@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AnesteSys">
+<meta name="theme-color" content="#04060d">
+<title>AnesteSys Pro</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2304060d'/><text y='68' x='50' text-anchor='middle' font-size='55' font-family='monospace' fill='%2300e5ff'>♥</text></svg>">
+<style>
+:root{
+  --bg:#04060d;--s1:#0a0f1c;--s2:#0f1628;--border:#1e2d44;
+  --cyan:#00e5ff;--green:#00e676;--orange:#ff6d00;--yellow:#ffd600;
+  --red:#ff1744;--purple:#d500f9;--white:#dde8ff;--muted:#3d5a78;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tap: 52px; /* minimum tap target */
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html{height:100%;font-size:14px;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--white);
+  font-family:-apple-system,'SF Pro Display',sans-serif;
+  height:100%;overflow:hidden;
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bottom);
+}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;height:100%;height:100dvh}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:rgba(10,15,28,0.95);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:10px 16px 8px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;position:relative;z-index:50;
+}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--orange))}
+.brand{font-size:18px;font-weight:800;color:var(--cyan);letter-spacing:-0.5px}
+.brand span{color:var(--orange)}
+.topbar-clock{font-size:22px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;font-family:'Menlo',monospace}
+.topbar-info{text-align:center;font-size:10px;color:var(--muted);line-height:1.4}
+.topbar-info b{color:var(--white);font-size:11px}
+
+/* ── PAGES ── */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:12px 12px 80px;display:none;
+  -webkit-overflow-scrolling:touch}
+.page.active{display:block}
+
+/* ── STATUS CARDS ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.statcard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:10px 12px;position:relative;overflow:hidden}
+.statcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.statcard.c-cyan::before{background:var(--cyan)}
+.statcard.c-green::before{background:var(--green)}
+.statcard.c-orange::before{background:var(--orange)}
+.statcard.c-yellow::before{background:var(--yellow)}
+.statcard.c-red::before{background:var(--red)}
+.statcard.c-purple::before{background:var(--purple)}
+.statcard label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:3px}
+.statcard .val{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.statcard .unit{font-size:9px;color:var(--muted);margin-top:2px}
+.c-cyan .val{color:var(--cyan)}.c-green .val{color:var(--green)}
+.c-orange .val{color:var(--orange)}.c-yellow .val{color:var(--yellow)}
+.c-red .val{color:var(--red)}.c-purple .val{color:var(--purple)}
+.statcard.flash{animation:flash 1s infinite}
+@keyframes flash{0%,100%{border-color:var(--red)}50%{border-color:var(--border)}}
+
+/* ── SECTION ── */
+.section{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.section-header{padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-header h2{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan)}
+.section-body{padding:14px 16px}
+
+/* ── VITAL SLIDERS (big for fingers) ── */
+.vslider-row{margin-bottom:14px}
+.vslider-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.vslider-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.vslider-val{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.vslider-unit{font-size:11px;color:var(--muted);margin-left:4px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:8px;border-radius:4px;
+  background:var(--border);outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:28px;height:28px;border-radius:50%;
+  background:var(--cyan);border:3px solid var(--bg);
+  box-shadow:0 0 10px rgba(0,229,255,.4);cursor:pointer;
+}
+input[type=range].warn::-webkit-slider-thumb{background:var(--yellow);box-shadow:0 0 10px rgba(255,214,0,.4)}
+input[type=range].danger::-webkit-slider-thumb{background:var(--red);box-shadow:0 0 12px rgba(255,23,68,.6)}
+
+/* ── BUTTONS ── */
+.btn{
+  background:var(--cyan);color:var(--bg);border:none;border-radius:12px;
+  padding:0 20px;height:var(--tap);
+  font-size:13px;font-weight:700;cursor:pointer;
+  letter-spacing:0.5px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  white-space:nowrap;transition:opacity .15s,transform .1s;
+  -webkit-user-select:none;user-select:none;
+  min-width:var(--tap);
+}
+.btn:active{opacity:.75;transform:scale(.97)}
+.btn.o{background:var(--orange)}.btn.g{background:var(--green)}
+.btn.r{background:var(--red)}.btn.y{background:var(--yellow);color:#000}
+.btn.ghost{background:rgba(255,255,255,.07);color:var(--white);border:1px solid var(--border)}
+.btn.sm{height:38px;font-size:11px;padding:0 14px;border-radius:10px}
+.btn.full{width:100%}
+
+/* ── FORM CONTROLS ── */
+input[type=number],input[type=text],input[type=time],select,textarea{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+  color:var(--white);font-size:15px;padding:12px 14px;width:100%;
+  -webkit-appearance:none;appearance:none;
+  transition:border-color .2s;
+}
+input:focus,select:focus{outline:none;border-color:var(--cyan)}
+select option{background:var(--s1)}
+.field{margin-bottom:10px}
+.field label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:5px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ── ALERTS ── */
+.alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.4;margin-bottom:8px;animation:slidein .25s ease}
+@keyframes slidein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.alert.info{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2)}
+.alert.warn{background:rgba(255,214,0,.08);border:1px solid rgba(255,214,0,.25)}
+.alert.danger{background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.3)}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-time{font-size:10px;color:var(--muted);display:block;margin-top:3px}
+
+/* ── TABLE ── */
+.htable{width:100%;border-collapse:collapse;font-size:12px}
+.htable th{background:var(--s2);padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border:1px solid var(--border);white-space:nowrap}
+.htable td{padding:8px 10px;border:1px solid var(--border);font-variant-numeric:tabular-nums;white-space:nowrap}
+.htable tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.hl{color:var(--cyan);font-weight:700}
+.wc{color:var(--yellow)}.dc{color:var(--red);font-weight:700}
+
+/* ── BOTTOM TABS ── */
+.bottomnav{
+  background:rgba(10,15,28,0.95);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(6,1fr);
+  padding:6px 4px;padding-bottom:calc(6px + var(--safe-bottom));
+  flex-shrink:0;position:relative;z-index:50;
+}
+.navbtn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:4px 2px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;border-radius:10px;
+  transition:color .2s,background .2s;min-height:50px;
+}
+.navbtn.active{color:var(--cyan)}
+.navbtn:active{background:rgba(0,229,255,.08)}
+.navbtn .icon{font-size:22px;line-height:1}
+.navbtn .label{font-size:9px;font-weight:600;letter-spacing:0.5px}
+.navbtn .badge{
+  position:absolute;top:4px;right:4px;background:var(--red);color:#fff;
+  font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center;
+}
+
+/* ── CHART ── */
+canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
+
+/* ── PHASE BAR ── */
+.phase-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.phase-pill{
+  flex-shrink:0;padding:8px 14px;border-radius:20px;
+  background:var(--s2);border:1px solid var(--border);font-size:11px;text-align:center;
+}
+.phase-pill.done{border-color:var(--green);background:rgba(0,230,118,.08)}
+.phase-pill.active-phase{border-color:var(--cyan);background:rgba(0,229,255,.08)}
+.phase-pill .ph-name{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.phase-pill .ph-time{font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums}
+.phase-pill.done .ph-time{color:var(--green)}
+
+/* ── LIVE DOT ── */
+.live{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.2s infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);color:var(--cyan)}
+.badge.r{background:rgba(255,23,68,.1);border-color:rgba(255,23,68,.3);color:var(--red)}
+.badge.g{background:rgba(0,230,118,.1);border-color:rgba(0,230,118,.3);color:var(--green)}
+.badge.y{background:rgba(255,214,0,.1);border-color:rgba(255,214,0,.3);color:var(--yellow)}
+
+/* ── VENT DISPLAY ── */
+.vent-big{text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 6px;margin-bottom:8px}
+.vent-big .vb-val{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.vent-big .vb-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.vent-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+
+/* ── BALANCE BIG ── */
+.balance-hero{text-align:center;padding:20px;background:var(--bg);border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+.balance-hero .bh-val{font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.balance-hero .bh-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+
+/* ── FARMACO ITEM ── */
+.f-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.f-name{font-weight:700;font-size:14px}
+.f-dose{color:var(--cyan);font-size:13px;margin-top:2px}
+.f-note{color:var(--muted);font-size:11px;margin-top:2px}
+.f-meta{text-align:right;flex-shrink:0}
+.f-hour{font-size:16px;font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums}
+.f-via{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── RESUMEN ── */
+.res-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.res-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--cyan);font-weight:700;margin-bottom:10px}
+.res-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid rgba(30,45,68,.5)}
+.res-row span:first-child{color:var(--muted)}
+.res-row span:last-child{font-weight:600}
+.res-total{display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:800;border-top:1px solid var(--border);margin-top:4px}
+.aldrete-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.aldrete-score{font-size:28px;font-weight:800;color:var(--green)}
+
+/* ── SCROLL INDICATOR ── */
+.scroll-hint{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;letter-spacing:1px}
+
+/* ── ALARM RING ── */
+@keyframes alarm-ring{0%,100%{transform:scale(1)}10%,30%,50%{transform:scale(1.05)}20%,40%{transform:scale(.97)}}
+.ringing{animation:alarm-ring .6s infinite}
+
+/* swipe indicator for tables */
+.swipe-hint{font-size:10px;color:var(--muted);text-align:center;padding:4px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">Aneste<span>Sys</span></div>
+  <div class="topbar-info" id="topbar-pac">
+    <b>G.C.G</b><br>74a · Exp 747938
+  </div>
+  <div class="topbar-clock" id="clock">00:00:00</div>
+</div>
+
+<!-- PAGES -->
+<div class="pages">
+
+<!-- ══ MONITOR ══ -->
+<div class="page active" id="page-monitor">
+
+  <!-- PHASE BAR -->
+  <div class="phase-row" id="phase-row">
+    <div class="phase-pill" id="ph-pre"><div class="ph-name">Pre-Anest.</div><div class="ph-time" id="ph-pre-t">--:--</div></div>
+    <div class="phase-pill" id="ph-an"><div class="ph-name">Anestesia</div><div class="ph-time" id="ph-an-t">--:--</div></div>
+    <div class="phase-pill" id="ph-cx"><div class="ph-name">Cirugía</div><div class="ph-time" id="ph-cx-t">--:--</div></div>
+    <div class="phase-pill" id="ph-rec"><div class="ph-name">Recuper.</div><div class="ph-time" id="ph-rec-t">--:--</div></div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="stat-row">
+    <div class="statcard c-cyan"><label>⏱ T. Anestesia</label><div class="val" id="st-tan">--:--</div><div class="unit">hh:mm</div></div>
+    <div class="statcard c-orange"><label>🔪 T. Cirugía</label><div class="val" id="st-tcx">--:--</div><div class="unit">hh:mm</div></div>
+  </div>
+  <div class="stat-row">
+    <div class="statcard c-yellow"><label>💧 Balance</label><div class="val" id="st-bal">0</div><div class="unit">ml total</div></div>
+    <div class="statcard c-red" id="sc-sang"><label>🩸 Sangrado</label><div class="val" id="st-sang">0</div><div class="unit">ml</div></div>
+  </div>
+  <div class="stat-row-3" style="margin-bottom:10px">
+    <div class="statcard c-purple"><label>🔔 Alarma en</label><div class="val" style="font-size:22px" id="st-alarm">60:00</div></div>
+    <div class="statcard c-green"><label>💊 Fármacos</label><div class="val" id="st-fm">0</div></div>
+    <div class="statcard c-cyan"><label>📊 Registros</label><div class="val" id="st-reg">0</div></div>
+  </div>
+
+  <!-- VITALES -->
+  <div class="section">
+    <div class="section-header">
+      <h2>📊 Signos Vitales</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="live"></span>
+        <select id="vi-interval" style="width:auto;font-size:11px;padding:6px 10px;height:auto" onchange="changeVitalInterval()">
+          <option value="0">Manual</option>
+          <option value="3">c/3 min</option>
+          <option value="5" selected>c/5 min</option>
+          <option value="10">c/10 min</option>
+          <option value="15">c/15 min</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-body">
+
+      <!-- TA SISTÓLICA -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">TA Sistólica</span>
+          <span><span class="vslider-val" id="dv-tas" style="color:var(--cyan)">135</span><span class="vslider-unit">mmHg</span></span>
+        </div>
+        <input type="range" id="sl-tas" min="60" max="220" value="135" oninput="upV('tas',this.value)">
+      </div>
+      <!-- TA DIASTÓLICA -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">TA Diastólica</span>
+          <span><span class="vslider-val" id="dv-tad" style="color:var(--cyan)">91</span><span class="vslider-unit">mmHg</span></span>
+        </div>
+        <input type="range" id="sl-tad" min="30" max="130" value="91" oninput="upV('tad',this.value)">
+      </div>
+      <!-- FC -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">Frecuencia Cardíaca</span>
+          <span><span class="vslider-val" id="dv-fc" style="color:var(--orange)">100</span><span class="vslider-unit">lpm</span></span>
+        </div>
+        <input type="range" id="sl-fc" min="30" max="200" value="100" oninput="upV('fc',this.value)">
+      </div>
+      <!-- SPO2 -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">SpO2</span>
+          <span><span class="vslider-val" id="dv-spo2" style="color:var(--green)">93</span><span class="vslider-unit">%</span></span>
+        </div>
+        <input type="range" id="sl-spo2" min="70" max="100" value="93" oninput="upV('spo2',this.value)">
+      </div>
+      <!-- FR -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">Frec. Respiratoria</span>
+          <span><span class="vslider-val" id="dv-fr" style="color:var(--green)">17</span><span class="vslider-unit">rpm</span></span>
+        </div>
+        <input type="range" id="sl-fr" min="4" max="40" value="17" oninput="upV('fr',this.value)">
+      </div>
+      <!-- TEMP -->
+      <div class="vslider-row">
+        <div class="vslider-top">
+          <span class="vslider-label">Temperatura</span>
+          <span><span class="vslider-val" id="dv-temp" style="color:var(--yellow)">37.0</span><span class="vslider-unit">°C</span></span>
+        </div>
+        <input type="range" id="sl-temp" min="34" max="41" step="0.1" value="37.0" oninput="upV('temp',this.value)">
+      </div>
+
+      <button class="btn g full" style="margin-bottom:10px" onclick="registrar()">📌 Registrar Punto</button>
+
+      <!-- CHART -->
+      <canvas id="chart" height="160"></canvas>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:10px;color:var(--muted)">
+        <span><span style="color:var(--cyan)">●</span> TA</span>
+        <span><span style="color:var(--green)">●</span> SpO2</span>
+        <span><span style="color:var(--orange)">●</span> FC</span>
+        <span><span style="color:var(--yellow)">●</span> Temp</span>
+      </div>
+
+      <!-- PHASE BUTTONS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+        <button class="btn sm" onclick="startPhase('an')">▶ Anest.</button>
+        <button class="btn sm o" onclick="startPhase('cx')">▶ Cx</button>
+        <button class="btn sm r" onclick="startPhase('fin')">■ Fin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOURLY TABLE -->
+  <div class="section">
+    <div class="section-header"><h2>🕐 Tabla de Registro</h2><span class="badge" id="reg-count">0</span></div>
+    <div class="swipe-hint">← desliza la tabla →</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="htable">
+        <thead><tr><th>Hora</th><th>TAS</th><th>TAD</th><th>PAM</th><th>FC</th><th>FR</th><th>SpO2</th><th>Temp</th><th>Nota</th></tr></thead>
+        <tbody id="vital-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /monitor -->
+
+<!-- ══ LÍQUIDOS ══ -->
+<div class="page" id="page-liq">
+  <div class="balance-hero" id="bal-hero">
+    <div class="bh-val" id="bal-big" style="color:var(--yellow)">0</div>
+    <div class="bh-lbl">Balance Total (ml)</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><h2>📥 Ingresos</h2></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>NaCl 0.9% (ml)</label><input type="number" id="in-nacl" value="300" onchange="calcLiq()"></div>
+        <div class="field"><label>Sol. Hartman (ml)</label><input type="number" id="in-hart" value="900" onchange="calcLiq()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Plasma/Coloides (ml)</label><input type="number" id="in-col" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Paq. Globular (ml)</label><input type="number" id="in-pg" value="0" onchange="calcLiq()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Medicamentos (ml)</label><input type="number" id="in-med" value="178" onchange="calcLiq()"></div>
+        <div class="field"><label>Otro (ml)</label><input type="number" id="in-otro" value="0" onchange="calcLiq()"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
+        <span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Total Ingresos</span>
+        <span style="font-size:22px;font-weight:800;color:var(--green)" id="ing-total">1378 ml</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><h2>📤 Egresos</h2></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>P. Insensibles (ml)</label><input type="number" id="eg-ins" value="56" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml)</label><input type="number" id="eg-bas" value="96" onchange="calcLiq()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Diuresis (ml)</label><input type="number" id="eg-diu" value="53" onchange="calcLiq()"></div>
+        <div class="field"><label>🩸 Sangrado (ml)</label><input type="number" id="eg-sang" value="200" onchange="calcLiq()" style="color:var(--red)"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Trauma Qx (ml)</label><input type="number" id="eg-trau" value="106" onchange="calcLiq()"></div>
+        <div class="field"><label>Otro (ml)</label><input type="number" id="eg-otro" value="0" onchange="calcLiq()"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;background:rgba(255,23,68,.07);border:1px solid rgba(255,23,68,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
+        <span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Total Egresos</span>
+        <span style="font-size:22px;font-weight:800;color:var(--red)" id="eg-total">511 ml</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA SANGRADO -->
+  <div class="section">
+    <div class="section-header"><h2>🩸 Sangrado vs Permisible</h2></div>
+    <div class="section-body">
+      <div style="position:relative;height:24px;background:var(--border);border-radius:12px;overflow:hidden;margin-bottom:8px">
+        <div id="sang-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));width:28%;border-radius:12px;transition:width .5s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+        <span id="sang-pct">200 ml (28%)</span>
+        <span>Permisible: <b style="color:var(--yellow)" id="sp-lbl">714 ml</b></span>
+      </div>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">VSC</div>
+          <div style="font-size:22px;font-weight:800;color:var(--cyan)" id="vsc-lbl">4760 ml</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Diuresis/hr</div>
+          <div style="font-size:22px;font-weight:800;color:var(--cyan)" id="diu-hr">0.5 ml/kg/h</div>
+        </div>
+      </div>
+      <button class="btn full" style="margin-top:10px" onclick="addLiqHora()">+ Registrar Hora Actual</button>
+    </div>
+  </div>
+
+  <!-- HOURLY LIQUID TABLE -->
+  <div class="section">
+    <div class="section-header"><h2>📋 Registro por Hora</h2></div>
+    <div class="swipe-hint">← desliza →</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="htable">
+        <thead><tr><th>Hora</th><th>NaCl</th><th>Hartman</th><th>Sangrado</th><th>Diuresis</th><th>Bal. Hr</th><th>Acumulado</th></tr></thead>
+        <tbody id="liq-tbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div><!-- /liq -->
+
+<!-- ══ VENTILADOR ══ -->
+<div class="page" id="page-vent">
+  <div class="section">
+    <div class="section-header">
+      <h2>🫁 Parámetros</h2>
+      <button class="btn sm g" onclick="regVent()">📌 Registrar</button>
+    </div>
+    <div class="section-body">
+      <div class="field" style="margin-bottom:14px">
+        <label>Modo Ventilatorio</label>
+        <select id="vm-modo"><option>VC — Volumen Control</option><option>PC — Presión Control</option><option>SIMV</option><option>PSV — Soporte de Presión</option></select>
+      </div>
+
+      <div class="vent-grid">
+        <div class="vent-big" style="color:var(--cyan)"><div class="vb-val" id="dvv-fio2">40%</div><div class="vb-lbl">FiO2</div></div>
+        <div class="vent-big" style="color:var(--green)"><div class="vb-val" id="dvv-vc">400 ml</div><div class="vb-lbl">Vol. Corriente</div></div>
+        <div class="vent-big" style="color:var(--orange)"><div class="vb-val" id="dvv-fr">12 rpm</div><div class="vb-lbl">Frecuencia</div></div>
+        <div class="vent-big" style="color:var(--yellow)"><div class="vb-val" id="dvv-peep">5 cmH₂O</div><div class="vb-lbl">PEEP</div></div>
+        <div class="vent-big" style="color:var(--red)"><div class="vb-val" id="dvv-ppeak">20 cmH₂O</div><div class="vb-lbl">P. Pico</div></div>
+        <div class="vent-big" style="color:var(--purple)"><div class="vb-val" id="dvv-etco2">38 mmHg</div><div class="vb-lbl">EtCO2</div></div>
+      </div>
+
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">FiO2 (%)</span></div>
+        <input type="range" id="sv-fio2" min="21" max="100" value="40" oninput="upVent('fio2',this.value,'%')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Vol. Corriente (ml)</span></div>
+        <input type="range" id="sv-vc" min="200" max="800" value="400" step="10" oninput="upVent('vc',this.value,' ml')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Frecuencia (rpm)</span></div>
+        <input type="range" id="sv-fr" min="6" max="30" value="12" oninput="upVent('fr',this.value,' rpm')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">PEEP (cmH₂O)</span></div>
+        <input type="range" id="sv-peep" min="0" max="20" value="5" oninput="upVent('peep',this.value,' cmH₂O')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Presión Pico (cmH₂O)</span></div>
+        <input type="range" id="sv-ppeak" min="10" max="50" value="20" oninput="upVent('ppeak',this.value,' cmH₂O')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">EtCO2 (mmHg)</span></div>
+        <input type="range" id="sv-etco2" min="20" max="60" value="38" oninput="upVent('etco2',this.value,' mmHg')"></div>
+
+      <!-- HALOGENADO -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:4px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Agente Halogenado</div>
+        <div class="field-row">
+          <div class="field"><label>Agente</label>
+            <select id="vm-hal"><option>Sevoflurano</option><option>Isoflurano</option><option>Desflurano</option></select></div>
+          <div class="field"><label>Vol % — <span id="dvv-hal" style="color:var(--purple)">2%</span></label>
+            <input type="range" id="sv-hal" min="0" max="8" step="0.5" value="2" oninput="document.getElementById('dvv-hal').textContent=this.value+'%'">
+          </div>
+        </div>
+      </div>
+
+      <!-- DERIVED -->
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">VM</div>
+          <div style="font-size:20px;font-weight:800;color:var(--green)" id="calc-vm">4.8 L/min</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Complianza</div>
+          <div style="font-size:20px;font-weight:800;color:var(--yellow)" id="calc-comp">26 ml/cmH₂O</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">VT/kg</div>
+          <div style="font-size:20px;font-weight:800" id="calc-vtkg" style="color:var(--green)">7.1 ml/kg</div>
+        </div>
+      </div>
+      <div id="vent-alert-box" style="margin-top:10px;font-size:12px;color:var(--green)">✓ Parámetros dentro de límites</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><h2>📋 Historial Ventilador</h2></div>
+    <div class="swipe-hint">← desliza →</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="htable">
+        <thead><tr><th>Hora</th><th>Modo</th><th>FiO2</th><th>VC</th><th>FR</th><th>PEEP</th><th>Pico</th><th>EtCO2</th><th>VM</th></tr></thead>
+        <tbody id="vent-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div><!-- /vent -->
+
+<!-- ══ FÁRMACOS ══ -->
+<div class="page" id="page-farm">
+  <div class="section">
+    <div class="section-header"><h2>💊 Nuevo Medicamento</h2></div>
+    <div class="section-body">
+      <div class="field"><label>Fármaco</label>
+        <input type="text" id="fn" list="fdl" placeholder="Buscar o escribir...">
+        <datalist id="fdl">
+          <option value="Fentanilo"><option value="Sufentanilo"><option value="Morfina">
+          <option value="Propofol"><option value="Ketamina"><option value="Midazolam"><option value="Etomidato">
+          <option value="Dexmedetomidina"><option value="Lidocaína 1%"><option value="Lidocaína 2%">
+          <option value="Lidocaína 10%"><option value="Bupivacaína 0.5%"><option value="Ropivacaína 0.75%">
+          <option value="Vecuronio"><option value="Rocuronio"><option value="Succinilcolina">
+          <option value="Atropina"><option value="Efedrina"><option value="Norepinefrina">
+          <option value="Adrenalina"><option value="Dopamina"><option value="Dobutamina">
+          <option value="Neostigmina"><option value="Sugammadex"><option value="Dexametasona">
+          <option value="Ondansetrón"><option value="Metoclopramida"><option value="Paracetamol">
+          <option value="Ketorolaco"><option value="Tramadol"><option value="Dipirona"><option value="Dexketoprofeno">
+        </datalist>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Dosis</label><input type="text" id="fd" placeholder="ej. 100 mcg"></div>
+        <div class="field"><label>Vía</label>
+          <select id="fv"><option>IV</option><option>IM</option><option>SC</option><option>IO</option><option>IT</option><option>Epidural</option><option>Instil.</option><option>Inhal.</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Hora exacta</label><input type="time" id="fh"></div>
+        <div class="field"><label>Indicación</label><input type="text" id="fnota" placeholder="Para qué..."></div>
+      </div>
+      <button class="btn o full" onclick="addFarm()">+ Registrar Medicamento</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>📋 Medicamentos Administrados</h2>
+      <span class="badge" id="farm-badge">0</span>
+    </div>
+    <div class="section-body" id="farm-list" style="padding-top:8px">
+      <div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin registros</div>
+    </div>
+  </div>
+</div><!-- /farm -->
+
+<!-- ══ ALERTAS ══ -->
+<div class="page" id="page-alert">
+  <!-- NEXT ALARM -->
+  <div style="background:var(--s1);border:2px solid var(--purple);border-radius:14px;padding:20px;text-align:center;margin-bottom:10px" id="alarm-box">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px">🔔 Próxima alarma horaria en</div>
+    <div style="font-size:56px;font-weight:800;color:var(--purple);font-variant-numeric:tabular-nums" id="alarm-big">60:00</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Se activa automáticamente cada hora desde inicio de anestesia</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="section" style="margin-bottom:10px">
+    <div class="section-header"><h2>⚙️ Límites de Alarma</h2><button class="btn sm g" onclick="saveAlarmCfg()">Guardar</button></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>TA Sist. ALTA</label><input type="number" id="lim-thi" value="160"></div>
+        <div class="field"><label>TA Sist. BAJA</label><input type="number" id="lim-tlo" value="80"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>FC ALTA</label><input type="number" id="lim-fhi" value="120"></div>
+        <div class="field"><label>FC BAJA</label><input type="number" id="lim-flo" value="45"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>SpO2 BAJA (%)</label><input type="number" id="lim-slo" value="92"></div>
+        <div class="field"><label>Temp. ALTA (°C)</label><input type="number" id="lim-tphi" value="38.5" step="0.1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERT LIST -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🚨 Historial</h2>
+      <button class="btn sm ghost" onclick="clearAlerts()">Limpiar</button>
+    </div>
+    <div class="section-body" id="alert-list">
+      <div class="alert danger"><span class="alert-icon">🚨</span><div><div>Intubación difícil — Fibroscopia + Videolaringoscopia</div><span class="alert-time">15:35</span></div></div>
+      <div class="alert warn"><span class="alert-icon">⚠️</span><div><div>Lidocaína: revisar dosis acumulada</div><span class="alert-time">15:30</span></div></div>
+    </div>
+  </div>
+</div><!-- /alert -->
+
+<!-- ══ RESUMEN / PDF ══ -->
+<div class="page" id="page-res">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="btn g" onclick="genRes()">🔄 Generar</button>
+    <button class="btn" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="btn o" onclick="copiarRes()">📋 Copiar</button>
+  </div>
+  <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
+    💡 Para guardar PDF: toca "Imprimir" → selecciona <b style="color:var(--white)">Guardar como PDF</b> (en Safari) o <b style="color:var(--white)">Compartir → Guardar en Archivos</b>
+  </div>
+
+  <div id="res-content">
+    <div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div style="font-size:20px;font-weight:800;color:var(--cyan)">REGISTRO ANESTÉSICO</div>
+      <div style="font-size:11px;color:var(--muted)">Hospital General Dr. Aurelio Valdivieso</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px" id="res-fecha"></div>
+    </div>
+    <div id="res-pac" class="res-section"></div>
+    <div id="res-vitales" class="res-section"></div>
+    <div id="res-liq" class="res-section"></div>
+    <div id="res-farms" class="res-section"></div>
+    <div id="res-vent" class="res-section"></div>
+    <div id="res-aldrete" class="res-section"></div>
+  </div>
+
+  <!-- ALDRETE -->
+  <div class="section" style="margin-top:12px">
+    <div class="section-header"><h2>📋 Escala Aldrete</h2></div>
+    <div class="section-body">
+      <div class="field"><label>Actividad</label>
+        <select id="al-act" onchange="calcAld()"><option value="2">Mueve 4 extremidades — 2</option><option value="1">Mueve 2 — 1</option><option value="0">No mueve — 0</option></select></div>
+      <div class="field"><label>Respiración</label>
+        <select id="al-resp" onchange="calcAld()"><option value="2">Profunda, tose — 2</option><option value="1">Disnea — 1</option><option value="0">Apnea — 0</option></select></div>
+      <div class="field"><label>Circulación</label>
+        <select id="al-circ" onchange="calcAld()"><option value="2">±20% preanest. — 2</option><option value="1">20–50% — 1</option><option value="0">&gt;50% — 0</option></select></div>
+      <div class="field"><label>Conciencia</label>
+        <select id="al-conc" onchange="calcAld()"><option value="2">Completamente despierto — 2</option><option value="1">Al llamado — 1</option><option value="0">No responde — 0</option></select></div>
+      <div class="field"><label>SpO2</label>
+        <select id="al-sat" onchange="calcAld()"><option value="2">&gt;92% en aire — 2</option><option value="1">Necesita O2 — 1</option><option value="0">&lt;90% — 0</option></select></div>
+      <div style="text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:10px">
+        <div style="font-size:52px;font-weight:800;color:var(--green)" id="ald-score">10</div>
+        <div style="font-size:13px;margin-top:4px" id="ald-status" style="color:var(--green)">✓ Alta Autorizada</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /res -->
+
+</div><!-- /pages -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav">
+  <button class="navbtn active" onclick="nav('monitor',this)" id="nb-monitor">
+    <span class="icon">📊</span><span class="label">Monitor</span>
+  </button>
+  <button class="navbtn" onclick="nav('liq',this)" id="nb-liq">
+    <span class="icon">💧</span><span class="label">Líquidos</span>
+  </button>
+  <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
+    <span class="icon">🫁</span><span class="label">Ventil.</span>
+  </button>
+  <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
+    <span class="icon">💊</span><span class="label">Fármacos</span>
+  </button>
+  <button class="navbtn" onclick="nav('alert',this)" id="nb-alert" style="position:relative">
+    <span class="icon">🚨</span><span class="label">Alertas</span>
+    <span class="badge r" id="alert-badge" style="position:absolute;top:4px;right:6px;font-size:9px;padding:1px 5px;display:none">0</span>
+  </button>
+  <button class="navbtn" onclick="nav('res',this)" id="nb-res">
+    <span class="icon">📄</span><span class="label">Resumen</span>
+  </button>
+</nav>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const S = {
+  vitals: {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0},
+  history: [],
+  farms: [
+    {n:'Lidocaína 10%',d:'300+150 mg',v:'Instil.',h:'15:30',nota:'Bloqueo laríngeo'},
+    {n:'Dexmedetomidina',d:'47 mcg',v:'IV',h:'15:30',nota:'Premedicación'},
+    {n:'Fentanilo',d:'360 mcg',v:'IV',h:'15:45',nota:'Analgesia'},
+    {n:'Propofol',d:'130 mg',v:'IV',h:'15:50',nota:'Inducción'},
+    {n:'Norepinefrina',d:'0.03-0.05 mcg/kg/min',v:'IV',h:'16:00',nota:'Soporte'},
+    {n:'Dexametasona',d:'8 mg',v:'IV',h:'16:30',nota:'Antiemético'},
+    {n:'Paracetamol',d:'1 g',v:'IV',h:'16:30',nota:'Analgesia'},
+    {n:'Ondansetrón',d:'4 mg',v:'IV',h:'18:30',nota:'Antiemético'},
+  ],
+  phases: {an:null,cx:null,fin:null},
+  ventHist: [],
+  liqHora: [],
+  alerts: [],
+  alarmCfg: {tHi:160,tLo:80,fHi:120,fLo:45,sLo:92,tpHi:38.5},
+  pac: {nombre:'G.C.G',edad:74,exp:'747938',sexo:'Masculino',peso:68,pesoI:53,pesoC:56,
+        dx:'Neurofibroma de cuello',cx:'Resección de tumor de cuello',
+        tipoAn:'AGB + Bloqueo Laríngeo Superior',asa:'II',med:'R2 Nadia F. López Sainz'},
+  hrAlarms: [],
+  autoInterval: null,
+};
+
+// Seed history from form data
+const seedData = [
+  [153,83,88,98,17,37.4,'15:30'],[104,60,88,98,15,37.4,'15:45'],[47,30,85,99,10,37.6,'16:00'],
+  [72,44,80,99,12,37.5,'16:15'],[86,54,78,94,12,37.4,'16:30'],[77,48,76,94,12,37.3,'16:45'],
+  [75,45,75,94,12,37.3,'17:00'],[72,43,78,93,12,37.2,'17:15'],[64,40,80,93,12,37.2,'17:30'],
+  [73,45,82,93,12,37.1,'17:45'],[71,44,88,93,12,37.1,'18:00'],[72,44,92,93,12,37.0,'18:15'],
+  [100,63,98,94,15,37.0,'18:45'],[105,67,100,94,18,37.0,'19:00'],[135,91,100,93,17,37.0,'19:45']
+];
+seedData.forEach(d=>S.history.push({tas:d[0],tad:d[1],fc:d[2],spo2:d[3],fr:d[4],temp:d[5],hora:d[6]}));
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='res') genRes();
+}
+
+// ═══════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX',{hour12:false});
+  // Timers
+  function fmt(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+  if(S.phases.an){
+    const el=Math.floor((now-S.phases.an)/1000);
+    document.getElementById('st-tan').textContent=fmt(now-S.phases.an);
+    if(!S.phases.fin){
+      const nx=Math.ceil((el+1)/3600)*3600-el;
+      const ts=String(Math.floor(nx/60)).padStart(2,'0')+':'+String(nx%60).padStart(2,'0');
+      document.getElementById('st-alarm').textContent=ts;
+      document.getElementById('alarm-big').textContent=ts;
+      const hr=Math.floor(el/3600);
+      if(el>0&&el%3600<2&&!S.hrAlarms.includes(hr)&&hr>0){S.hrAlarms.push(hr);fireHrAlarm(hr);}
+    }
+  }
+  if(S.phases.cx) document.getElementById('st-tcx').textContent=fmt(now-S.phases.cx);
+}
+setInterval(tick,1000); tick();
+
+// ═══════════════════════════════════════════════
+// VITALS
+// ═══════════════════════════════════════════════
+const vColors = {tas:'var(--cyan)',tad:'var(--cyan)',fc:'var(--orange)',spo2:'var(--green)',fr:'var(--green)',temp:'var(--yellow)'};
+const vWarnHi = {tas:160,tad:110,fc:120,spo2:100,fr:28,temp:38.5};
+const vWarnLo = {tas:80,tad:40,fc:45,spo2:92,fr:8,temp:35};
+const vDangHi = {tas:190,fc:150,spo2:100,fr:35,temp:39};
+const vDangLo = {tas:70,fc:35,spo2:90,fr:6};
+
+function upV(key, val) {
+  S.vitals[key] = parseFloat(val);
+  const dv = document.getElementById('dv-'+key);
+  const sl = document.getElementById('sl-'+key);
+  dv.textContent = val;
+  const v = parseFloat(val);
+  sl.className = '';
+  dv.style.color = vColors[key];
+  if((vDangLo[key]!==undefined&&v<=vDangLo[key])||(vDangHi[key]!==undefined&&v>=vDangHi[key])){
+    sl.className='danger'; dv.style.color='var(--red)';
+  } else if(v<=vWarnLo[key]||v>=vWarnHi[key]){
+    sl.className='warn'; dv.style.color='var(--yellow)';
+  }
+}
+
+function registrar() {
+  const hora = getT();
+  const pam = Math.round(S.vitals.tad+(S.vitals.tas-S.vitals.tad)/3);
+  const row = {...S.vitals, hora, pam};
+  S.history.push(row);
+  renderVitalTable();
+  drawChart();
+  checkAlarms(row, hora);
+  // Haptic feedback
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+function checkAlarms(v, hora) {
+  const c = S.alarmCfg;
+  if(v.tas>=c.tHi) addAlert('danger',`⚠️ TA Sistólica ALTA: ${v.tas} mmHg`,hora);
+  if(v.tas<=c.tLo) addAlert('danger',`⚠️ TA Sistólica BAJA: ${v.tas} mmHg`,hora);
+  if(v.fc>=c.fHi) addAlert('warn',`⚠️ Taquicardia: FC ${v.fc} lpm`,hora);
+  if(v.fc<=c.fLo) addAlert('danger',`🚨 Bradicardia: FC ${v.fc} lpm`,hora);
+  if(v.spo2<=c.sLo) addAlert('danger',`🚨 SpO2 CRÍTICA: ${v.spo2}%`,hora);
+  if(v.temp>=c.tpHi) addAlert('warn',`⚠️ Hipertermia: ${v.temp}°C`,hora);
+}
+
+function renderVitalTable() {
+  const b = document.getElementById('vital-tbody');
+  if(!S.history.length){b.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';return;}
+  b.innerHTML=[...S.history].reverse().map(r=>`
+    <tr>
+      <td class="hl">${r.hora}</td>
+      <td class="${r.tas>160||r.tas<80?'dc':r.tas>140?'wc':''}">${r.tas}</td>
+      <td>${r.tad}</td>
+      <td>${r.pam||Math.round(r.tad+(r.tas-r.tad)/3)}</td>
+      <td class="${r.fc>120||r.fc<45?'dc':''}">${r.fc}</td>
+      <td>${r.fr}</td>
+      <td class="${r.spo2<92?'dc':r.spo2<94?'wc':''}">${r.spo2}</td>
+      <td class="${parseFloat(r.temp)>=38.5?'wc':''}">${r.temp}</td>
+      <td style="color:var(--muted)"></td>
+    </tr>`).join('');
+  document.getElementById('reg-count').textContent = S.history.length;
+  document.getElementById('st-reg').textContent = S.history.length;
+}
+renderVitalTable();
+
+// ═══════════════════════════════════════════════
+// CHART
+// ═══════════════════════════════════════════════
+function drawChart() {
+  const cv = document.getElementById('chart');
+  if(!cv) return;
+  const dpr = window.devicePixelRatio||1;
+  const W = cv.offsetWidth, H = 160;
+  cv.width=W*dpr; cv.height=H*dpr;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const c = cv.getContext('2d');
+  c.scale(dpr,dpr);
+  c.fillStyle='#04060d'; c.fillRect(0,0,W,H);
+  c.strokeStyle='rgba(30,45,68,.6)'; c.lineWidth=.5;
+  for(let i=0;i<=6;i++){const y=(i/6)*H;c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+  const d=S.history; if(d.length<2)return;
+  function line(k,mn,mx,col){
+    const pts=d.map(r=>r[k]);
+    c.beginPath();c.strokeStyle=col;c.lineWidth=2;
+    pts.forEach((v,i)=>{const x=(i/(pts.length-1))*W,y=H-((v-mn)/(mx-mn))*H;i===0?c.moveTo(x,y):c.lineTo(x,y);});
+    c.stroke();
+    const lv=pts[pts.length-1],lx=W,ly=H-((lv-mn)/(mx-mn))*H;
+    c.beginPath();c.fillStyle=col;c.arc(lx,ly,4,0,Math.PI*2);c.fill();
+  }
+  line('tas',40,220,'#00e5ff');
+  line('spo2',80,100,'#00e676');
+  line('fc',30,180,'#ff6d00');
+  line('temp',34,41,'#ffd600');
+}
+setTimeout(drawChart,200);
+window.addEventListener('resize',()=>setTimeout(drawChart,100));
+
+// ═══════════════════════════════════════════════
+// AUTO-INTERVAL
+// ═══════════════════════════════════════════════
+function changeVitalInterval() {
+  if(S.autoInterval) clearInterval(S.autoInterval);
+  const mins = parseInt(document.getElementById('vi-interval').value);
+  if(!mins) return;
+  S.autoInterval = setInterval(()=>{
+    if(S.phases.an&&!S.phases.fin){
+      registrar();
+      addAlert('info',`📊 Auto-registro c/${mins}min`,getT());
+    }
+  }, mins*60000);
+}
+
+// ═══════════════════════════════════════════════
+// PHASES
+// ═══════════════════════════════════════════════
+function startPhase(p) {
+  const hora=getT();
+  if(p==='an'){
+    S.phases.an=new Date();
+    document.getElementById('ph-an').className='phase-pill active-phase';
+    document.getElementById('ph-an-t').textContent=hora;
+    addAlert('info',`▶ Anestesia iniciada: ${hora}`,hora);
+  } else if(p==='cx'){
+    S.phases.cx=new Date();
+    document.getElementById('ph-cx').className='phase-pill active-phase';
+    document.getElementById('ph-cx-t').textContent=hora;
+    addAlert('info',`🔪 Cirugía iniciada: ${hora}`,hora);
+  } else {
+    S.phases.fin=new Date();
+    document.getElementById('ph-rec').className='phase-pill done';
+    document.getElementById('ph-rec-t').textContent=hora;
+    addAlert('info',`■ Fin del procedimiento: ${hora}`,hora);
+  }
+  if(navigator.vibrate) navigator.vibrate([50,30,50]);
+}
+
+// ═══════════════════════════════════════════════
+// HOURLY ALARM
+// ═══════════════════════════════════════════════
+function fireHrAlarm(hr) {
+  const msg=`🔔 HORA ${hr} — Revisar: líquidos, vitales, fármacos pendientes`;
+  addAlert('warn',msg,getT());
+  document.getElementById('alarm-box').classList.add('ringing');
+  setTimeout(()=>document.getElementById('alarm-box').classList.remove('ringing'),3000);
+  if('Notification' in window&&Notification.permission==='granted')
+    new Notification(`AnesteSys — Hora ${hr}`,{body:msg});
+  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+}
+
+// ═══════════════════════════════════════════════
+// LIQUIDOS
+// ═══════════════════════════════════════════════
+function calcLiq() {
+  const get=id=>parseInt(document.getElementById(id).value)||0;
+  const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
+  const sang=get('eg-sang');
+  const diu=get('eg-diu');
+  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
+  const bal=ti-te;
+  document.getElementById('ing-total').textContent=ti+' ml';
+  document.getElementById('eg-total').textContent=te+' ml';
+  const bb=document.getElementById('bal-big');
+  bb.textContent=(bal>=0?'+':'')+bal+' ml';
+  bb.style.color=bal>0?'var(--green)':bal<-300?'var(--red)':'var(--yellow)';
+  document.getElementById('st-bal').textContent=(bal>=0?'+':'')+bal;
+  document.getElementById('st-sang').textContent=sang;
+  // bar
+  const vsp=714,pct=Math.min(100,Math.round(sang/vsp*100));
+  document.getElementById('sang-bar').style.width=pct+'%';
+  document.getElementById('sang-pct').textContent=`${sang} ml (${pct}%)`;
+  // diuresis/hr
+  const hrs=S.phases.an?Math.max(0.5,(new Date()-S.phases.an)/3600000):2.5;
+  const dur=(diu/(S.pac.pesoC||56)/hrs).toFixed(2);
+  document.getElementById('diu-hr').textContent=dur+' ml/kg/h';
+  if(sang>600&&!S._sangAlerted){S._sangAlerted=true;addAlert('danger','🩸 Sangrado >600ml — evaluar transfusión',getT());}
+}
+calcLiq();
+
+function addLiqHora() {
+  const get=id=>parseInt(document.getElementById(id).value)||0;
+  const hora=getT(),nacl=get('in-nacl'),hart=get('in-hart'),sang=get('eg-sang'),diu=get('eg-diu');
+  const balHr=(nacl+hart)-(sang+diu);
+  const prev=S.liqHora.length?S.liqHora[S.liqHora.length-1].acum:0;
+  const acum=prev+balHr;
+  S.liqHora.push({hora,nacl,hart,sang,diu,balHr,acum});
+  const b=document.getElementById('liq-tbody');
+  b.innerHTML=S.liqHora.map(r=>`<tr>
+    <td class="hl">${r.hora}</td><td>${r.nacl}</td><td>${r.hart}</td>
+    <td class="${r.sang>300?'wc':''}">${r.sang}</td><td>${r.diu}</td>
+    <td class="${r.balHr<0?'wc':''}">${r.balHr>=0?'+':''}${r.balHr}</td>
+    <td class="${r.acum<-500?'dc':r.acum<0?'wc':'hl'}">${r.acum>=0?'+':''}${r.acum}</td>
+  </tr>`).join('');
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+// ═══════════════════════════════════════════════
+// VENTILADOR
+// ═══════════════════════════════════════════════
+const ventVals = {fio2:40,vc:400,fr:12,peep:5,ppeak:20,etco2:38};
+function upVent(k,v,u) {
+  ventVals[k]=parseFloat(v);
+  document.getElementById('dvv-'+k).textContent=v+u;
+  calcVentDerived();
+}
+function calcVentDerived() {
+  const vm=(ventVals.vc*ventVals.fr/1000);
+  document.getElementById('calc-vm').textContent=vm.toFixed(1)+' L/min';
+  const comp=(ventVals.vc/Math.max(1,ventVals.ppeak-ventVals.peep));
+  document.getElementById('calc-comp').textContent=comp.toFixed(1)+' ml/cmH₂O';
+  const vtkg=(ventVals.vc/(S.pac.pesoI||53));
+  const vtkgEl=document.getElementById('calc-vtkg');
+  vtkgEl.textContent=vtkg.toFixed(1)+' ml/kg';
+  vtkgEl.style.color=vtkg>8?'var(--red)':vtkg>6.5?'var(--yellow)':'var(--green)';
+  // Alerts
+  const msgs=[];
+  if(ventVals.ppeak>30) msgs.push('⚠️ Presión pico alta (>30 cmH₂O)');
+  if(vtkg>8) msgs.push('⚠️ Volutrauma — VT/kg >8 ml/kg');
+  if(ventVals.etco2>45) msgs.push('⚠️ Hipercapnia — EtCO2 '+ventVals.etco2);
+  if(ventVals.etco2<30) msgs.push('⚠️ Hipocapnia — EtCO2 '+ventVals.etco2);
+  document.getElementById('vent-alert-box').innerHTML=msgs.length?
+    msgs.map(m=>`<div style="color:var(--yellow);margin-bottom:4px">${m}</div>`).join(''):
+    '<span style="color:var(--green)">✓ Parámetros dentro de límites</span>';
+}
+
+function regVent() {
+  const hora=getT();
+  const v={hora,modo:document.getElementById('vm-modo').value.split('—')[0].trim(),...ventVals,
+    vm:(ventVals.vc*ventVals.fr/1000).toFixed(1),
+    hal:document.getElementById('sv-hal').value+'%'};
+  S.ventHist.unshift(v);
+  const b=document.getElementById('vent-tbody');
+  b.innerHTML=S.ventHist.map(r=>`<tr>
+    <td class="hl">${r.hora}</td><td>${r.modo}</td><td>${r.fio2}%</td>
+    <td>${r.vc}</td><td>${r.fr}</td><td>${r.peep}</td>
+    <td class="${r.ppeak>30?'dc':''}">${r.ppeak}</td>
+    <td class="${r.etco2>45||r.etco2<30?'wc':''}">${r.etco2}</td>
+    <td>${r.vm}</td>
+  </tr>`).join('');
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+// ═══════════════════════════════════════════════
+// FÁRMACOS
+// ═══════════════════════════════════════════════
+function addFarm() {
+  const n=document.getElementById('fn').value.trim();
+  const d=document.getElementById('fd').value.trim();
+  const v=document.getElementById('fv').value;
+  const nota=document.getElementById('fnota').value.trim();
+  const hEl=document.getElementById('fh').value;
+  const h=hEl||getT();
+  if(!n){alert('Escribe el nombre del fármaco');return;}
+  S.farms.unshift({n,d:d||'—',v,h,nota});
+  renderFarms();
+  document.getElementById('fn').value='';
+  document.getElementById('fd').value='';
+  document.getElementById('fnota').value='';
+  document.getElementById('st-fm').textContent=S.farms.length;
+  addAlert('info',`💊 ${n} ${d} ${v} — ${h}`,h);
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+function renderFarms() {
+  const el=document.getElementById('farm-list');
+  if(!S.farms.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin registros</div>';return;}
+  el.innerHTML=S.farms.map(f=>`
+    <div class="f-item">
+      <div>
+        <div class="f-name">${f.n}</div>
+        <div class="f-dose">${f.d} · ${f.v}</div>
+        ${f.nota?`<div class="f-note">${f.nota}</div>`:''}
+      </div>
+      <div class="f-meta"><div class="f-hour">${f.h}</div><div class="f-via">${f.v}</div></div>
+    </div>`).join('');
+  document.getElementById('farm-badge').textContent=S.farms.length;
+  document.getElementById('st-fm').textContent=S.farms.length;
+}
+renderFarms();
+
+// ═══════════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════════
+function addAlert(type,msg,hora) {
+  S.alerts.push({type,msg,hora});
+  const el=document.getElementById('alert-list');
+  const div=document.createElement('div');
+  div.className='alert '+type;
+  const ic=type==='danger'?'🚨':type==='warn'?'⚠️':'ℹ️';
+  div.innerHTML=`<span class="alert-icon">${ic}</span><div><div>${msg}</div><span class="alert-time">${hora}</span></div>`;
+  el.insertBefore(div,el.firstChild);
+  const b=document.getElementById('alert-badge');
+  const cnt=S.alerts.filter(a=>a.type!=='info').length;
+  b.textContent=cnt;b.style.display=cnt?'inline':'none';
+}
+
+function clearAlerts() {S.alerts=[];document.getElementById('alert-list').innerHTML='';document.getElementById('alert-badge').style.display='none';}
+function saveAlarmCfg() {
+  S.alarmCfg={tHi:+document.getElementById('lim-thi').value,tLo:+document.getElementById('lim-tlo').value,
+    fHi:+document.getElementById('lim-fhi').value,fLo:+document.getElementById('lim-flo').value,
+    sLo:+document.getElementById('lim-slo').value,tpHi:+document.getElementById('lim-tphi').value};
+  addAlert('info','✓ Límites de alarma actualizados',getT());
+}
+
+// ═══════════════════════════════════════════════
+// ALDRETE
+// ═══════════════════════════════════════════════
+function calcAld() {
+  const s=['al-act','al-resp','al-circ','al-conc','al-sat'].reduce((a,id)=>a+(+document.getElementById(id).value),0);
+  document.getElementById('ald-score').textContent=s;
+  const el=document.getElementById('ald-status');
+  if(s>=9){el.textContent='✓ Alta Autorizada (≥9)';el.style.color='var(--green)';}
+  else if(s>=7){el.textContent='⚠ Observación requerida';el.style.color='var(--yellow)';}
+  else{el.textContent='✗ No dar de alta';el.style.color='var(--red)';}
+  return s;
+}
+
+// ═══════════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════════
+function genRes() {
+  const p=S.pac;
+  document.getElementById('res-fecha').textContent=new Date().toLocaleString('es-MX');
+
+  document.getElementById('res-pac').innerHTML=`
+    <div class="res-title">DATOS DEL PACIENTE</div>
+    <div class="res-row"><span>Paciente</span><span>${p.nombre}</span></div>
+    <div class="res-row"><span>Edad</span><span>${p.edad} años</span></div>
+    <div class="res-row"><span>Exp.</span><span>${p.exp}</span></div>
+    <div class="res-row"><span>Diagnóstico</span><span style="text-align:right;max-width:55%">${p.dx}</span></div>
+    <div class="res-row"><span>Cirugía</span><span style="text-align:right;max-width:55%">${p.cx}</span></div>
+    <div class="res-row"><span>Anestesia</span><span style="color:var(--cyan);text-align:right;max-width:55%">${p.tipoAn}</span></div>
+    <div class="res-row"><span>ASA</span><span style="color:var(--yellow)">${p.asa}</span></div>
+    <div class="res-row"><span>Anestesiólogo</span><span>${p.med}</span></div>`;
+
+  const lv=S.history.length?S.history[S.history.length-1]:{};
+  document.getElementById('res-vitales').innerHTML=`
+    <div class="res-title">SIGNOS VITALES (EGRESO)</div>
+    <div class="res-row"><span>TA</span><span style="color:var(--cyan)">${lv.tas||'--'}/${lv.tad||'--'} mmHg</span></div>
+    <div class="res-row"><span>FC</span><span>${lv.fc||'--'} lpm</span></div>
+    <div class="res-row"><span>SpO2</span><span>${lv.spo2||'--'}%</span></div>
+    <div class="res-row"><span>FR</span><span>${lv.fr||'--'} rpm</span></div>
+    <div class="res-row"><span>Temperatura</span><span>${lv.temp||'--'}°C</span></div>
+    <div class="res-row"><span>Registros totales</span><span>${S.history.length}</span></div>`;
+
+  const get=id=>parseInt(document.getElementById(id).value)||0;
+  const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
+  const sang=get('eg-sang'),diu=get('eg-diu');
+  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
+  const bal=ti-te;
+  document.getElementById('res-liq').innerHTML=`
+    <div class="res-title">BALANCE DE LÍQUIDOS</div>
+    <div class="res-row"><span>Total Ingresos</span><span style="color:var(--green)">${ti} ml</span></div>
+    <div class="res-row"><span>Total Egresos</span><span style="color:var(--red)">${te} ml</span></div>
+    <div class="res-row"><span>Diuresis</span><span>${diu} ml</span></div>
+    <div class="res-row"><span>Sangrado</span><span style="color:var(--red)">${sang} ml</span></div>
+    <div class="res-row"><span>VSP Permisible</span><span style="color:var(--yellow)">714 ml</span></div>
+    <div class="res-total"><span>BALANCE TOTAL</span><span style="color:${bal>=0?'var(--green)':'var(--yellow)'}">${bal>=0?'+':''}${bal} ml</span></div>`;
+
+  document.getElementById('res-farms').innerHTML=`
+    <div class="res-title">FÁRMACOS ADMINISTRADOS (${S.farms.length})</div>
+    ${[...S.farms].reverse().map(f=>`<div class="res-row"><span>${f.h} — ${f.n}</span><span>${f.d} ${f.v}</span></div>`).join('')}`;
+
+  const vl=S.ventHist.length?S.ventHist[0]:null;
+  document.getElementById('res-vent').innerHTML=vl?`
+    <div class="res-title">PARÁMETROS VENTILATORIOS</div>
+    <div class="res-row"><span>Modo</span><span>${vl.modo}</span></div>
+    <div class="res-row"><span>FiO2</span><span>${vl.fio2}%</span></div>
+    <div class="res-row"><span>Vol. Corriente</span><span>${vl.vc} ml</span></div>
+    <div class="res-row"><span>Frecuencia</span><span>${vl.fr} rpm</span></div>
+    <div class="res-row"><span>PEEP</span><span>${vl.peep} cmH₂O</span></div>
+    <div class="res-row"><span>P. Pico</span><span>${vl.ppeak} cmH₂O</span></div>
+    <div class="res-row"><span>EtCO2</span><span>${vl.etco2} mmHg</span></div>
+    <div class="res-row"><span>VM</span><span>${vl.vm} L/min</span></div>`:'';
+
+  const sc=calcAld();
+  document.getElementById('res-aldrete').innerHTML=`
+    <div class="res-title">ESCALA ALDRETE</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:10px 0">
+      <div style="font-size:48px;font-weight:800;color:${sc>=9?'var(--green)':'var(--yellow)'}">${sc}/10</div>
+      <div style="font-size:15px;color:${sc>=9?'var(--green)':'var(--yellow)'}">${sc>=9?'✓ Alta Autorizada':'⚠ Observación'}</div>
+    </div>`;
+}
+
+function copiarRes() {
+  const t=document.getElementById('res-content').innerText;
+  if(navigator.share){
+    navigator.share({title:'Registro Anestésico — AnesteSys',text:t});
+  } else {
+    navigator.clipboard.writeText(t).then(()=>alert('✓ Copiado — pega en WhatsApp, correo, Notes, etc.'));
+  }
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function getT(){return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});}
+
+// Request notifications
+if('Notification' in window) Notification.requestPermission();
+
+// Periodic recalc
+setInterval(calcLiq, 60000);
+setInterval(calcVentDerived, 10000);
+</script>
+</body>
+</html>
