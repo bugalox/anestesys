@@ -229,6 +229,28 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 .aldrete-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .aldrete-score{font-size:28px;font-weight:800;color:var(--green)}
 
+/* ── PRINT / PDF ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 10px !important; }
+  .app { display: block !important; height: auto !important; }
+  .topbar, .bottomnav, .pages, .btn, .swipe-hint { display: none !important; }
+  #print-area { display: block !important; }
+  .pr-section { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #ccc; page-break-inside: avoid; }
+  .pr-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #0088aa; margin-bottom: 4px; }
+  .pr-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; border-bottom: 1px solid #eee; }
+  .pr-row span:first-child { color: #666; }
+  .pr-row span:last-child { font-weight: 600; }
+  .pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .pr-box { border: 1px solid #ccc; border-radius: 4px; padding: 4px 6px; text-align: center; }
+  .pr-box .pv { font-size: 14px; font-weight: 800; }
+  .pr-box .pl { font-size: 8px; color: #666; }
+  table { width: 100%; border-collapse: collapse; font-size: 8px; }
+  th { background: #eee !important; padding: 3px 5px; text-align: center; border: 1px solid #ccc; font-size: 7px; text-transform: uppercase; }
+  td { padding: 3px 5px; border: 1px solid #ddd; text-align: center; }
+  h1 { font-size: 14px; margin-bottom: 2px; }
+}
+
 /* ── SCROLL INDICATOR ── */
 .scroll-hint{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;letter-spacing:1px}
 
@@ -282,19 +304,136 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange);margin-bottom:12px;font-weight:700">🏥 Procedimiento</div>
       <div class="field"><label>Diagnóstico preoperatorio</label><input type="text" id="m-dx" placeholder="Diagnóstico..."></div>
       <div class="field"><label>Cirugía / Procedimiento</label><input type="text" id="m-cx" placeholder="Procedimiento a realizar..."></div>
-      <div class="field"><label>Tipo de anestesia</label>
-        <select id="m-tipoan">
-          <option>AGB — Anestesia General Balanceada</option>
-          <option>TIVA — Anestesia Total Intravenosa</option>
-          <option>Bloqueo Neuroaxial — Epidural</option>
-          <option>Bloqueo Neuroaxial — Espinal</option>
-          <option>Bloqueo Neuroaxial — Combinado</option>
-          <option>Bloqueo Regional — Periférico</option>
-          <option>Sedación consciente</option>
-          <option>AGB + Bloqueo Laríngeo Superior</option>
-          <option>AGB + Bloqueo Regional</option>
-          <option>Local + Sedación</option>
-        </select>
+      <!-- TÉCNICA ANESTÉSICA -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);font-weight:700;margin-bottom:10px">🩺 Técnica Anestésica</div>
+
+        <div class="field"><label>Técnica principal</label>
+          <select id="m-tipoan" onchange="toggleAnFields()">
+            <option value="">— Seleccionar —</option>
+            <optgroup label="── ANESTESIA GENERAL ──">
+              <option>AGB — Anestesia General Balanceada</option>
+              <option>TIVA — Anestesia Total Intravenosa</option>
+              <option>AGB + Bloqueo Laríngeo Superior</option>
+              <option>AGB + Bloqueo Regional</option>
+              <option>AGB + Neuroaxial</option>
+              <option>Inhalatoria pura</option>
+            </optgroup>
+            <optgroup label="── NEUROAXIAL ──">
+              <option>Espinal — Bloqueo Subaracnoideo</option>
+              <option>Epidural — Lumbar</option>
+              <option>Epidural — Torácica</option>
+              <option>Combinado Espinal-Epidural (CSE)</option>
+              <option>Caudal</option>
+            </optgroup>
+            <optgroup label="── REGIONAL PERIFÉRICO ──">
+              <option>Bloqueo Regional — Miembro Superior</option>
+              <option>Bloqueo Regional — Miembro Inferior</option>
+              <option>Bloqueo de Plexo Braquial</option>
+              <option>Bloqueo Interescalénico</option>
+              <option>Bloqueo Supraclavicular</option>
+              <option>Bloqueo Infraclavicular</option>
+              <option>Bloqueo Axilar</option>
+              <option>Bloqueo Femoral</option>
+              <option>Bloqueo Ciático</option>
+              <option>Bloqueo Poplíteo</option>
+              <option>Bloqueo Safeno</option>
+              <option>Bloqueo Tobillo</option>
+              <option>Bloqueo TAP (Transversus Abdominis)</option>
+              <option>Bloqueo PECS I / PECS II</option>
+              <option>Bloqueo Paravertebral</option>
+              <option>Bloqueo Intercostal</option>
+              <option>Bloqueo del Nervio Laríngeo Superior</option>
+              <option>Bloqueo del Plexo Cervical</option>
+              <option>Bloqueo Retrobulbar / Peribulbar</option>
+            </optgroup>
+            <optgroup label="── SEDACIÓN / LOCAL ──">
+              <option>Sedación Consciente</option>
+              <option>Sedación Profunda</option>
+              <option>Anestesia Local</option>
+              <option>Local + Sedación</option>
+              <option>MAC — Monitored Anesthesia Care</option>
+            </optgroup>
+            <option value="__otro__">✏️ Otra (escribir abajo)</option>
+          </select>
+        </div>
+
+        <!-- Guía utilizada (solo para bloqueos) -->
+        <div id="guia-row" style="display:none" class="field">
+          <label>Guía utilizada</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;background:var(--s1);border:1px solid var(--border);border-radius:8px;cursor:pointer">
+              <input type="radio" name="guia" id="g-us" value="Ultrasonido" style="width:18px;height:18px"> 🔊 Ultrasonido
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;background:var(--s1);border:1px solid var(--border);border-radius:8px;cursor:pointer">
+              <input type="radio" name="guia" id="g-ns" value="Neuroestimulador" style="width:18px;height:18px"> ⚡ Neuroestimulador
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;background:var(--s1);border:1px solid var(--border);border-radius:8px;cursor:pointer">
+              <input type="radio" name="guia" id="g-us-ns" value="Ultrasonido + Neuroestimulador" style="width:18px;height:18px"> 🔊+⚡ Ambos
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;background:var(--s1);border:1px solid var(--border);border-radius:8px;cursor:pointer">
+              <input type="radio" name="guia" id="g-ref" value="Referencias anatómicas" style="width:18px;height:18px"> 📍 Referencias anatómicas
+            </label>
+          </div>
+        </div>
+
+        <!-- Técnica complementaria -->
+        <div class="field" style="margin-top:4px">
+          <label>Técnica complementaria (opcional)</label>
+          <select id="m-tipoan2">
+            <option value="">— Ninguna / N/A —</option>
+            <optgroup label="── NEUROAXIAL ──">
+              <option>+ Espinal</option>
+              <option>+ Epidural</option>
+              <option>+ Epidural para analgesia postop.</option>
+              <option>+ Caudal</option>
+            </optgroup>
+            <optgroup label="── BLOQUEOS REGIONALES ──">
+              <option>+ Bloqueo de Plexo Braquial</option>
+              <option>+ Bloqueo Interescalénico</option>
+              <option>+ Bloqueo Supraclavicular</option>
+              <option>+ Bloqueo Infraclavicular</option>
+              <option>+ Bloqueo Axilar</option>
+              <option>+ Bloqueo Femoral</option>
+              <option>+ Bloqueo Ciático</option>
+              <option>+ Bloqueo TAP</option>
+              <option>+ Bloqueo PECS</option>
+              <option>+ Bloqueo Paravertebral</option>
+              <option>+ Bloqueo Laríngeo Superior</option>
+              <option>+ Bloqueo Intercostal</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Campo libre siempre disponible -->
+        <div class="field" style="margin-top:4px">
+          <label>Notas / detalles adicionales de la técnica</label>
+          <textarea id="m-tipoan-nota" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="Ej: Bloqueo TAP bilateral guiado por US, aguja 22G, ropivacaína 0.375% 20ml c/lado..."></textarea>
+        </div>
+
+        <!-- Medicamento local -->
+        <div class="field" style="margin-top:4px">
+          <label>Anestésico local utilizado</label>
+          <div style="display:flex;gap:8px">
+            <select id="m-anlocal" style="flex:1">
+              <option value="">— Seleccionar —</option>
+              <option>Lidocaína 1%</option>
+              <option>Lidocaína 2%</option>
+              <option>Lidocaína 10% (tópica)</option>
+              <option>Bupivacaína 0.25%</option>
+              <option>Bupivacaína 0.5%</option>
+              <option>Ropivacaína 0.2%</option>
+              <option>Ropivacaína 0.375%</option>
+              <option>Ropivacaína 0.5%</option>
+              <option>Ropivacaína 0.75%</option>
+              <option>Levobupivacaína 0.5%</option>
+              <option>Mepivacaína 1%</option>
+              <option>Mepivacaína 2%</option>
+              <option>Prilocaína</option>
+            </select>
+            <input type="text" id="m-anlocal-dosis" placeholder="Vol. / dosis" style="width:110px">
+          </div>
+        </div>
       </div>
     </div>
 
@@ -416,11 +555,49 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <span><span style="color:var(--yellow)">●</span> Temp</span>
       </div>
 
-      <!-- PHASE BUTTONS -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
-        <button class="btn sm" onclick="startPhase('an')">▶ Anest.</button>
-        <button class="btn sm o" onclick="startPhase('cx')">▶ Cx</button>
-        <button class="btn sm r" onclick="startPhase('fin')">■ Fin</button>
+      <!-- PHASE BUTTONS IMPROVED -->
+      <div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);margin-bottom:12px;font-weight:700">⏱ Control de Fases</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn sm" id="btn-an" onclick="startPhase('an')" style="min-width:110px;background:var(--cyan)">▶ Inicio Anest.</button>
+            <div style="flex:1">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora de inicio (editable)</div>
+              <input type="time" id="time-an" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('an',this.value)">
+            </div>
+            <div style="text-align:right;min-width:50px">
+              <div style="font-size:9px;color:var(--muted)">Duración</div>
+              <div style="font-size:14px;font-weight:700;color:var(--cyan)" id="dur-an">--:--</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn sm o" id="btn-cx" onclick="startPhase('cx')" style="min-width:110px">▶ Inicio Cx</button>
+            <div style="flex:1">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora de inicio (editable)</div>
+              <input type="time" id="time-cx" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('cx',this.value)">
+            </div>
+            <div style="text-align:right;min-width:50px">
+              <div style="font-size:9px;color:var(--muted)">Duración</div>
+              <div style="font-size:14px;font-weight:700;color:var(--orange)" id="dur-cx">--:--</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn sm r" id="btn-fin" onclick="startPhase('fin')" style="min-width:110px">■ Finalizar</button>
+            <div style="flex:1">
+              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora fin (editable)</div>
+              <input type="time" id="time-fin" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('fin',this.value)">
+            </div>
+            <div style="text-align:right;min-width:50px">
+              <div style="font-size:9px;color:var(--muted)">Total</div>
+              <div style="font-size:14px;font-weight:700;color:var(--red)" id="dur-fin">--:--</div>
+            </div>
+          </div>
+
+        </div>
+        <button class="btn r full" style="margin-top:12px" onclick="resetCronometros()">🔄 Reiniciar Cronómetros</button>
       </div>
     </div>
   </div>
@@ -526,6 +703,22 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       </table>
     </div>
   </div>
+  <!-- HOURLY BUCKETS -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🕐 Resumen por Hora</h2>
+      <span class="badge" id="hr-bucket-count">0 horas</span>
+    </div>
+    <div class="section-body" id="hour-buckets">
+      <div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">
+        Se acumula automáticamente cada hora desde el inicio de anestesia.<br>También puedes forzar un registro tocando el botón de abajo.
+      </div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <button class="btn o full" onclick="forceHourSnapshot()">📌 Registrar Hora Actual Ahora</button>
+    </div>
+  </div>
+
 </div><!-- /liq -->
 
 <!-- ══ VENTILADOR ══ -->
@@ -696,7 +889,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 <div class="page" id="page-res">
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <button class="btn g" onclick="genRes()">🔄 Generar</button>
-    <button class="btn" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="btn" onclick="genRes();document.getElementById('print-area').style.display='block';window.print();setTimeout(()=>document.getElementById('print-area').style.display='none',2000)">🖨️ Imprimir / PDF</button>
     <button class="btn o" onclick="copiarRes()">📋 Copiar</button>
   </div>
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
@@ -764,6 +957,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   </button>
 </nav>
 
+<!-- PRINT AREA (hidden on screen, shows on print) -->
+<div id="print-area" style="display:none"></div>
+
 </div><!-- /app -->
 
 <script>
@@ -773,16 +969,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 const S = {
   vitals: {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0},
   history: [],
-  farms: [
-    {n:'Lidocaína 10%',d:'300+150 mg',v:'Instil.',h:'15:30',nota:'Bloqueo laríngeo'},
-    {n:'Dexmedetomidina',d:'47 mcg',v:'IV',h:'15:30',nota:'Premedicación'},
-    {n:'Fentanilo',d:'360 mcg',v:'IV',h:'15:45',nota:'Analgesia'},
-    {n:'Propofol',d:'130 mg',v:'IV',h:'15:50',nota:'Inducción'},
-    {n:'Norepinefrina',d:'0.03-0.05 mcg/kg/min',v:'IV',h:'16:00',nota:'Soporte'},
-    {n:'Dexametasona',d:'8 mg',v:'IV',h:'16:30',nota:'Antiemético'},
-    {n:'Paracetamol',d:'1 g',v:'IV',h:'16:30',nota:'Analgesia'},
-    {n:'Ondansetrón',d:'4 mg',v:'IV',h:'18:30',nota:'Antiemético'},
-  ],
+  farms: [],
   phases: {an:null,cx:null,fin:null},
   ventHist: [],
   liqHora: [],
@@ -810,7 +997,12 @@ function openPacModal() {
   if(S.pac.peso) document.getElementById('m-peso').value = S.pac.peso;
   if(S.pac.dx) document.getElementById('m-dx').value = S.pac.dx;
   if(S.pac.cx) document.getElementById('m-cx').value = S.pac.cx;
-  if(S.pac.tipoAn) document.getElementById('m-tipoan').value = S.pac.tipoAn;
+  if(S.pac.tipoAn) { document.getElementById('m-tipoan').value = S.pac.tipoAn; toggleAnFields(); }
+  if(S.pac.tipoAn2) document.getElementById('m-tipoan2').value = S.pac.tipoAn2;
+  if(S.pac.tipoAnNota) document.getElementById('m-tipoan-nota').value = S.pac.tipoAnNota;
+  if(S.pac.anLocal) document.getElementById('m-anlocal').value = S.pac.anLocal;
+  if(S.pac.anLocalDosis) document.getElementById('m-anlocal-dosis').value = S.pac.anLocalDosis;
+  if(S.pac.guia) { const el=document.querySelector('input[name="guia"][value="'+S.pac.guia+'"]'); if(el) el.checked=true; }
   if(S.pac.med) document.getElementById('m-anest').value = S.pac.med;
   if(S.pac.ciru) document.getElementById('m-ciru').value = S.pac.ciru;
   if(S.pac.inst) document.getElementById('m-inst').value = S.pac.inst;
@@ -821,6 +1013,20 @@ function openPacModal() {
 function closePacModal() {
   document.getElementById('pac-modal').style.display = 'none';
   document.body.style.overflow = '';
+}
+
+function toggleAnFields() {
+  const v = document.getElementById('m-tipoan').value.toLowerCase();
+  const isBlock = v.includes('bloqueo') || v.includes('regional') || v.includes('plexo') ||
+                  v.includes('espinal') || v.includes('epidural') || v.includes('cse') ||
+                  v.includes('caudal') || v.includes('femoral') || v.includes('ciatico') ||
+                  v.includes('ciático') || v.includes('tap') || v.includes('pecs') ||
+                  v.includes('paravert') || v.includes('intercost') || v.includes('axilar') ||
+                  v.includes('supracl') || v.includes('infracl') || v.includes('larín') ||
+                  v.includes('cervical') || v.includes('retro') || v.includes('perib') ||
+                  v.includes('safeno') || v.includes('poplít') || v.includes('tobillo') ||
+                  v.includes('interescal');
+  document.getElementById('guia-row').style.display = isBlock ? 'block' : 'none';
 }
 
 function savePacModal() {
@@ -836,7 +1042,14 @@ function savePacModal() {
   S.pac.pesoI  = Math.round(S.pac.peso * 0.9);
   S.pac.dx     = document.getElementById('m-dx').value.trim();
   S.pac.cx     = document.getElementById('m-cx').value.trim();
-  S.pac.tipoAn = document.getElementById('m-tipoan').value;
+  const tipoanSel = document.getElementById('m-tipoan').value;
+  S.pac.tipoAn   = tipoanSel === '__otro__' ? '' : tipoanSel;
+  S.pac.tipoAn2  = document.getElementById('m-tipoan2').value;
+  S.pac.tipoAnNota = document.getElementById('m-tipoan-nota').value.trim();
+  S.pac.anLocal  = document.getElementById('m-anlocal').value;
+  S.pac.anLocalDosis = document.getElementById('m-anlocal-dosis').value.trim();
+  const guiaEl = document.querySelector('input[name="guia"]:checked');
+  S.pac.guia = guiaEl ? guiaEl.value : '';
   S.pac.med    = document.getElementById('m-anest').value.trim();
   S.pac.ciru   = document.getElementById('m-ciru').value.trim();
   S.pac.inst   = document.getElementById('m-inst').value.trim();
@@ -881,24 +1094,35 @@ function nav(id, btn) {
 // ═══════════════════════════════════════════════
 // CLOCK
 // ═══════════════════════════════════════════════
+function fmt(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function fmt2(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m';}
+
 function tick() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX',{hour12:false});
-  // Timers
-  function fmt(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+
   if(S.phases.an){
-    const el=Math.floor((now-S.phases.an)/1000);
-    document.getElementById('st-tan').textContent=fmt(now-S.phases.an);
+    const ms=now-S.phases.an, el=Math.floor(ms/1000);
+    document.getElementById('st-tan').textContent=fmt2(ms);
+    document.getElementById('dur-an').textContent=fmt2(ms);
     if(!S.phases.fin){
       const nx=Math.ceil((el+1)/3600)*3600-el;
       const ts=String(Math.floor(nx/60)).padStart(2,'0')+':'+String(nx%60).padStart(2,'0');
       document.getElementById('st-alarm').textContent=ts;
       document.getElementById('alarm-big').textContent=ts;
+      // Hourly alarm check
       const hr=Math.floor(el/3600);
-      if(el>0&&el%3600<2&&!S.hrAlarms.includes(hr)&&hr>0){S.hrAlarms.push(hr);fireHrAlarm(hr);}
+      if(el>0&&el%3600<3&&!S.hrAlarms.includes(hr)&&hr>0){S.hrAlarms.push(hr);fireHrAlarm(hr);}
     }
   }
-  if(S.phases.cx) document.getElementById('st-tcx').textContent=fmt(now-S.phases.cx);
+  if(S.phases.cx){
+    const ms=now-S.phases.cx;
+    document.getElementById('st-tcx').textContent=fmt2(ms);
+    document.getElementById('dur-cx').textContent=fmt2(ms);
+  }
+  if(S.phases.fin && S.phases.an){
+    document.getElementById('dur-fin').textContent=fmt2(S.phases.fin-S.phases.an);
+  }
 }
 setInterval(tick,1000); tick();
 
@@ -934,7 +1158,7 @@ function registrar() {
   renderVitalTable();
   drawChart();
   checkAlarms(row, hora);
-  // Haptic feedback
+  addToHourBucket('vital', row);
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -1018,33 +1242,136 @@ function changeVitalInterval() {
 // ═══════════════════════════════════════════════
 // PHASES
 // ═══════════════════════════════════════════════
+function timeStrToDate(hhmm) {
+  const [hh,mm] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(hh,mm,0,0);
+  return d;
+}
+
 function startPhase(p) {
   const hora=getT();
+  const now=new Date();
   if(p==='an'){
-    S.phases.an=new Date();
+    S.phases.an=now;
     document.getElementById('ph-an').className='phase-pill active-phase';
     document.getElementById('ph-an-t').textContent=hora;
-    addAlert('info',`▶ Anestesia iniciada: ${hora}`,hora);
+    document.getElementById('time-an').value=hora;
+    document.getElementById('btn-an').style.background='var(--green)';
+    document.getElementById('btn-an').textContent='✓ Anestesia';
+    addAlert('info','▶ Anestesia iniciada: '+hora,hora);
   } else if(p==='cx'){
-    S.phases.cx=new Date();
+    S.phases.cx=now;
     document.getElementById('ph-cx').className='phase-pill active-phase';
     document.getElementById('ph-cx-t').textContent=hora;
-    addAlert('info',`🔪 Cirugía iniciada: ${hora}`,hora);
+    document.getElementById('time-cx').value=hora;
+    document.getElementById('btn-cx').style.background='var(--green)';
+    document.getElementById('btn-cx').textContent='✓ Cirugía';
+    addAlert('info','🔪 Cirugía iniciada: '+hora,hora);
   } else {
-    S.phases.fin=new Date();
+    S.phases.fin=now;
     document.getElementById('ph-rec').className='phase-pill done';
     document.getElementById('ph-rec-t').textContent=hora;
-    addAlert('info',`■ Fin del procedimiento: ${hora}`,hora);
+    document.getElementById('time-fin').value=hora;
+    document.getElementById('btn-fin').style.background='var(--muted)';
+    document.getElementById('btn-fin').textContent='✓ Finalizado';
+    addAlert('info','■ Fin del procedimiento: '+hora,hora);
   }
   if(navigator.vibrate) navigator.vibrate([50,30,50]);
+}
+
+// Reset all timers and phases
+function resetCronometros() {
+  if (!confirm('¿Reiniciar todos los cronómetros y fases? No se borran los registros de vitales ni fármacos.')) return;
+  S.phases = {an: null, cx: null, fin: null};
+  S.hrAlarms = [];
+  // Reset displays
+  ['an','cx','rec'].forEach(function(p) {
+    const el = document.getElementById('ph-' + p);
+    if (el) el.className = 'phase-pill';
+    const tel = document.getElementById('ph-' + p + '-t');
+    if (tel) tel.textContent = '--:--';
+  });
+  document.getElementById('st-tan').textContent = '--:--';
+  document.getElementById('st-tcx').textContent = '--:--';
+  document.getElementById('st-alarm').textContent = '60:00';
+  document.getElementById('alarm-big').textContent = '60:00';
+  document.getElementById('dur-an').textContent = '--:--';
+  document.getElementById('dur-cx').textContent = '--:--';
+  document.getElementById('dur-fin').textContent = '--:--';
+  ['time-an','time-cx','time-fin'].forEach(function(id) {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['btn-an','btn-cx','btn-fin'].forEach(function(id) {
+    const el = document.getElementById(id); if (!el) return;
+    if (id === 'btn-an')  { el.style.background = 'var(--cyan)';  el.textContent = '▶ Inicio Anest.'; }
+    if (id === 'btn-cx')  { el.style.background = 'var(--orange)'; el.textContent = '▶ Inicio Cx'; }
+    if (id === 'btn-fin') { el.style.background = 'var(--red)';    el.textContent = '■ Finalizar'; }
+  });
+  addAlert('info', '🔄 Cronómetros reiniciados', getT());
+  if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+}
+
+// Allow manually editing phase times
+function editPhaseTime(p, val) {
+  if(!val) return;
+  const d = timeStrToDate(val);
+  if(p==='an'){ S.phases.an=d; document.getElementById('ph-an-t').textContent=val; }
+  else if(p==='cx'){ S.phases.cx=d; document.getElementById('ph-cx-t').textContent=val; }
+  else { S.phases.fin=d; document.getElementById('ph-rec-t').textContent=val; }
+}
+
+// ═══════════════════════════════════════════════
+// HOURLY BUCKETS (accumulate per hour)
+// ═══════════════════════════════════════════════
+// S.hourBuckets = { "Hora 1": {farms:[], liqIn:0, liqEg:0, sang:0, diu:0}, ... }
+S.hourBuckets = {};
+
+function getCurrentHourLabel() {
+  if(!S.phases.an) return 'Hora 0';
+  const el = Math.floor((new Date()-S.phases.an)/3600000);
+  return 'Hora '+(el+1);
+}
+
+function addToHourBucket(type, data) {
+  const lbl = getCurrentHourLabel();
+  if(!S.hourBuckets[lbl]) S.hourBuckets[lbl]={farms:[],liqIn:0,liqEg:0,sang:0,diu:0,vitals:[]};
+  if(type==='farm') S.hourBuckets[lbl].farms.push(data);
+  if(type==='liq') { S.hourBuckets[lbl].liqIn+=data.in||0; S.hourBuckets[lbl].liqEg+=data.eg||0; S.hourBuckets[lbl].sang+=data.sang||0; S.hourBuckets[lbl].diu+=data.diu||0; }
+  if(type==='vital') S.hourBuckets[lbl].vitals.push(data);
+  renderHourBuckets();
+}
+
+function renderHourBuckets() {
+  // Render in liquidos page
+  const el = document.getElementById('hour-buckets');
+  if(!el) return;
+  const hrs = Object.keys(S.hourBuckets);
+  if(!hrs.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">Sin registros horarios aún</div>';return;}
+  el.innerHTML = hrs.map(hr => {
+    const b = S.hourBuckets[hr];
+    return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--cyan);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">${hr}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:8px">
+        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Ingresos IV</span><b style="color:var(--green)">${b.liqIn} ml</b></div>
+        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Sangrado</span><b style="color:var(--red)">${b.sang} ml</b></div>
+        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Diuresis</span><b style="color:var(--cyan)">${b.diu} ml</b></div>
+        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Balance hr</span><b style="color:${b.liqIn-(b.sang+b.diu)>=0?'var(--green)':'var(--yellow)'}">${b.liqIn-(b.sang+b.diu)>=0?'+':''}${b.liqIn-(b.sang+b.diu)} ml</b></div>
+      </div>
+      ${b.farms.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Fármacos (${b.farms.length})</div>${b.farms.map(f=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">${f.h} — <b>${f.n}</b> ${f.d} ${f.v}</div>`).join('')}`:''}
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════
 // HOURLY ALARM
 // ═══════════════════════════════════════════════
 function fireHrAlarm(hr) {
-  const msg=`🔔 HORA ${hr} — Revisar: líquidos, vitales, fármacos pendientes`;
+  const msg='🔔 HORA '+hr+' — Revisar: líquidos, vitales, fármacos pendientes';
   addAlert('warn',msg,getT());
+  // snapshot liquidos for this hour
+  const get=id=>parseInt(document.getElementById(id)?.value)||0;
+  addToHourBucket('liq',{in:get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg'),sang:get('eg-sang'),diu:get('eg-diu'),eg:get('eg-ins')+get('eg-bas')+get('eg-diu')+get('eg-sang')});
   document.getElementById('alarm-box').classList.add('ringing');
   setTimeout(()=>document.getElementById('alarm-box').classList.remove('ringing'),3000);
   if('Notification' in window&&Notification.permission==='granted')
@@ -1080,6 +1407,20 @@ function calcLiq() {
   if(sang>600&&!S._sangAlerted){S._sangAlerted=true;addAlert('danger','🩸 Sangrado >600ml — evaluar transfusión',getT());}
 }
 calcLiq();
+
+function forceHourSnapshot() {
+  const get=id=>parseInt(document.getElementById(id)?.value)||0;
+  const lbl = getCurrentHourLabel();
+  if(!S.hourBuckets[lbl]) S.hourBuckets[lbl]={farms:[],liqIn:0,liqEg:0,sang:0,diu:0,vitals:[]};
+  S.hourBuckets[lbl].liqIn += get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg');
+  S.hourBuckets[lbl].sang  += get('eg-sang');
+  S.hourBuckets[lbl].diu   += get('eg-diu');
+  renderHourBuckets();
+  const bc = document.getElementById('hr-bucket-count');
+  if(bc) bc.textContent = Object.keys(S.hourBuckets).length+' horas';
+  if(navigator.vibrate) navigator.vibrate(30);
+  addAlert('info','📌 Snapshot horario registrado: '+getCurrentHourLabel(),getT());
+}
 
 function addLiqHora() {
   const get=id=>parseInt(document.getElementById(id).value)||0;
@@ -1161,7 +1502,8 @@ function addFarm() {
   document.getElementById('fd').value='';
   document.getElementById('fnota').value='';
   document.getElementById('st-fm').textContent=S.farms.length;
-  addAlert('info',`💊 ${n} ${d} ${v} — ${h}`,h);
+  addAlert('info','💊 '+n+' '+d+' '+v+' — '+h,h);
+  addToHourBucket('farm', {n,d,v,h,nota});
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -1223,73 +1565,322 @@ function calcAld() {
 // RESUMEN
 // ═══════════════════════════════════════════════
 function genRes() {
-  const p=S.pac;
-  document.getElementById('res-fecha').textContent=new Date().toLocaleString('es-MX');
-
-  // Update institution line dynamically
+  const p = S.pac;
+  const fecha = new Date().toLocaleString('es-MX');
+  document.getElementById('res-fecha').textContent = fecha;
   const instEl = document.getElementById('res-inst-header');
-  if(instEl) instEl.textContent = p.inst || 'Anestesiología · Registro Perioperatorio';
+  if (instEl) instEl.textContent = p.inst || 'Anestesiología · Registro Perioperatorio';
 
-  document.getElementById('res-pac').innerHTML=`
+  // ── All data upfront, declared ONCE ──
+  function getF(id) { const el = document.getElementById(id); return el ? (parseInt(el.value) || 0) : 0; }
+  const nacl    = getF('in-nacl'), hart = getF('in-hart'), col = getF('in-col');
+  const pg_ml   = getF('in-pg'),  med_ml = getF('in-med'), otro_in = getF('in-otro');
+  const ins_ml  = getF('eg-ins'), bas_ml = getF('eg-bas');
+  const sang_ml = getF('eg-sang'), diu_ml = getF('eg-diu');
+  const trau_ml = getF('eg-trau'), otro_eg = getF('eg-otro');
+  const ti  = nacl + hart + col + pg_ml + med_ml + otro_in;
+  const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg;
+  const bal = ti - te;
+  const vsp = Math.round((S.pac.pesoC || 70) * 10);
+  const sangPct = Math.min(100, Math.round(sang_ml / vsp * 100));
+  const lv  = S.history.length ? S.history[S.history.length - 1] : {};
+  const vl  = S.ventHist.length ? S.ventHist[0] : null;
+  const sc  = calcAld();
+  const hrs = Object.keys(S.hourBuckets);
+  const tAN = document.getElementById('time-an')  ? document.getElementById('time-an').value  : '--:--';
+  const tCX = document.getElementById('time-cx')  ? document.getElementById('time-cx').value  : '--:--';
+  const tFN = document.getElementById('time-fin') ? document.getElementById('time-fin').value : '--:--';
+  const durAN = document.getElementById('st-tan')  ? document.getElementById('st-tan').textContent  : '--';
+  const durCX = document.getElementById('st-tcx') ? document.getElementById('st-tcx').textContent : '--';
+
+  // ── Screen version ──
+  document.getElementById('res-pac').innerHTML = `
     <div class="res-title">DATOS DEL PACIENTE</div>
-    <div class="res-row"><span>Paciente</span><span style="font-weight:800;color:var(--white)">${p.nombre||'—'}</span></div>
-    <div class="res-row"><span>Edad / Sexo</span><span>${p.edad||'—'} años · ${p.sexo||'—'}</span></div>
-    ${p.exp?`<div class="res-row"><span>No. Expediente</span><span>${p.exp}</span></div>`:''}
-    <div class="res-row"><span>Diagnóstico</span><span style="text-align:right;max-width:55%">${p.dx||'—'}</span></div>
-    <div class="res-row"><span>Cirugía</span><span style="text-align:right;max-width:55%">${p.cx||'—'}</span></div>
-    <div class="res-row"><span>Tipo Anestesia</span><span style="color:var(--cyan);text-align:right;max-width:55%">${p.tipoAn||'—'}</span></div>
+    <div class="res-row"><span>Paciente</span><span style="font-weight:800">${p.nombre||'—'}</span></div>
+    <div class="res-row"><span>Edad / Sexo</span><span>${p.edad||'—'} a · ${p.sexo||'—'}</span></div>
+    ${p.exp ? '<div class="res-row"><span>Expediente</span><span>' + p.exp + '</span></div>' : ''}
+    <div class="res-row"><span>Diagnóstico</span><span style="max-width:55%;text-align:right">${p.dx||'—'}</span></div>
+    <div class="res-row"><span>Cirugía</span><span style="max-width:55%;text-align:right">${p.cx||'—'}</span></div>
+    <div class="res-row"><span>Técnica</span><span style="color:var(--cyan);max-width:60%;text-align:right">${p.tipoAn||'—'}${p.tipoAn2 ? ' + ' + p.tipoAn2 : ''}</span></div>
+    ${p.guia ? '<div class="res-row"><span>Guía</span><span>' + p.guia + '</span></div>' : ''}
+    ${p.anLocal ? '<div class="res-row"><span>Anest. local</span><span>' + p.anLocal + (p.anLocalDosis ? ' · ' + p.anLocalDosis : '') + '</span></div>' : ''}
+    ${p.tipoAnNota ? '<div class="res-row"><span>Notas técnica</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.tipoAnNota + '</span></div>' : ''}
     <div class="res-row"><span>ASA</span><span style="color:var(--yellow);font-weight:800">${p.asa||'—'}</span></div>
     <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
-    ${p.ciru?`<div class="res-row"><span>Cirujano</span><span>${p.ciru}</span></div>`:''}
-    ${p.inst?`<div class="res-row"><span>Institución</span><span>${p.inst}</span></div>`:''}`;
+    ${p.ciru ? '<div class="res-row"><span>Cirujano</span><span>' + p.ciru + '</span></div>' : ''}
+    ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
+    <div class="res-row"><span>Inicio Anestesia</span><span>${tAN}</span></div>
+    <div class="res-row"><span>Inicio Cirugía</span><span>${tCX}</span></div>
+    <div class="res-row"><span>Fin</span><span>${tFN}</span></div>`;
 
-  const lv=S.history.length?S.history[S.history.length-1]:{};
-  document.getElementById('res-vitales').innerHTML=`
-    <div class="res-title">SIGNOS VITALES (EGRESO)</div>
+  document.getElementById('res-vitales').innerHTML = `
+    <div class="res-title">SIGNOS VITALES EGRESO (${S.history.length} registros)</div>
     <div class="res-row"><span>TA</span><span style="color:var(--cyan)">${lv.tas||'--'}/${lv.tad||'--'} mmHg</span></div>
-    <div class="res-row"><span>FC</span><span>${lv.fc||'--'} lpm</span></div>
-    <div class="res-row"><span>SpO2</span><span>${lv.spo2||'--'}%</span></div>
-    <div class="res-row"><span>FR</span><span>${lv.fr||'--'} rpm</span></div>
-    <div class="res-row"><span>Temperatura</span><span>${lv.temp||'--'}°C</span></div>
-    <div class="res-row"><span>Registros totales</span><span>${S.history.length}</span></div>`;
+    <div class="res-row"><span>FC / FR</span><span>${lv.fc||'--'} lpm / ${lv.fr||'--'} rpm</span></div>
+    <div class="res-row"><span>SpO2 / Temp</span><span>${lv.spo2||'--'}% / ${lv.temp||'--'}°C</span></div>`;
 
-  const get=id=>parseInt(document.getElementById(id).value)||0;
-  const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
-  const sang=get('eg-sang'),diu=get('eg-diu');
-  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
-  const bal=ti-te;
-  document.getElementById('res-liq').innerHTML=`
+  document.getElementById('res-liq').innerHTML = `
     <div class="res-title">BALANCE DE LÍQUIDOS</div>
     <div class="res-row"><span>Total Ingresos</span><span style="color:var(--green)">${ti} ml</span></div>
     <div class="res-row"><span>Total Egresos</span><span style="color:var(--red)">${te} ml</span></div>
-    <div class="res-row"><span>Diuresis</span><span>${diu} ml</span></div>
-    <div class="res-row"><span>Sangrado</span><span style="color:var(--red)">${sang} ml</span></div>
-    <div class="res-row"><span>VSP Permisible</span><span style="color:var(--yellow)">714 ml</span></div>
-    <div class="res-total"><span>BALANCE TOTAL</span><span style="color:${bal>=0?'var(--green)':'var(--yellow)'}">${bal>=0?'+':''}${bal} ml</span></div>`;
+    <div class="res-row"><span>Sangrado / Diuresis</span><span>${sang_ml} ml / ${diu_ml} ml</span></div>
+    <div class="res-total"><span>BALANCE TOTAL</span><span style="color:${bal >= 0 ? 'var(--green)' : 'var(--yellow)'}">${bal >= 0 ? '+' : ''}${bal} ml</span></div>`;
 
-  document.getElementById('res-farms').innerHTML=`
-    <div class="res-title">FÁRMACOS ADMINISTRADOS (${S.farms.length})</div>
-    ${[...S.farms].reverse().map(f=>`<div class="res-row"><span>${f.h} — ${f.n}</span><span>${f.d} ${f.v}</span></div>`).join('')}`;
+  document.getElementById('res-farms').innerHTML = `
+    <div class="res-title">FÁRMACOS (${S.farms.length})</div>
+    ${[...S.farms].reverse().map(f => '<div class="res-row"><span>' + f.h + ' ' + f.n + '</span><span>' + f.d + ' ' + f.v + '</span></div>').join('')}`;
 
-  const vl=S.ventHist.length?S.ventHist[0]:null;
-  document.getElementById('res-vent').innerHTML=vl?`
-    <div class="res-title">PARÁMETROS VENTILATORIOS</div>
-    <div class="res-row"><span>Modo</span><span>${vl.modo}</span></div>
-    <div class="res-row"><span>FiO2</span><span>${vl.fio2}%</span></div>
-    <div class="res-row"><span>Vol. Corriente</span><span>${vl.vc} ml</span></div>
-    <div class="res-row"><span>Frecuencia</span><span>${vl.fr} rpm</span></div>
-    <div class="res-row"><span>PEEP</span><span>${vl.peep} cmH₂O</span></div>
-    <div class="res-row"><span>P. Pico</span><span>${vl.ppeak} cmH₂O</span></div>
-    <div class="res-row"><span>EtCO2</span><span>${vl.etco2} mmHg</span></div>
-    <div class="res-row"><span>VM</span><span>${vl.vm} L/min</span></div>`:'';
+  document.getElementById('res-vent').innerHTML = vl ? `
+    <div class="res-title">VENTILADOR</div>
+    <div class="res-row"><span>Modo / FiO2</span><span>${vl.modo} · ${vl.fio2}%</span></div>
+    <div class="res-row"><span>VC / FR / PEEP</span><span>${vl.vc}ml · ${vl.fr}rpm · ${vl.peep}cmH₂O</span></div>
+    <div class="res-row"><span>P.Pico / EtCO2</span><span>${vl.ppeak}cmH₂O · ${vl.etco2}mmHg</span></div>` : '';
 
-  const sc=calcAld();
-  document.getElementById('res-aldrete').innerHTML=`
+  document.getElementById('res-aldrete').innerHTML = `
     <div class="res-title">ESCALA ALDRETE</div>
-    <div style="display:flex;align-items:center;gap:16px;padding:10px 0">
-      <div style="font-size:48px;font-weight:800;color:${sc>=9?'var(--green)':'var(--yellow)'}">${sc}/10</div>
-      <div style="font-size:15px;color:${sc>=9?'var(--green)':'var(--yellow)'}">${sc>=9?'✓ Alta Autorizada':'⚠ Observación'}</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:8px 0">
+      <div style="font-size:44px;font-weight:800;color:${sc >= 9 ? 'var(--green)' : 'var(--yellow)'}">${sc}/10</div>
+      <div style="color:${sc >= 9 ? 'var(--green)' : 'var(--yellow)'}">${sc >= 9 ? '✓ Alta Autorizada' : '⚠ Observación'}</div>
     </div>`;
+
+  // ── PDF Helper ──
+  function ST(t, color) { color = color || '#0077aa'; return '<div style="background:' + color + ';color:#fff;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;border-radius:4px;margin:10px 0 5px">' + t + '</div>'; }
+  function ROW(l, r) { return '<div style="display:flex;justify-content:space-between;padding:3px 4px;border-bottom:1px solid #eee;font-size:9px"><span style="color:#555">' + l + '</span><span style="font-weight:600">' + r + '</span></div>'; }
+
+  // ── HOJA 1: Portada + Paciente + Signos Vitales ──
+  const vitalRows = S.history.map(function(r, i) {
+    const pam = r.pam || Math.round(r.tad + (r.tas - r.tad) / 3);
+    const bg = i % 2 === 0 ? '#fff' : '#f8fbff';
+    const tasCl = (r.tas > 160 || r.tas < 80) ? 'color:red;font-weight:800' : r.tas > 140 ? 'color:orange' : '';
+    const fcCl  = (r.fc > 120 || r.fc < 45)  ? 'color:red;font-weight:800' : '';
+    const spCl  = r.spo2 < 92 ? 'color:red;font-weight:800' : r.spo2 < 94 ? 'color:orange' : '';
+    const tpCl  = parseFloat(r.temp) >= 38.5  ? 'color:orange' : '';
+    return '<tr style="background:' + bg + '"><td style="padding:3px 5px;font-weight:700;color:#0077aa">' + r.hora +
+      '</td><td style="padding:3px 5px;' + tasCl + '">' + r.tas +
+      '</td><td style="padding:3px 5px">' + r.tad +
+      '</td><td style="padding:3px 5px;font-weight:700">' + pam +
+      '</td><td style="padding:3px 5px;' + fcCl + '">' + r.fc +
+      '</td><td style="padding:3px 5px">' + r.fr +
+      '</td><td style="padding:3px 5px;' + spCl + '">' + r.spo2 +
+      '</td><td style="padding:3px 5px;' + tpCl + '">' + r.temp + '</td></tr>';
+  }).join('');
+
+  const pg1 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0077aa;padding-bottom:8px;margin-bottom:10px">' +
+      '<div><div style="font-size:20px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO</div>' +
+      '<div style="font-size:9px;color:#666;margin-top:2px">' + (p.inst || 'Anestesiología · Registro Perioperatorio') + '</div></div>' +
+      '<div style="text-align:right;font-size:9px;color:#666"><div>' + fecha + '</div></div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
+      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
+        '<div style="background:#0077aa;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👤 PACIENTE</div>' +
+        '<div style="padding:6px 8px">' +
+          '<div style="font-size:14px;font-weight:900;margin-bottom:3px">' + (p.nombre || '—') + '</div>' +
+          '<div>' + (p.edad || '—') + ' años · ' + (p.sexo || '—') + ' · ASA <b style="color:#d44">' + (p.asa || '—') + '</b></div>' +
+          (p.exp ? '<div style="color:#666;font-size:8px">Exp: ' + p.exp + '</div>' : '') +
+          '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:3px"><b>Dx:</b> ' + (p.dx || '—') + '</div>' +
+          '<div><b>Cx:</b> <i>' + (p.cx || '—') + '</i></div>' +
+          '<div style="margin-top:3px;color:#0077aa;font-weight:700;font-size:8px">' + (p.tipoAn || '—') + (p.tipoAn2 ? ' + ' + p.tipoAn2 : '') + '</div>' +
+          (p.guia ? '<div style="font-size:7px;color:#444">Guía: ' + p.guia + '</div>' : '') +
+          (p.anLocal ? '<div style="font-size:7px;color:#444">An. local: ' + p.anLocal + (p.anLocalDosis ? ' · ' + p.anLocalDosis : '') + '</div>' : '') +
+          (p.tipoAnNota ? '<div style="font-size:7px;color:#555;font-style:italic;margin-top:2px">' + p.tipoAnNota + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
+        '<div style="background:#005f8a;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👨‍⚕️ EQUIPO MÉDICO</div>' +
+        '<div style="padding:6px 8px">' +
+          '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + (p.med || '—') + '</b></div>' +
+          '<div style="margin-bottom:8px"><span style="color:#888">Cirujano:</span><br>' + (p.ciru || '—') + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
+            '<div style="border:1px solid #0077aa;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Anest.</div><div style="font-weight:800;font-size:11px;color:#0077aa">' + tAN + '</div></div>' +
+            '<div style="border:1px solid #e67300;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Cx</div><div style="font-weight:800;font-size:11px;color:#e67300">' + tCX + '</div></div>' +
+            '<div style="border:1px solid #cc0033;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Fin</div><div style="font-weight:800;font-size:11px;color:#cc0033">' + tFN + '</div></div>' +
+          '</div>' +
+          '<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">' +
+            '<div style="background:#f0f8ff;border:1px solid #cde;border-radius:4px;padding:4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Anest.</div><div style="font-weight:800;color:#0077aa">' + durAN + '</div></div>' +
+            '<div style="background:#fff8f0;border:1px solid #edc;border-radius:4px;padding:4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Cx</div><div style="font-weight:800;color:#e67300">' + durCX + '</div></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    ST('📊 SIGNOS VITALES — HOJA DE MONITOREO COMPLETA') +
+    (S.history.length ?
+      '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+        '<thead><tr style="background:#0077aa;color:#fff">' +
+          '<th style="padding:4px 5px">Hora</th><th style="padding:4px 5px">TA Sist.</th><th style="padding:4px 5px">TA Diast.</th>' +
+          '<th style="padding:4px 5px">PAM</th><th style="padding:4px 5px">FC</th><th style="padding:4px 5px">FR</th>' +
+          '<th style="padding:4px 5px">SpO2%</th><th style="padding:4px 5px">Temp°C</th>' +
+        '</tr></thead><tbody>' + vitalRows + '</tbody></table>' +
+      '<div style="font-size:7px;color:#888;margin-top:3px">* Valores en rojo = fuera de límites</div>'
+      : '<div style="color:#999;padding:8px;text-align:center">Sin registros de signos vitales</div>') +
+  '</div>';
+
+  // ── HOJA 2: Líquidos + Horario + Fármacos ──
+  const hrsRows = hrs.map(function(hr, i) {
+    const b = S.hourBuckets[hr];
+    const bhr = b.liqIn - b.sang - b.diu;
+    const bg2 = i % 2 === 0 ? '#fff' : '#f5f8ff';
+    return '<tr style="background:' + bg2 + '">' +
+      '<td style="padding:3px 5px;font-weight:700;color:#334455">' + hr + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;color:#006633;font-weight:700">' + b.liqIn + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;color:' + (b.sang > 0 ? '#cc0000' : '#666') + '">' + b.sang + '</td>' +
+      '<td style="padding:3px 5px;text-align:center">' + b.diu + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;font-weight:800;color:' + (bhr >= 0 ? '#006633' : '#cc6600') + '">' + (bhr >= 0 ? '+' : '') + bhr + '</td>' +
+      '<td style="padding:3px 5px;font-size:7px;color:#555">' + b.farms.map(function(f) { return '<b>' + f.n + '</b> ' + f.d; }).join(' · ') + '</td></tr>';
+  }).join('');
+
+  const pg2 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0077aa;padding-bottom:5px;margin-bottom:10px">' +
+      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + (p.nombre || 'Paciente') + '</span></div>' +
+      '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
+    '</div>' +
+    ST('💧 BALANCE DE LÍQUIDOS') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">' +
+      '<div>' +
+        '<div style="font-size:8px;font-weight:700;color:#006633;text-transform:uppercase;margin-bottom:4px">📥 INGRESOS</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+          (nacl  ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">NaCl 0.9%</td><td style="padding:2px 5px;text-align:right">' + nacl + ' ml</td></tr>' : '') +
+          (hart  ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Sol. Hartman</td><td style="padding:2px 5px;text-align:right">' + hart + ' ml</td></tr>' : '') +
+          (col   ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Coloides</td><td style="padding:2px 5px;text-align:right">' + col + ' ml</td></tr>' : '') +
+          (pg_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Paq. Globular</td><td style="padding:2px 5px;text-align:right">' + pg_ml + ' ml</td></tr>' : '') +
+          (med_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Medicamentos</td><td style="padding:2px 5px;text-align:right">' + med_ml + ' ml</td></tr>' : '') +
+          '<tr style="background:#e8f5e9"><td style="padding:3px 5px;font-weight:800;color:#006633">TOTAL</td><td style="padding:3px 5px;font-weight:900;color:#006633;text-align:right">' + ti + ' ml</td></tr>' +
+        '</table>' +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:8px;font-weight:700;color:#cc0000;text-transform:uppercase;margin-bottom:4px">📤 EGRESOS</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+          (ins_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">P. Insensibles</td><td style="padding:2px 5px;text-align:right">' + ins_ml + ' ml</td></tr>' : '') +
+          (bas_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Req. Basal</td><td style="padding:2px 5px;text-align:right">' + bas_ml + ' ml</td></tr>' : '') +
+          (diu_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Diuresis</td><td style="padding:2px 5px;text-align:right">' + diu_ml + ' ml</td></tr>' : '') +
+          '<tr style="background:#fff0f0"><td style="padding:2px 5px;font-weight:700">🩸 Sangrado</td><td style="padding:2px 5px;text-align:right;font-weight:700;color:red">' + sang_ml + ' ml</td></tr>' +
+          (trau_ml ? '<tr><td style="padding:2px 5px;border-bottom:1px solid #eee">Trauma Qx</td><td style="padding:2px 5px;text-align:right">' + trau_ml + ' ml</td></tr>' : '') +
+          '<tr style="background:#ffeeee"><td style="padding:3px 5px;font-weight:800;color:#cc0000">TOTAL</td><td style="padding:3px 5px;font-weight:900;color:#cc0000;text-align:right">' + te + ' ml</td></tr>' +
+        '</table>' +
+      '</div>' +
+    '</div>' +
+    '<div style="text-align:center;border:2px solid ' + (bal >= 0 ? '#006633' : '#cc6600') + ';border-radius:8px;padding:8px;margin-bottom:8px;background:' + (bal >= 0 ? '#f0fff4' : '#fff8ee') + '">' +
+      '<div style="font-size:24px;font-weight:900;color:' + (bal >= 0 ? '#006633' : '#cc6600') + '">' + (bal >= 0 ? '+' : '') + bal + ' ml</div>' +
+      '<div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:1px">Balance Hídrico Total</div>' +
+      '<div style="font-size:8px;color:#888;margin-top:2px">VSP: ' + vsp + ' ml · Sangrado: ' + sang_ml + ' ml (' + sangPct + '% permisible)</div>' +
+    '</div>' +
+    (hrs.length ?
+      ST('🕐 RESUMEN POR HORA', '#334455') +
+      '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+        '<thead><tr style="background:#334455;color:#fff">' +
+          '<th style="padding:4px 5px">Hora</th><th style="padding:4px 5px;text-align:center">Ingresos IV</th>' +
+          '<th style="padding:4px 5px;text-align:center">Sangrado</th><th style="padding:4px 5px;text-align:center">Diuresis</th>' +
+          '<th style="padding:4px 5px;text-align:center">Balance Hr</th><th style="padding:4px 5px">Fármacos</th>' +
+        '</tr></thead><tbody>' + hrsRows + '</tbody></table>'
+      : '') +
+    ST('💊 FÁRMACOS ADMINISTRADOS (' + S.farms.length + ')', '#5b2d8e') +
+    (S.farms.length ?
+      '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+        '<thead><tr style="background:#5b2d8e;color:#fff">' +
+          '<th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Fármaco</th>' +
+          '<th style="padding:4px 6px">Dosis</th><th style="padding:4px 6px">Vía</th><th style="padding:4px 6px">Indicación</th>' +
+        '</tr></thead><tbody>' +
+        [...S.farms].reverse().map(function(f, i) {
+          return '<tr style="background:' + (i % 2 === 0 ? '#fff' : '#faf7ff') + '">' +
+            '<td style="padding:3px 6px;font-weight:800;color:#5b2d8e">' + f.h + '</td>' +
+            '<td style="padding:3px 6px;font-weight:700">' + f.n + '</td>' +
+            '<td style="padding:3px 6px;text-align:center;color:#0077aa;font-weight:700">' + f.d + '</td>' +
+            '<td style="padding:3px 6px;text-align:center">' + f.v + '</td>' +
+            '<td style="padding:3px 6px;color:#666">' + f.nota + '</td></tr>';
+        }).join('') +
+        '</tbody></table>'
+      : '<div style="color:#999;padding:8px;text-align:center">Sin fármacos registrados</div>') +
+  '</div>';
+
+  // ── HOJA 3: Ventilador + Aldrete + Alertas + Firmas ──
+  const aldIds   = ['al-act','al-resp','al-circ','al-conc','al-sat'];
+  const aldLabls = ['Actividad','Respiración','Circulación','Conciencia','SpO2'];
+  const aldVals  = aldIds.map(function(id) {
+    const el = document.getElementById(id);
+    return { lbl: el ? el.options[el.selectedIndex].text : '—', val: el ? el.value : '0' };
+  });
+  const aldScore = aldVals.reduce(function(a, v) { return a + parseInt(v.val); }, 0);
+  const critAlerts = S.alerts.filter(function(a) { return a.type === 'danger' || a.type === 'warn'; }).slice(0, 20);
+
+  const lv2 = S.history.length ? S.history[S.history.length - 1] : {};
+  const pam2 = lv2.pam || Math.round((lv2.tad || 0) + ((lv2.tas || 0) - (lv2.tad || 0)) / 3);
+
+  const pg3 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0077aa;padding-bottom:5px;margin-bottom:10px">' +
+      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + (p.nombre || 'Paciente') + '</span></div>' +
+      '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
+      '<div>' +
+        ST('🫁 VENTILADOR', '#006644') +
+        (S.ventHist.length ?
+          '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+            '<thead><tr style="background:#006644;color:#fff"><th style="padding:4px">Parámetro</th><th style="padding:4px;text-align:center">Valor</th></tr></thead>' +
+            '<tbody>' +
+              [['Modo',vl.modo],['FiO2',vl.fio2+'%'],['Vol. Corriente',vl.vc+' ml'],['Frecuencia',vl.fr+' rpm'],['PEEP',vl.peep+' cmH₂O'],['P. Pico',vl.ppeak+' cmH₂O'],['EtCO2',vl.etco2+' mmHg'],['VM',vl.vm+' L/min']].map(function(r, i) {
+                return '<tr style="background:' + (i % 2 ? '#f0fff8' : '#fff') + '"><td style="padding:3px 5px;color:#555">' + r[0] + '</td><td style="padding:3px 5px;text-align:center;font-weight:700">' + r[1] + '</td></tr>';
+              }).join('') +
+            '</tbody></table>'
+          : '<div style="color:#999;padding:10px;text-align:center">Sin registro ventilatorio</div>') +
+      '</div>' +
+      '<div>' +
+        ST('📋 ALDRETE', '#8b4513') +
+        '<table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:8px">' +
+          '<thead><tr style="background:#8b4513;color:#fff"><th style="padding:4px">Parámetro</th><th style="padding:4px">Selección</th><th style="padding:4px;text-align:center">Pts</th></tr></thead>' +
+          '<tbody>' +
+            aldVals.map(function(v, i) {
+              return '<tr style="background:' + (i % 2 ? '#fff8f0' : '#fff') + '">' +
+                '<td style="padding:3px 5px;font-weight:700">' + aldLabls[i] + '</td>' +
+                '<td style="padding:3px 5px;color:#555">' + v.lbl + '</td>' +
+                '<td style="padding:3px 5px;text-align:center;font-weight:800;color:' + (v.val === '2' ? '#006633' : v.val === '0' ? '#cc0000' : '#cc6600') + '">' + v.val + '</td></tr>';
+            }).join('') +
+            '<tr style="background:' + (aldScore >= 9 ? '#e8f5e9' : '#fff8ee') + ';font-weight:900">' +
+              '<td colspan="2" style="padding:5px;font-size:11px">' + (aldScore >= 9 ? '✓ ALTA AUTORIZADA' : '⚠ OBSERVACIÓN') + '</td>' +
+              '<td style="padding:5px;font-size:16px;text-align:center;color:' + (aldScore >= 9 ? '#006633' : '#cc6600') + '">' + aldScore + '/10</td>' +
+            '</tr>' +
+          '</tbody></table>' +
+        ST('📊 SIGNOS VITALES EGRESO', '#004488') +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">' +
+          [['TA Sist.',lv2.tas||'--','#0077aa','mmHg'],['TA Diast.',lv2.tad||'--','#0077aa','mmHg'],
+           ['PAM',lv2.tas?pam2:'--','#004488','mmHg'],['FC',lv2.fc||'--','#e67300','lpm'],
+           ['SpO2',lv2.spo2||'--','#006633','%'],['Temp',lv2.temp||'--','#aa7700','°C']].map(function(r) {
+            return '<div style="border:1px solid #ddd;border-radius:4px;padding:5px;text-align:center">' +
+              '<div style="font-size:7px;color:#888">' + r[0] + '</div>' +
+              '<div style="font-size:16px;font-weight:900;color:' + r[2] + '">' + r[1] + '</div>' +
+              '<div style="font-size:7px;color:#666">' + r[3] + '</div></div>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    (critAlerts.length ?
+      ST('🚨 ALERTAS CLÍNICAS', '#aa0000') +
+      '<table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:10px">' +
+        '<thead><tr style="background:#aa0000;color:#fff"><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th><th style="padding:4px 6px">Descripción</th></tr></thead>' +
+        '<tbody>' +
+          critAlerts.map(function(a, i) {
+            return '<tr style="background:' + (i % 2 ? '#fff' : '#fff5f5') + '">' +
+              '<td style="padding:3px 6px;text-align:center;font-weight:700;color:#aa0000">' + a.hora + '</td>' +
+              '<td style="padding:3px 6px;text-align:center">' + (a.type === 'danger' ? '🚨 CRÍTICA' : '⚠️ Aviso') + '</td>' +
+              '<td style="padding:3px 6px">' + a.msg.replace(/[🚨⚠️ℹ️🔔📊💊▶🔪■📌]/g, '') + '</td></tr>';
+          }).join('') +
+        '</tbody></table>'
+      : '') +
+    '<div style="margin-top:16px;border:1px solid #ddd;border-radius:6px;padding:12px">' +
+      '<div style="font-size:10px;font-weight:800;color:#0077aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Firmas y Validación</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
+        '<div><div style="border-bottom:1px solid #333;height:40px;margin-bottom:4px"></div>' +
+          '<div style="font-size:9px;text-align:center"><b>' + (p.med || 'Anestesiólogo') + '</b></div>' +
+          '<div style="font-size:8px;text-align:center;color:#666">Médico Anestesiólogo</div></div>' +
+        '<div><div style="border-bottom:1px solid #333;height:40px;margin-bottom:4px"></div>' +
+          '<div style="font-size:9px;text-align:center"><b>' + (p.ciru || 'Cirujano') + '</b></div>' +
+          '<div style="font-size:8px;text-align:center;color:#666">Médico Cirujano</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:8px;text-align:center;font-size:8px;color:#999;border-top:1px solid #eee;padding-top:6px">AnesteSys Pro · ' + fecha + ' · Uso exclusivo médico</div>' +
+  '</div>';
+
+  const sep = '<div style="page-break-before:always"></div>';
+  document.getElementById('print-area').innerHTML = pg1 + sep + pg2 + sep + pg3;
 }
 
 function copiarRes() {
