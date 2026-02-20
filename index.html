@@ -263,6 +263,31 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 </style>
 </head>
 <body>
+<!-- ══ EDIT FARM MODAL ══ -->
+<div id="edit-farm-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(4,6,13,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow-y:auto;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:var(--orange)">✏️ Editar Fármaco</div>
+      <button class="btn ghost sm" onclick="closeEditFarm()">✕ Cerrar</button>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px">
+      <div class="field"><label>Fármaco</label><input type="text" id="ef-nombre" placeholder="Nombre del fármaco..."></div>
+      <div class="field-row">
+        <div class="field"><label>Dosis</label><input type="text" id="ef-dosis" placeholder="ej. 100 mcg"></div>
+        <div class="field"><label>Vía</label><input type="text" id="ef-via" placeholder="IV, IM, IT..."></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Hora</label><input type="time" id="ef-hora"></div>
+        <div class="field"><label>Indicación / Nota</label><input type="text" id="ef-nota" placeholder="Premedicación, Analgesia..."></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <button class="btn r" onclick="deleteFarmRow()">🗑 Eliminar</button>
+      <button class="btn o full" onclick="saveFarmEdit()">✓ Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- TOP BAR -->
@@ -272,7 +297,11 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <b id="tb-nombre">✏️ Nuevo Paciente</b><br>
     <span id="tb-sub" style="font-size:9px">Toca para editar</span>
   </div>
-  <div class="topbar-clock" id="clock">00:00:00</div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <button onclick="autoSave(true)" style="background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Guardar caso">💾</button>
+    <button onclick="showLogin()" style="background:rgba(0,229,255,.1);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Historial de casos">📁</button>
+    <div class="topbar-clock" id="clock">00:00:00</div>
+  </div>
 </div>
 
 <!-- MODAL PACIENTE -->
@@ -549,7 +578,8 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <!-- CHART -->
       <canvas id="chart" height="160"></canvas>
       <div style="display:flex;gap:14px;margin-top:8px;font-size:10px;color:var(--muted)">
-        <span><span style="color:var(--cyan)">●</span> TA</span>
+        <span><span style="color:var(--cyan)">●</span> TAS/TAD</span>
+        <span><span style="color:var(--purple)">●</span> PAM</span>
         <span><span style="color:var(--green)">●</span> SpO2</span>
         <span><span style="color:var(--orange)">●</span> FC</span>
         <span><span style="color:var(--yellow)">●</span> Temp</span>
@@ -627,8 +657,8 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2>📥 Ingresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>NaCl 0.9% (ml)</label><input type="number" id="in-nacl" value="300" onchange="calcLiq()"></div>
-        <div class="field"><label>Sol. Hartman (ml)</label><input type="number" id="in-hart" value="900" onchange="calcLiq()"></div>
+        <div class="field"><label>NaCl 0.9% (ml)</label><input type="number" id="in-nacl" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Sol. Hartman (ml)</label><input type="number" id="in-hart" value="" placeholder="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Plasma/Coloides (ml)</label><input type="number" id="in-col" value="0" onchange="calcLiq()"></div>
@@ -649,15 +679,15 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2>📤 Egresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>P. Insensibles (ml)</label><input type="number" id="eg-ins" value="56" onchange="calcLiq()"></div>
-        <div class="field"><label>Req. Basal (ml)</label><input type="number" id="eg-bas" value="96" onchange="calcLiq()"></div>
+        <div class="field"><label>P. Insensibles (ml)</label><input type="number" id="eg-ins" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml)</label><input type="number" id="eg-bas" value="" placeholder="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Diuresis (ml)</label><input type="number" id="eg-diu" value="53" onchange="calcLiq()"></div>
-        <div class="field"><label>🩸 Sangrado (ml)</label><input type="number" id="eg-sang" value="200" onchange="calcLiq()" style="color:var(--red)"></div>
+        <div class="field"><label>Diuresis (ml)</label><input type="number" id="eg-diu" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>🩸 Sangrado (ml)</label><input type="number" id="eg-sang" value="" placeholder="0" onchange="calcLiq()" style="color:var(--red)"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Trauma Qx (ml)</label><input type="number" id="eg-trau" value="106" onchange="calcLiq()"></div>
+        <div class="field"><label>Trauma Qx (ml)</label><input type="number" id="eg-trau" value="" placeholder="0" onchange="calcLiq()"></div>
         <div class="field"><label>Otro (ml)</label><input type="number" id="eg-otro" value="0" onchange="calcLiq()"></div>
       </div>
       <div style="display:flex;justify-content:space-between;background:rgba(255,23,68,.07);border:1px solid rgba(255,23,68,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
@@ -1130,10 +1160,10 @@ setInterval(tick,1000); tick();
 // VITALS
 // ═══════════════════════════════════════════════
 const vColors = {tas:'var(--cyan)',tad:'var(--cyan)',fc:'var(--orange)',spo2:'var(--green)',fr:'var(--green)',temp:'var(--yellow)'};
-const vWarnHi = {tas:160,tad:110,fc:120,spo2:100,fr:28,temp:38.5};
-const vWarnLo = {tas:80,tad:40,fc:45,spo2:92,fr:8,temp:35};
-const vDangHi = {tas:190,fc:150,spo2:100,fr:35,temp:39};
-const vDangLo = {tas:70,fc:35,spo2:90,fr:6};
+const vWarnHi = {tas:160,tad:110,pam:110,fc:120,spo2:100,fr:28,temp:38.5};
+const vWarnLo = {tas:80,tad:40,pam:60,fc:45,spo2:92,fr:8,temp:35};
+const vDangHi = {tas:190,pam:130,fc:150,spo2:100,fr:35,temp:39};
+const vDangLo = {tas:70,pam:50,fc:35,spo2:90,fr:6};
 
 function upV(key, val) {
   S.vitals[key] = parseFloat(val);
@@ -1174,21 +1204,22 @@ function checkAlarms(v, hora) {
 
 function renderVitalTable() {
   const b = document.getElementById('vital-tbody');
-  if(!S.history.length){b.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';return;}
-  b.innerHTML=[...S.history].reverse().map(r=>`
-    <tr>
-      <td class="hl">${r.hora}</td>
+  if(!S.history.length){b.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros — toca "Registrar Punto"</td></tr>';return;}
+  const n = S.history.length;
+  b.innerHTML=[...S.history].map((r,i)=>({r,i})).reverse().map(({r,i})=>`
+    <tr onclick="openEditVital(${i})" style="cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(0,229,255,.07)'" onmouseout="this.style.background=''">
+      <td class="hl" style="font-weight:800">${r.hora}</td>
       <td class="${r.tas>160||r.tas<80?'dc':r.tas>140?'wc':''}">${r.tas}</td>
       <td>${r.tad}</td>
-      <td>${r.pam||Math.round(r.tad+(r.tas-r.tad)/3)}</td>
+      <td style="color:#d500f9;font-weight:700">${r.pam||Math.round(r.tad+(r.tas-r.tad)/3)}</td>
       <td class="${r.fc>120||r.fc<45?'dc':''}">${r.fc}</td>
       <td>${r.fr}</td>
       <td class="${r.spo2<92?'dc':r.spo2<94?'wc':''}">${r.spo2}</td>
       <td class="${parseFloat(r.temp)>=38.5?'wc':''}">${r.temp}</td>
-      <td style="color:var(--muted)"></td>
+      <td style="color:var(--cyan);font-size:11px">${r.nota||'✏️'}</td>
     </tr>`).join('');
-  document.getElementById('reg-count').textContent = S.history.length;
-  document.getElementById('st-reg').textContent = S.history.length;
+  document.getElementById('reg-count').textContent = n;
+  const stReg=document.getElementById('st-reg'); if(stReg) stReg.textContent=n;
 }
 renderVitalTable();
 
@@ -1371,7 +1402,7 @@ function fireHrAlarm(hr) {
   addAlert('warn',msg,getT());
   // snapshot liquidos for this hour
   const get=id=>parseInt(document.getElementById(id)?.value)||0;
-  addToHourBucket('liq',{in:get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg'),sang:get('eg-sang'),diu:get('eg-diu'),eg:get('eg-ins')+get('eg-bas')+get('eg-diu')+get('eg-sang')});
+  // auto-snapshot for this hour on alarm
   document.getElementById('alarm-box').classList.add('ringing');
   setTimeout(()=>document.getElementById('alarm-box').classList.remove('ringing'),3000);
   if('Notification' in window&&Notification.permission==='granted')
@@ -1509,9 +1540,9 @@ function addFarm() {
 
 function renderFarms() {
   const el=document.getElementById('farm-list');
-  if(!S.farms.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin registros</div>';return;}
-  el.innerHTML=S.farms.map(f=>`
-    <div class="f-item">
+  if(!S.farms.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin medicamentos registrados</div>';return;}
+  el.innerHTML=S.farms.map((f,i)=>`
+    <div class="f-item" style="cursor:pointer" onclick="openEditFarm2(${i})">
       <div>
         <div class="f-name">${f.n}</div>
         <div class="f-dose">${f.d} · ${f.v}</div>
@@ -1704,6 +1735,47 @@ function genRes() {
       '</div>' +
     '</div>' +
     ST('📊 SIGNOS VITALES — HOJA DE MONITOREO COMPLETA') +
+    ST('📈 GRÁFICA DE SIGNOS VITALES') +
+    (S.history.length ? (function() {
+      // Build SVG chart
+      const W=680, H=120, pad=30;
+      const hours = S.history.map(r=>r.hora);
+      const n = S.history.length;
+      const xStep = n > 1 ? (W - pad*2) / (n-1) : 0;
+      function xOf(i) { return pad + i * xStep; }
+      // Normalize to chart height
+      function line(vals, min, max, color, label) {
+        if(n < 2) return '';
+        const pts = vals.map((v,i) => xOf(i)+','+(pad + (H-pad*2) * (1-(v-min)/(max-min||1))));
+        return '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round"/>';
+      }
+      const tasV = S.history.map(r=>r.tas), tadV = S.history.map(r=>r.tad), pamV = S.history.map(r=>r.pam||Math.round(r.tad+(r.tas-r.tad)/3));
+      const fcV  = S.history.map(r=>r.fc),  spV  = S.history.map(r=>r.spo2);
+      // X axis labels (every 3rd)
+      const xLabels = hours.map((h,i) => i%Math.max(1,Math.floor(n/8))===0 ? '<text x="'+xOf(i)+'" y="'+(H+8)+'" text-anchor="middle" font-size="7" fill="#888">'+h+'</text>' : '').join('');
+      // Y axis lines
+      const yLines = [60,80,100,120,140,160].map(v => {
+        const y = pad + (H-pad*2)*(1-(v-50)/(200));
+        return '<line x1="'+pad+'" x2="'+(W-pad)+'" y1="'+y+'" y2="'+y+'" stroke="#333" stroke-width="0.5"/><text x="'+(pad-4)+'" y="'+(y+3)+'" text-anchor="end" font-size="6" fill="#666">'+v+'</text>';
+      }).join('');
+      const svg = '<svg width="100%" viewBox="0 0 '+(W+20)+' '+(H+20)+'" xmlns="http://www.w3.org/2000/svg" style="display:block;margin-bottom:4px">'+
+        '<rect width="100%" height="100%" fill="#111" rx="4"/>'+
+        yLines+
+        line(tasV,50,200,'#00e5ff','TAS')+
+        line(tadV,50,200,'#0099cc','TAD')+
+        line(pamV,50,200,'#aa00ff','PAM')+
+        line(fcV,30,180,'#ff6d00','FC')+
+        line(spV,70,100,'#00e676','SpO2')+
+        xLabels+
+        '<text x="10" y="12" font-size="8" fill="#00e5ff" font-weight="bold">TAS</text>'+
+        '<text x="40" y="12" font-size="8" fill="#0099cc" font-weight="bold">TAD</text>'+
+        '<text x="70" y="12" font-size="8" fill="#aa00ff" font-weight="bold">PAM</text>'+
+        '<text x="100" y="12" font-size="8" fill="#ff6d00" font-weight="bold">FC</text>'+
+        '<text x="125" y="12" font-size="8" fill="#00e676" font-weight="bold">SpO2</text>'+
+      '</svg>';
+      return svg;
+    })() : '<div style="color:#999;padding:6px">Sin datos para gráfica</div>') +
+    ST('📊 REGISTRO DE SIGNOS VITALES — TABLA COMPLETA') +
     (S.history.length ?
       '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
         '<thead><tr style="background:#0077aa;color:#fff">' +
@@ -1903,6 +1975,463 @@ if('Notification' in window) Notification.requestPermission();
 // Periodic recalc
 setInterval(calcLiq, 60000);
 setInterval(calcVentDerived, 10000);
+
+// ═══════════════════════════════════════════════════════════════
+// EDITAR SIGNO VITAL
+// ═══════════════════════════════════════════════════════════════
+var _editVitalIdx = -1;
+
+function openEditVital(idx) {
+  _editVitalIdx = idx;
+  var r = S.history[idx];
+  if (!r) return;
+  document.getElementById('ev-hora').value  = r.hora  || '';
+  document.getElementById('ev-tas').value   = r.tas   || '';
+  document.getElementById('ev-tad').value   = r.tad   || '';
+  document.getElementById('ev-pam').value   = r.pam   || Math.round(r.tad + (r.tas - r.tad) / 3);
+  document.getElementById('ev-fc').value    = r.fc    || '';
+  document.getElementById('ev-fr').value    = r.fr    || '';
+  document.getElementById('ev-spo2').value  = r.spo2  || '';
+  document.getElementById('ev-temp').value  = r.temp  || '';
+  document.getElementById('ev-nota').value  = r.nota  || '';
+  document.getElementById('edit-vital-modal').style.display = 'block';
+}
+
+function closeEditVital() {
+  document.getElementById('edit-vital-modal').style.display = 'none';
+}
+
+function saveVitalEdit() {
+  if (_editVitalIdx < 0) return;
+  var tas = parseInt(document.getElementById('ev-tas').value) || 0;
+  var tad = parseInt(document.getElementById('ev-tad').value) || 0;
+  var pam = parseInt(document.getElementById('ev-pam').value) || Math.round(tad + (tas - tad) / 3);
+  S.history[_editVitalIdx] = {
+    hora: document.getElementById('ev-hora').value,
+    tas:  tas, tad: tad, pam: pam,
+    fc:   parseInt(document.getElementById('ev-fc').value)   || 0,
+    fr:   parseInt(document.getElementById('ev-fr').value)   || 0,
+    spo2: parseInt(document.getElementById('ev-spo2').value) || 0,
+    temp: parseFloat(document.getElementById('ev-temp').value) || 0,
+    nota: document.getElementById('ev-nota').value.trim()
+  };
+  closeEditVital();
+  renderVitalTable();
+  drawChart();
+  autoSave();
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function deleteVitalRow() {
+  if (_editVitalIdx < 0) return;
+  if (!confirm('¿Eliminar este registro de signos vitales?')) return;
+  S.history.splice(_editVitalIdx, 1);
+  closeEditVital();
+  renderVitalTable();
+  drawChart();
+  autoSave();
+  if (navigator.vibrate) navigator.vibrate([50,30,50]);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDITAR FÁRMACO
+// ═══════════════════════════════════════════════════════════════
+var _editFarmIdx = -1;
+
+function openEditFarm2(idx) {
+  _editFarmIdx = idx;
+  var f = S.farms[idx];
+  if (!f) return;
+  document.getElementById('ef2-nombre').value = f.n    || '';
+  document.getElementById('ef2-dosis').value  = f.d    || '';
+  document.getElementById('ef2-via').value    = f.v    || '';
+  document.getElementById('ef2-hora').value   = f.h    || '';
+  document.getElementById('ef2-nota').value   = f.nota || '';
+  document.getElementById('edit-farm-modal2').style.display = 'block';
+}
+
+function closeEditFarm2() {
+  document.getElementById('edit-farm-modal2').style.display = 'none';
+}
+
+function saveFarm2() {
+  if (_editFarmIdx < 0) return;
+  S.farms[_editFarmIdx] = {
+    n:    document.getElementById('ef2-nombre').value.trim(),
+    d:    document.getElementById('ef2-dosis').value.trim(),
+    v:    document.getElementById('ef2-via').value.trim(),
+    h:    document.getElementById('ef2-hora').value,
+    nota: document.getElementById('ef2-nota').value.trim()
+  };
+  closeEditFarm2();
+  renderFarms();
+  autoSave();
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function deleteFarm2() {
+  if (_editFarmIdx < 0) return;
+  if (!confirm('¿Eliminar este fármaco del registro?')) return;
+  S.farms.splice(_editFarmIdx, 1);
+  closeEditFarm2();
+  renderFarms();
+  var st = document.getElementById('st-farms'); if(st) st.textContent = S.farms.length;
+  autoSave();
+  if (navigator.vibrate) navigator.vibrate([50,30,50]);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SISTEMA DE LOGIN Y GUARDADO
+// ═══════════════════════════════════════════════════════════════
+var DB_KEY   = 'anestesys_casos';
+var USER_KEY = 'anestesys_user';
+
+function getUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || '{"nombre":"","inst":""}'); }
+  catch(e) { return {nombre:'',inst:''}; }
+}
+
+function getCasos() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveCasos(arr) {
+  localStorage.setItem(DB_KEY, JSON.stringify(arr));
+}
+
+function getCasoId() {
+  if (!S._casoId) S._casoId = 'caso_' + Date.now();
+  return S._casoId;
+}
+
+function serializeState() {
+  return {
+    id:      getCasoId(),
+    fecha:   new Date().toLocaleString('es-MX'),
+    savedAt: Date.now(),
+    pac:     S.pac,
+    history: S.history,
+    farms:   S.farms,
+    ventHist:    S.ventHist,
+    liqHora:     S.liqHora,
+    hourBuckets: S.hourBuckets,
+    alerts:      S.alerts,
+    alarmCfg:    S.alarmCfg,
+    phases: {
+      an:    S.phases.an    ? S.phases.an.toISOString()    : null,
+      cx:    S.phases.cx    ? S.phases.cx.toISOString()    : null,
+      fincx: S.phases.fincx ? S.phases.fincx.toISOString() : null,
+      fin:   S.phases.fin   ? S.phases.fin.toISOString()   : null
+    },
+    timeInputs: {
+      an:    (document.getElementById('time-an')    || {value:''}).value,
+      cx:    (document.getElementById('time-cx')    || {value:''}).value,
+      fincx: (document.getElementById('time-fincx') || {value:''}).value,
+      fin:   (document.getElementById('time-fin')   || {value:''}).value
+    },
+    liqInputs: {
+      nacl: (document.getElementById('in-nacl')  || {value:''}).value,
+      hart: (document.getElementById('in-hart')  || {value:''}).value,
+      col:  (document.getElementById('in-col')   || {value:''}).value,
+      pg:   (document.getElementById('in-pg')    || {value:''}).value,
+      med:  (document.getElementById('in-med')   || {value:''}).value,
+      otro: (document.getElementById('in-otro')  || {value:''}).value,
+      ins:  (document.getElementById('eg-ins')   || {value:''}).value,
+      bas:  (document.getElementById('eg-bas')   || {value:''}).value,
+      diu:  (document.getElementById('eg-diu')   || {value:''}).value,
+      sang: (document.getElementById('eg-sang')  || {value:''}).value,
+      trau: (document.getElementById('eg-trau')  || {value:''}).value,
+      oeg:  (document.getElementById('eg-otro')  || {value:''}).value
+    },
+    aldrete: {
+      act:  (document.getElementById('al-act')  || {value:'2'}).value,
+      resp: (document.getElementById('al-resp') || {value:'2'}).value,
+      circ: (document.getElementById('al-circ') || {value:'2'}).value,
+      conc: (document.getElementById('al-conc') || {value:'2'}).value,
+      sat:  (document.getElementById('al-sat')  || {value:'2'}).value
+    }
+  };
+}
+
+function autoSave(manual) {
+  var state  = serializeState();
+  var casos  = getCasos();
+  var idx    = casos.findIndex(function(c){ return c.id === state.id; });
+  if (idx >= 0) { casos[idx] = state; } else { casos.unshift(state); }
+  if (casos.length > 50) casos.splice(50);
+  saveCasos(casos);
+  if (manual) {
+    showToast('💾 Guardado: ' + (S.pac.nombre || 'Sin nombre'));
+    if (navigator.vibrate) navigator.vibrate([30,30,30]);
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast-msg');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast-msg';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f1628;border:1px solid #1e2d44;border-radius:10px;padding:11px 20px;font-size:13px;color:#dde8ff;z-index:600;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.7);transition:opacity .4s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.style.opacity='0'; }, 2500);
+}
+
+function restoreState(caso) {
+  S._casoId     = caso.id;
+  S.pac         = caso.pac         || {};
+  S.history     = caso.history     || [];
+  S.farms       = caso.farms       || [];
+  S.ventHist    = caso.ventHist    || [];
+  S.liqHora     = caso.liqHora     || [];
+  S.hourBuckets = caso.hourBuckets || {};
+  S.alerts      = caso.alerts      || [];
+  S.alarmCfg    = caso.alarmCfg    || S.alarmCfg;
+  S.hrAlarms    = [];
+
+  var ph = caso.phases || {};
+  S.phases = {
+    an:    ph.an    ? new Date(ph.an)    : null,
+    cx:    ph.cx    ? new Date(ph.cx)    : null,
+    fincx: ph.fincx ? new Date(ph.fincx) : null,
+    fin:   ph.fin   ? new Date(ph.fin)   : null
+  };
+
+  // Phase buttons
+  function setBtn(id, bg, txt) { var b=document.getElementById(id); if(b){b.style.background=bg;b.textContent=txt;} }
+  if(S.phases.an)    setBtn('btn-an',    'var(--green)',  '✓ Anestesia');
+  if(S.phases.cx)    setBtn('btn-cx',    'var(--green)',  '✓ Cx iniciada');
+  if(S.phases.fincx) setBtn('btn-fincx', '#00cc44',      '✓ Cx terminada');
+  if(S.phases.fin)   setBtn('btn-fin',   'var(--muted)',  '✓ Anest. terminada');
+
+  // Time inputs
+  var ti = caso.timeInputs || {};
+  ['an','cx','fincx','fin'].forEach(function(k){
+    var el = document.getElementById('time-'+k); if(el && ti[k]) el.value = ti[k];
+  });
+
+  // Liquid inputs
+  var li = caso.liqInputs || {};
+  var lm = {nacl:'in-nacl',hart:'in-hart',col:'in-col',pg:'in-pg',med:'in-med',otro:'in-otro',
+             ins:'eg-ins',bas:'eg-bas',diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
+  Object.keys(lm).forEach(function(k){ var el=document.getElementById(lm[k]); if(el) el.value=li[k]||''; });
+
+  // Aldrete
+  var al = caso.aldrete || {};
+  ['act','resp','circ','conc','sat'].forEach(function(k){ var el=document.getElementById('al-'+k); if(el&&al[k]) el.value=al[k]; });
+
+  // Refresh all UI
+  updateTopbar();
+  renderVitalTable();
+  drawChart();
+  renderFarms();
+  renderHourBuckets();
+  calcLiq();
+  if(typeof calcAld==='function') calcAld();
+}
+
+function loadCaso(id) {
+  var casos = getCasos();
+  var caso  = casos.find(function(c){ return c.id === id; });
+  if (!caso) { showToast('Error: caso no encontrado'); return; }
+  if (S.history.length || S.farms.length) autoSave();
+  restoreState(caso);
+  hideLogin();
+  showToast('📂 Cargado: ' + (caso.pac && caso.pac.nombre ? caso.pac.nombre : 'Sin nombre'));
+}
+
+function deleteCaso(id) {
+  if (!confirm('Eliminar este caso del historial?')) return;
+  var casos = getCasos().filter(function(c){ return c.id !== id; });
+  saveCasos(casos);
+  refreshHistorial();
+}
+
+function refreshHistorial() {
+  var el = document.getElementById('historial-list');
+  if (!el) return;
+  var casos = getCasos();
+  if (!casos.length) {
+    el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:28px 16px;font-size:13px;line-height:1.7">No hay casos guardados.<br>Presiona "Nuevo Paciente" y el caso<br>se guardará automáticamente.</div>';
+    return;
+  }
+  el.innerHTML = casos.map(function(c) {
+    var nombre  = (c.pac && c.pac.nombre) ? c.pac.nombre : 'Sin nombre';
+    var edad    = (c.pac && c.pac.edad)   ? c.pac.edad+'a' : '';
+    var exp     = (c.pac && c.pac.exp)    ? '· Exp '+c.pac.exp : '';
+    var tipoAn  = (c.pac && c.pac.tipoAn) ? c.pac.tipoAn.split('—')[0].trim().split(' ').slice(0,3).join(' ') : '';
+    var nVit    = (c.history || []).length;
+    var nFar    = (c.farms   || []).length;
+    var fecha   = c.fecha || '';
+    var isCurr  = S._casoId === c.id;
+    var cid = c.id;    var card = '<div style="background:#04060d;border:1.5px solid '+(isCurr?'#00e5ff':'#1e2d44')+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;position:relative">';    card += isCurr ? '<div style="position:absolute;top:10px;right:44px;font-size:9px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:1px">● Activo</div>' : '';    card += '<div style="font-size:16px;font-weight:800;color:#dde8ff;margin-bottom:3px;padding-right:36px">'+nombre+' <span style="font-size:12px;color:#3d5a78;font-weight:400">'+edad+' '+exp+'</span></div>';    card += '<div style="font-size:11px;color:#00e5ff;margin-bottom:5px">'+tipoAn+'</div>';    card += '<div style="font-size:10px;color:#3d5a78">'+fecha+' · '+nVit+' vitales · '+nFar+' farmacos</div>';    card += '<button style="position:absolute;top:12px;right:12px;background:transparent;border:none;color:#ff1744;font-size:20px;cursor:pointer;padding:2px 6px" id="del_'+cid+'">🗑</button>';    card += '</div>';    return card;  }).join('');
+}
+
+function loginAndNew() {
+  var nombre = document.getElementById('login-user').value.trim();
+  var inst   = document.getElementById('login-inst').value.trim();
+  localStorage.setItem(USER_KEY, JSON.stringify({nombre:nombre, inst:inst}));
+
+  // Reset state for new patient
+  S._casoId     = 'caso_' + Date.now();
+  S.pac         = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
+                   dx:'',cx:'',tipoAn:'',asa:'II',med:nombre,ciru:'',inst:inst};
+  S.history     = [];
+  S.farms       = [];
+  S.ventHist    = [];
+  S.liqHora     = [];
+  S.hourBuckets = {};
+  S.alerts      = [];
+  S.hrAlarms    = [];
+  S.phases      = {an:null,cx:null,fincx:null,fin:null};
+
+  // Clear UI
+  ['time-an','time-cx','time-fincx','time-fin'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro','eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  renderVitalTable(); renderFarms(); renderHourBuckets(); calcLiq(); drawChart();
+
+  hideLogin();
+  updateTopbar();
+  showToast('✅ Nuevo paciente — ' + (nombre ? 'Bienvenido Dr. '+nombre : 'Listo'));
+  setTimeout(openPacModal, 400);
+}
+
+function showLogin() {
+  autoSave();
+  var u = getUser();
+  document.getElementById('login-user').value = u.nombre || '';
+  document.getElementById('login-inst').value = u.inst   || '';
+  refreshHistorial();
+  document.getElementById('login-screen').style.display = 'block';
+}
+
+function hideLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+}
+
+// Auto-save every 90 seconds
+setInterval(function(){ if(S.pac.nombre||S.history.length||S.farms.length) autoSave(); }, 90000);
+
+// ── On startup ──
+(function initApp() {
+  var u     = getUser();
+  var casos = getCasos();
+
+  document.getElementById('login-user').value = u.nombre || '';
+  document.getElementById('login-inst').value = u.inst   || '';
+
+  if (casos.length > 0) {
+    // Restore last case silently, then show login screen
+    restoreState(casos[0]);
+    refreshHistorial();
+    document.getElementById('login-screen').style.display = 'block';
+  } else {
+    // First ever launch — show login
+    refreshHistorial();
+    document.getElementById('login-screen').style.display = 'block';
+  }
+})();
 </script>
+
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA DE LOGIN / HISTORIAL  (z-index 500)
+════════════════════════════════════════════════════════ -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#04060d;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 30px">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(180deg,#0a0f1c 0%,#04060d 100%);padding:50px 24px 24px;text-align:center;border-bottom:1px solid #1e2d44">
+    <div style="font-size:38px;font-weight:900;color:#00e5ff;letter-spacing:-1px">Aneste<span style="color:#dde8ff">Sys</span></div>
+    <div style="font-size:11px;color:#3d5a78;letter-spacing:3px;text-transform:uppercase;margin-top:6px">Registro Anestésico Pro</div>
+  </div>
+
+  <div style="max-width:440px;margin:0 auto;padding:20px 16px">
+
+    <!-- Formulario de usuario -->
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:16px;padding:20px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">👤 Mi Usuario</div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Nombre del Anestesiólogo</label>
+        <input type="text" id="login-user" placeholder="Dr. / Dra. ..." style="width:100%;padding:12px 14px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:10px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Institución (opcional)</label>
+        <input type="text" id="login-inst" placeholder="Hospital / Clínica..." style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:10px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <button onclick="loginAndNew()" style="width:100%;padding:15px;font-size:15px;font-weight:800;background:#00e676;color:#04060d;border:none;border-radius:12px;cursor:pointer;letter-spacing:0.5px">➕ Nuevo Paciente</button>
+    </div>
+
+    <!-- Historial guardado -->
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:16px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
+        <button onclick="refreshHistorial()" style="background:none;border:1px solid #1e2d44;border-radius:8px;color:#3d5a78;font-size:13px;padding:5px 10px;cursor:pointer">↻ Actualizar</button>
+      </div>
+      <div id="historial-list">
+        <div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px">Cargando historial...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR SIGNO VITAL  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-vital-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Vitales</div>
+      <button onclick="closeEditVital()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ev-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Sistólica</label><input type="number" id="ev-tas" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Diastólica</label><input type="number" id="ev-tad" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">PAM</label><input type="number" id="ev-pam" placeholder="auto" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #d500f9;border-radius:8px;color:#d500f9;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FC (lpm)</label><input type="number" id="ev-fc" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FR (rpm)</label><input type="number" id="ev-fr" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">SpO2 (%)</label><input type="number" id="ev-spo2" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Temp (°C)</label><input type="number" id="ev-temp" step="0.1" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ffd600;border-radius:8px;color:#ffd600;box-sizing:border-box"></div>
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteVitalRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveVitalEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR FÁRMACO  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-farm-modal2" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#ff6d00">✏️ Editar Fármaco</div>
+      <button onclick="closeEditFarm2()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="margin-bottom:12px"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Fármaco</label><input type="text" id="ef2-nombre" style="width:100%;padding:12px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Dosis</label><input type="text" id="ef2-dosis" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Vía</label><input type="text" id="ef2-via" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ef2-hora" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Indicación</label><input type="text" id="ef2-nota" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:#ff6d00;border:none;border-radius:12px;color:#fff;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
