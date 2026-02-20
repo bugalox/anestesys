@@ -540,6 +540,17 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         </div>
         <input type="range" id="sl-tad" min="30" max="130" value="91" oninput="upV('tad',this.value)">
       </div>
+ <!-- PAM (derivada) -->
+ <div class="vslider-row" style="margin-top:2px">
+   <div class="vslider-top">
+     <span class="vslider-label">PAM (Presión arterial media)</span>
+     <span><span class="vslider-val" id="dv-pam" style="color:var(--purple)">--</span><span class="vslider-unit">mmHg</span></span>
+   </div>
+   <div style="height:8px;background:var(--border);border-radius:4px;position:relative">
+     <div id="pam-bar" style="position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));border-radius:4px;transition:width .2s"></div>
+   </div>
+ </div>
+
       <!-- FC -->
       <div class="vslider-row">
         <div class="vslider-top">
@@ -576,7 +587,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <button class="btn g full" style="margin-bottom:10px" onclick="registrar()">📌 Registrar Punto</button>
 
       <!-- CHART -->
-      <canvas id="chart" height="160"></canvas>
+      <canvas id="chart" height="320"></canvas>
       <div style="display:flex;gap:14px;margin-top:8px;font-size:10px;color:var(--muted)">
         <span><span style="color:var(--cyan)">●</span> TAS/TAD</span>
         <span><span style="color:var(--purple)">●</span> PAM</span>
@@ -729,7 +740,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
         <thead><tr><th>Hora</th><th>NaCl</th><th>Hartman</th><th>Sangrado</th><th>Diuresis</th><th>Bal. Hr</th><th>Acumulado</th></tr></thead>
-        <tbody id="liq-tbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+        <tbody id="liq-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -823,7 +834,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
         <thead><tr><th>Hora</th><th>Modo</th><th>FiO2</th><th>VC</th><th>FR</th><th>PEEP</th><th>Pico</th><th>EtCO2</th><th>VM</th></tr></thead>
-        <tbody id="vent-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+        <tbody id="vent-tbody"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -992,7 +1003,343 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 </div><!-- /app -->
 
+
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA DE LOGIN / HISTORIAL  (z-index 500)
+════════════════════════════════════════════════════════ -->
+<div id="login-screen" style="display:block;position:fixed;inset:0;z-index:500;background:#04060d;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 40px">
+
+  <!-- ✕ Cerrar — SOLO visible cuando ya estás autenticado y abres historial -->
+  <button id="btn-close-login"
+    onclick="hideLogin()"
+    style="display:none;position:fixed;top:calc(16px + env(safe-area-inset-top));right:16px;
+           width:40px;height:40px;border-radius:50%;
+           background:rgba(0,229,255,.12);border:1.5px solid rgba(0,229,255,.35);
+           color:#00e5ff;font-size:18px;font-weight:700;cursor:pointer;z-index:520;
+           line-height:40px;text-align:center;padding:0;
+           transition:background .2s,border-color .2s">✕</button>
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(180deg,#060c1a 0%,#04060d 100%);
+              padding:56px 24px 28px;text-align:center;
+              border-bottom:1px solid #1e2d44;position:relative">
+    <div style="font-size:40px;font-weight:900;color:#00e5ff;letter-spacing:-1.5px;line-height:1">
+      Aneste<span style="color:#dde8ff">Sys</span>
+    </div>
+    <div style="font-size:10px;color:#3d5a78;letter-spacing:4px;text-transform:uppercase;margin-top:8px">
+      Registro Anestésico Pro
+    </div>
+    <!-- Línea degradado decorativa -->
+    <div style="position:absolute;bottom:0;left:0;right:0;height:1px;
+                background:linear-gradient(90deg,transparent,#00e5ff,#d500f9,transparent)"></div>
+  </div>
+
+  <div style="max-width:420px;margin:0 auto;padding:24px 16px">
+
+    <!-- ══ CARD LOGIN ══ -->
+    <div id="access-card" style="background:#080d1a;border:1px solid #1e2d44;border-radius:20px;
+                                  padding:24px;margin-bottom:16px;
+                                  box-shadow:0 4px 32px rgba(0,0,0,.4)">
+
+      <!-- Título con ícono -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,229,255,.1);
+                    border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;
+                    justify-content:center;font-size:18px;flex-shrink:0">🔐</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#dde8ff;letter-spacing:.5px">Iniciar Sesión</div>
+          <div style="font-size:10px;color:#3d5a78;margin-top:1px">Acceso con cuenta registrada</div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1.5px;display:block;margin-bottom:6px">Email</label>
+        <input type="email" id="auth-email"
+               placeholder="medico@hospital.com"
+               onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"
+               style="width:100%;padding:13px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                      box-sizing:border-box;transition:border-color .2s"
+               onfocus="this.style.borderColor='#00e5ff'"
+               onblur="this.style.borderColor='#1e2d44'">
+      </div>
+
+      <!-- Contraseña -->
+      <div style="margin-bottom:20px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1.5px;display:block;margin-bottom:6px">Contraseña</label>
+        <input type="password" id="auth-pass"
+               placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin()"
+               style="width:100%;padding:13px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                      box-sizing:border-box;transition:border-color .2s"
+               onfocus="this.style.borderColor='#00e5ff'"
+               onblur="this.style.borderColor='#1e2d44'">
+      </div>
+
+      <!-- Botón iniciar sesión -->
+      <button id="login-btn" onclick="doLogin()"
+              style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                     background:linear-gradient(135deg,#00e676,#00c853);
+                     color:#04060d;border:none;border-radius:14px;cursor:pointer;
+                     letter-spacing:.5px;transition:opacity .2s,transform .1s;margin-bottom:10px"
+              onmousedown="this.style.transform='scale(.98)'"
+              onmouseup="this.style.transform=''"
+              ontouchstart="this.style.transform='scale(.98)'"
+              ontouchend="this.style.transform=''">
+        Iniciar sesión
+      </button>
+
+      <!-- Cerrar sesión (modo texto, menos prominente) -->
+      <button onclick="doLogout()"
+              style="width:100%;padding:10px;font-size:12px;font-weight:600;
+                     background:none;border:none;color:#3d5a78;cursor:pointer;
+                     letter-spacing:.3px">
+        Cerrar sesión
+      </button>
+
+      <!-- Mensaje de estado -->
+      <div id="access-msg"
+           style="margin-top:10px;font-size:12px;color:#3d5a78;
+                  line-height:1.6;text-align:center;min-height:18px">
+        Inicia sesión para continuar.
+      </div>
+    </div>
+
+    <!-- ══ PERFIL GUARDADO (visible post-login) ══ -->
+    <div id="ls-perfil-guardado"
+         style="display:none;background:#080d1a;border:1px solid #1e2d44;
+                border-radius:20px;padding:20px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;
+                    text-transform:uppercase;letter-spacing:2px">👤 Mi Perfil</div>
+        <button onclick="lsCambiarPerfil()"
+                style="background:none;border:1px solid #1e2d44;border-radius:8px;
+                       color:#3d5a78;font-size:12px;padding:5px 12px;cursor:pointer">
+          ✏️ Cambiar
+        </button>
+      </div>
+      <div id="ls-nombre-display"
+           style="font-size:20px;font-weight:800;color:#dde8ff;margin-bottom:4px"></div>
+      <div id="ls-inst-display"
+           style="font-size:13px;color:#3d5a78;margin-bottom:2px"></div>
+      <div id="ls-email-display"
+           style="font-size:12px;color:#3d5a78;margin-bottom:16px"></div>
+      <button onclick="loginAndNew()"
+              style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                     background:linear-gradient(135deg,#00e676,#00c853);
+                     color:#04060d;border:none;border-radius:14px;cursor:pointer">
+        ➕ Nuevo Paciente
+      </button>
+    </div>
+
+    <!-- ══ FORM PERFIL (visible post-login si no hay perfil) ══ -->
+    <div id="ls-perfil-form"
+         style="display:none;background:#080d1a;border:1px solid #1e2d44;
+                border-radius:20px;padding:20px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:800;color:#00e5ff;
+                  text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">
+        👤 Crear Mi Perfil
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Nombre del Anestesiólogo *
+        </label>
+        <input type="text" id="login-user" placeholder="Dr. / Dra. Apellido Nombre"
+               style="width:100%;padding:12px 14px;font-size:16px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Institución (opcional)
+        </label>
+        <input type="text" id="login-inst" placeholder="Hospital / Clínica..."
+               style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Correo (para enviar PDFs)
+        </label>
+        <input type="email" id="login-email" placeholder="correo@hospital.com"
+               style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="lsGuardarPerfil()"
+                style="padding:14px;font-size:14px;font-weight:800;background:#00e5ff;
+                       color:#04060d;border:none;border-radius:12px;cursor:pointer">
+          ✓ Guardar
+        </button>
+        <button onclick="loginAndNew()"
+                style="padding:14px;font-size:14px;font-weight:700;
+                       background:linear-gradient(135deg,#00e676,#00c853);
+                       color:#04060d;border:none;border-radius:12px;cursor:pointer">
+          ➕ Nuevo
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ CASOS GUARDADOS (visible post-login) ══ -->
+    <div style="background:#080d1a;border:1px solid #1e2d44;border-radius:20px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;
+                    text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
+        <button id="btn-refresh-hist" onclick="refreshHistorial()"
+                style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);
+                       border-radius:8px;color:#00e5ff;font-size:14px;
+                       width:32px;height:32px;cursor:pointer;line-height:32px;text-align:center;padding:0">
+          ↻
+        </button>
+      </div>
+      <div id="historial-list">
+        <div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px">Cargando...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL CONFIRMACIÓN CUSTOM (reemplaza confirm() bloqueado en Safari PWA)
+════════════════════════════════════════════════════════ -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(4,6,13,0.92);align-items:center;justify-content:center;align-items:center;justify-content:center;padding:20px" onclick="confirmCancel()">
+  <div onclick="event.stopPropagation()" style="background:#0a0f1c;border:2px solid #ff1744;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(255,23,68,.3)">
+    <div style="font-size:36px;margin-bottom:12px">🗑</div>
+    <div id="confirm-msg" style="font-size:16px;font-weight:700;color:#dde8ff;margin-bottom:8px">¿Eliminar este caso?</div>
+    <div id="confirm-sub" style="font-size:13px;color:#3d5a78;margin-bottom:24px">Esta acción no se puede deshacer</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="confirmCancel()" style="padding:14px;font-size:14px;font-weight:700;background:#0f1628;border:1.5px solid #1e2d44;border-radius:12px;color:#3d5a78;cursor:pointer">Cancelar</button>
+      <button id="confirm-ok-btn" onclick="confirmOk()" style="padding:14px;font-size:14px;font-weight:700;background:#ff1744;border:none;border-radius:12px;color:#fff;cursor:pointer">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR FILA LÍQUIDOS
+════════════════════════════════════════════════════════ -->
+<div id="edit-liq-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Hora</div>
+      <button onclick="closeEditLiq()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;color:#00e676;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📥 Ingresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">NaCl 0.9% (ml)</label><input type="number" id="el-nacl" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hartman (ml)</label><input type="number" id="el-hart" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+      </div>
+      <div style="font-size:10px;font-weight:800;color:#ff1744;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📤 Egresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">🩸 Sangrado (ml)</label><input type="number" id="el-sang" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diuresis (ml)</label><input type="number" id="el-diu" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteLiqRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar fila</button>
+      <button onclick="saveLiqEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e5ff;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR VENTILADOR
+════════════════════════════════════════════════════════ -->
+<div id="edit-vent-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e676">✏️ Editar Registro Ventilador</div>
+      <button onclick="closeEditVent()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hora</label><input type="time" id="ev2-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Modo</label><input type="text" id="ev2-modo" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">FiO2 (%)</label><input type="number" id="ev2-fio2" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Vol. Corriente (ml)</label><input type="number" id="ev2-vc" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">FR (rpm)</label><input type="number" id="ev2-fr" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">PEEP (cmH₂O)</label><input type="number" id="ev2-peep" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">P. Pico (cmH₂O)</label><input type="number" id="ev2-ppeak" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">EtCO2 (mmHg)</label><input type="number" id="ev2-etco2" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Vol. Min. (L/min)</label><input type="number" id="ev2-vm" step="0.1" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteVentRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveVentEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR SIGNO VITAL  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-vital-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Vitales</div>
+      <button onclick="closeEditVital()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ev-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Sistólica</label><input type="number" id="ev-tas" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Diastólica</label><input type="number" id="ev-tad" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">PAM</label><input type="number" id="ev-pam" placeholder="auto" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #d500f9;border-radius:8px;color:#d500f9;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FC (lpm)</label><input type="number" id="ev-fc" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FR (rpm)</label><input type="number" id="ev-fr" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">SpO2 (%)</label><input type="number" id="ev-spo2" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Temp (°C)</label><input type="number" id="ev-temp" step="0.1" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ffd600;border-radius:8px;color:#ffd600;box-sizing:border-box"></div>
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteVitalRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveVitalEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR FÁRMACO  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-farm-modal2" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#ff6d00">✏️ Editar Fármaco</div>
+      <button onclick="closeEditFarm2()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="margin-bottom:12px"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Fármaco</label><input type="text" id="ef2-nombre" style="width:100%;padding:12px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Dosis</label><input type="text" id="ef2-dosis" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Vía</label><input type="text" id="ef2-via" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ef2-hora" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Indicación</label><input type="text" id="ef2-nota" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:#ff6d00;border:none;border-radius:12px;color:#fff;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ═══════════════════════════════════════════════
+// ACCESS FLAG (bloqueo total)
+window.__ACCESS_GRANTED = false;
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
@@ -1165,11 +1512,27 @@ const vWarnLo = {tas:80,tad:40,pam:60,fc:45,spo2:92,fr:8,temp:35};
 const vDangHi = {tas:190,pam:130,fc:150,spo2:100,fr:35,temp:39};
 const vDangLo = {tas:70,pam:50,fc:35,spo2:90,fr:6};
 
+function updatePAM(){
+  try {
+    var tas = parseFloat(S.vitals.tas)||0;
+    var tad = parseFloat(S.vitals.tad)||0;
+    var pam = Math.round(tad + (tas - tad)/3);
+    var el = document.getElementById('dv-pam');
+    if (el) el.textContent = pam;
+    var bar = document.getElementById('pam-bar');
+    if (bar) {
+      var pct = Math.max(0, Math.min(100, Math.round((pam-40)/(130-40)*100)));
+      bar.style.width = pct + '%';
+    }
+  } catch(e) {}
+}
+
 function upV(key, val) {
   S.vitals[key] = parseFloat(val);
   const dv = document.getElementById('dv-'+key);
   const sl = document.getElementById('sl-'+key);
   dv.textContent = val;
+ updatePAM();
   const v = parseFloat(val);
   sl.className = '';
   dv.style.color = vColors[key];
@@ -1207,7 +1570,7 @@ function renderVitalTable() {
   if(!S.history.length){b.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros — toca "Registrar Punto"</td></tr>';return;}
   const n = S.history.length;
   b.innerHTML=[...S.history].map((r,i)=>({r,i})).reverse().map(({r,i})=>`
-    <tr onclick="openEditVital(${i})" style="cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(0,229,255,.07)'" onmouseout="this.style.background=''">
+    <tr onclick="openEditVital(${i})" style="cursor:pointer;transition:background .15s">
       <td class="hl" style="font-weight:800">${r.hora}</td>
       <td class="${r.tas>160||r.tas<80?'dc':r.tas>140?'wc':''}">${r.tas}</td>
       <td>${r.tad}</td>
@@ -1228,30 +1591,167 @@ renderVitalTable();
 // ═══════════════════════════════════════════════
 function drawChart() {
   const cv = document.getElementById('chart');
-  if(!cv) return;
-  const dpr = window.devicePixelRatio||1;
-  const W = cv.offsetWidth, H = 160;
-  cv.width=W*dpr; cv.height=H*dpr;
-  cv.style.width=W+'px'; cv.style.height=H+'px';
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.offsetWidth;
+  const H = 320; // 4 paneles
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+  cv.style.width = W + 'px';
+  cv.style.height = H + 'px';
   const c = cv.getContext('2d');
-  c.scale(dpr,dpr);
-  c.fillStyle='#04060d'; c.fillRect(0,0,W,H);
-  c.strokeStyle='rgba(30,45,68,.6)'; c.lineWidth=.5;
-  for(let i=0;i<=6;i++){const y=(i/6)*H;c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
-  const d=S.history; if(d.length<2)return;
-  function line(k,mn,mx,col){
-    const pts=d.map(r=>r[k]);
-    c.beginPath();c.strokeStyle=col;c.lineWidth=2;
-    pts.forEach((v,i)=>{const x=(i/(pts.length-1))*W,y=H-((v-mn)/(mx-mn))*H;i===0?c.moveTo(x,y):c.lineTo(x,y);});
-    c.stroke();
-    const lv=pts[pts.length-1],lx=W,ly=H-((lv-mn)/(mx-mn))*H;
-    c.beginPath();c.fillStyle=col;c.arc(lx,ly,4,0,Math.PI*2);c.fill();
+  c.setTransform(dpr,0,0,dpr,0,0);
+
+  // Fondo
+  c.fillStyle = '#04060d';
+  c.fillRect(0,0,W,H);
+
+  const d = S.history || [];
+  if (d.length < 2) {
+    c.fillStyle = 'rgba(61,90,120,.9)';
+    c.font = '12px -apple-system,system-ui';
+    c.textAlign = 'center';
+    c.fillText('Sin datos para gráfica (registra al menos 2 puntos)', W/2, H/2);
+    return;
   }
-  line('tas',40,220,'#00e5ff');
-  line('spo2',80,100,'#00e676');
-  line('fc',30,180,'#ff6d00');
-  line('temp',34,41,'#ffd600');
+
+  // Helpers
+  function line(vals, min, max, y0, ph, color) {
+    const n = vals.length;
+    c.beginPath();
+    c.strokeStyle = color;
+    c.lineWidth = 2;
+    for (let i=0;i<n;i++) {
+      const v = vals[i];
+      const x = padL + (i/(n-1)) * plotW;
+      const y = y0 + ph - ((v - min) / (max - min)) * ph;
+      if (i===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke();
+    // last dot
+    const lv = vals[n-1];
+    const lx = padL + plotW;
+    const ly = y0 + ph - ((lv - min) / (max - min)) * ph;
+    c.beginPath();
+    c.fillStyle = color;
+    c.arc(lx,ly,3.5,0,Math.PI*2);
+    c.fill();
+  }
+
+  function riskBand(min, max, y0, ph, bands) {
+    // bands = [{lo,hi,color,alpha}]
+    for (const b of bands) {
+      const yHi = y0 + ph - ((b.hi - min)/(max-min))*ph;
+      const yLo = y0 + ph - ((b.lo - min)/(max-min))*ph;
+      c.fillStyle = b.color;
+      c.globalAlpha = b.alpha;
+      c.fillRect(padL, yHi, plotW, (yLo-yHi));
+      c.globalAlpha = 1;
+    }
+  }
+
+  function grid(min, max, y0, ph, ticks, labelColor='rgba(61,90,120,.9)') {
+    c.strokeStyle = 'rgba(30,45,68,.6)';
+    c.lineWidth = 0.7;
+    c.fillStyle = labelColor;
+    c.font = '10px Menlo, monospace';
+    c.textAlign = 'left';
+    ticks.forEach(v => {
+      const y = y0 + ph - ((v - min)/(max-min))*ph;
+      c.beginPath();
+      c.moveTo(padL, y);
+      c.lineTo(padL + plotW, y);
+      c.stroke();
+      c.fillText(String(v), 6, y+3);
+    });
+  }
+
+  function title(txt, y0, color) {
+    c.fillStyle = color;
+    c.font = '11px -apple-system,system-ui';
+    c.textAlign = 'left';
+    c.fillText(txt, padL, y0 - 6);
+  }
+
+  // Layout
+  const padL = 44; // espacio para etiquetas
+  const padR = 10;
+  const padT = 18;
+  const gap = 16;
+  const panelH = Math.floor((H - padT - gap*3) / 4);
+  const plotW = W - padL - padR;
+
+  // Datos
+  const tas = d.map(r => +r.tas);
+  const tad = d.map(r => +r.tad);
+  const fc  = d.map(r => +r.fc);
+  const sp  = d.map(r => +r.spo2);
+  const tp  = d.map(r => +r.temp);
+
+  // Panel 1: Presión
+  let y0 = padT;
+  title('TA (mmHg)', y0, '#00e5ff');
+  riskBand(50,200,y0,panelH,[
+    {lo: 90, hi: 160, color:'#00e676', alpha:0.08},
+    {lo: 80, hi: 90,  color:'#ffd600', alpha:0.10},
+    {lo: 160,hi: 190, color:'#ffd600', alpha:0.10},
+    {lo: 50, hi: 80,  color:'#ff1744', alpha:0.08},
+    {lo: 190,hi: 200, color:'#ff1744', alpha:0.08},
+  ]);
+  grid(50,200,y0,panelH,[80,100,120,140,160,180]);
+  line(tas,50,200,y0,panelH,'#00e5ff');
+  line(tad,50,200,y0,panelH,'#0099cc');
+
+  // Panel 2: FC
+  y0 = padT + (panelH + gap)*1;
+  title('FC (lpm)', y0, '#ff6d00');
+  riskBand(30,180,y0,panelH,[
+    {lo: 60, hi: 110, color:'#00e676', alpha:0.08},
+    {lo: 45, hi: 60,  color:'#ffd600', alpha:0.10},
+    {lo: 110,hi: 130, color:'#ffd600', alpha:0.10},
+    {lo: 30, hi: 45,  color:'#ff1744', alpha:0.08},
+    {lo: 130,hi: 180, color:'#ff1744', alpha:0.08},
+  ]);
+  grid(30,180,y0,panelH,[45,60,90,120,150]);
+  line(fc,30,180,y0,panelH,'#ff6d00');
+
+  // Panel 3: SpO2
+  y0 = padT + (panelH + gap)*2;
+  title('SpO₂ (%)', y0, '#00e676');
+  riskBand(70,100,y0,panelH,[
+    {lo: 94, hi: 100, color:'#00e676', alpha:0.08},
+    {lo: 92, hi: 94,  color:'#ffd600', alpha:0.12},
+    {lo: 70, hi: 92,  color:'#ff1744', alpha:0.10},
+  ]);
+  grid(70,100,y0,panelH,[92,94,96,98,100]);
+  line(sp,70,100,y0,panelH,'#00e676');
+
+  // Panel 4: Temp
+  y0 = padT + (panelH + gap)*3;
+  title('Temp (°C)', y0, '#ffd600');
+  riskBand(34,41,y0,panelH,[
+    {lo: 36.0, hi: 37.8, color:'#00e676', alpha:0.07},
+    {lo: 37.8, hi: 38.5, color:'#ffd600', alpha:0.10},
+    {lo: 38.5, hi: 41.0, color:'#ff1744', alpha:0.08},
+    {lo: 34.0, hi: 35.0, color:'#ffd600', alpha:0.08},
+  ]);
+  grid(34,41,y0,panelH,[35,36,37,38,39,40]);
+  line(tp,34,41,y0,panelH,'#ffd600');
+
+  // Eje X: marcas mínimas (inicio/medio/fin)
+  c.fillStyle = 'rgba(61,90,120,.9)';
+  c.font = '9px Menlo, monospace';
+  c.textAlign = 'center';
+  const n = d.length;
+  const t0 = d[0].hora || '';
+  const tm = d[Math.floor((n-1)/2)].hora || '';
+  const tN = d[n-1].hora || '';
+  const yLab = H - 6;
+  c.fillText(t0, padL, yLab);
+  c.fillText(tm, padL + plotW/2, yLab);
+  c.fillText(tN, padL + plotW, yLab);
 }
+
 setTimeout(drawChart,200);
 window.addEventListener('resize',()=>setTimeout(drawChart,100));
 
@@ -1313,7 +1813,9 @@ function startPhase(p) {
 
 // Reset all timers and phases
 function resetCronometros() {
-  if (!confirm('¿Reiniciar todos los cronómetros y fases? No se borran los registros de vitales ni fármacos.')) return;
+  showConfirm('¿Reiniciar cronómetros?', 'Las fases se borran. Los vitales y fármacos se conservan.', '🔄 Reiniciar', '#ff6d00', _doResetCronometros);
+}
+function _doResetCronometros() {
   S.phases = {an: null, cx: null, fin: null};
   S.hrAlarms = [];
   // Reset displays
@@ -1460,12 +1962,15 @@ function addLiqHora() {
   const prev=S.liqHora.length?S.liqHora[S.liqHora.length-1].acum:0;
   const acum=prev+balHr;
   S.liqHora.push({hora,nacl,hart,sang,diu,balHr,acum});
+ // Acumular por hora (desde inicio de anestesia)
+ try { addToHourBucket('liq', {in:(nacl+hart), eg:(sang+diu), sang:sang, diu:diu}); } catch(e) {}
   const b=document.getElementById('liq-tbody');
-  b.innerHTML=S.liqHora.map(r=>`<tr>
-    <td class="hl">${r.hora}</td><td>${r.nacl}</td><td>${r.hart}</td>
+  b.innerHTML=S.liqHora.map((r,i)=>`<tr onclick="openEditLiq(${i})" style="cursor:pointer">
+    <td class="hl" style="font-weight:800">${r.hora}</td><td>${r.nacl}</td><td>${r.hart}</td>
     <td class="${r.sang>300?'wc':''}">${r.sang}</td><td>${r.diu}</td>
     <td class="${r.balHr<0?'wc':''}">${r.balHr>=0?'+':''}${r.balHr}</td>
     <td class="${r.acum<-500?'dc':r.acum<0?'wc':'hl'}">${r.acum>=0?'+':''}${r.acum}</td>
+    <td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td>
   </tr>`).join('');
   if(navigator.vibrate) navigator.vibrate(30);
 }
@@ -1506,12 +2011,12 @@ function regVent() {
     hal:document.getElementById('sv-hal').value+'%'};
   S.ventHist.unshift(v);
   const b=document.getElementById('vent-tbody');
-  b.innerHTML=S.ventHist.map(r=>`<tr>
+  b.innerHTML=S.ventHist.map((r,i)=>`<tr onclick="openEditVent(${i})" style="cursor:pointer">
     <td class="hl">${r.hora}</td><td>${r.modo}</td><td>${r.fio2}%</td>
     <td>${r.vc}</td><td>${r.fr}</td><td>${r.peep}</td>
     <td class="${r.ppeak>30?'dc':''}">${r.ppeak}</td>
     <td class="${r.etco2>45||r.etco2<30?'wc':''}">${r.etco2}</td>
-    <td>${r.vm}</td>
+    <td>${r.vm}</td><td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td>
   </tr>`).join('');
   if(navigator.vibrate) navigator.vibrate(30);
 }
@@ -1564,7 +2069,9 @@ function addAlert(type,msg,hora) {
   const div=document.createElement('div');
   div.className='alert '+type;
   const ic=type==='danger'?'🚨':type==='warn'?'⚠️':'ℹ️';
-  div.innerHTML=`<span class="alert-icon">${ic}</span><div><div>${msg}</div><span class="alert-time">${hora}</span></div>`;
+  const alertIdx = S.alerts.length - 1;
+  div.innerHTML=`<span class="alert-icon">${ic}</span><div style="flex:1"><div>${msg}</div><span class="alert-time">${hora}</span></div><button onclick="deleteAlert(${alertIdx})" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;flex-shrink:0">🗑</button>`;
+  div.style.display='flex';div.style.alignItems='center';div.style.gap='8px';
   el.insertBefore(div,el.firstChild);
   const b=document.getElementById('alert-badge');
   const cnt=S.alerts.filter(a=>a.type!=='info').length;
@@ -1964,6 +2471,34 @@ function copiarRes() {
   }
 }
 
+function enviarPorCorreo() {
+  var u = getUser();
+  var email = u.email || '';
+  var pac = S.pac || {};
+  var nombre = pac.nombre || 'Paciente';
+  var fecha = new Date().toLocaleDateString('es-MX');
+  var subject = encodeURIComponent('Registro Anestésico — ' + nombre + ' — ' + fecha);
+  var body = encodeURIComponent(
+    'Registro Anestésico AnesteSys\n'
+    + '================================\n'
+    + 'Paciente: ' + nombre + '\n'
+    + 'Edad: ' + (pac.edad||'') + ' años\n'
+    + 'Expediente: ' + (pac.exp||'') + '\n'
+    + 'Procedimiento: ' + (pac.cx||'') + '\n'
+    + 'Anestesia: ' + (pac.tipoAn||'') + '\n'
+    + 'Fecha: ' + fecha + '\n\n'
+    + 'Adjunta el PDF generado con el botón "🖨 Imprimir / PDF" de la app.\n\n'
+    + '-- Enviado desde AnesteSys Pro --'
+  );
+  if (!email) {
+    // Open mailto picker without preset destination
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+    showToast('💡 Tip: guarda tu correo en tu perfil para tenerlo siempre listo');
+  } else {
+    window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+  }
+}
+
 // ═══════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════
@@ -2024,13 +2559,14 @@ function saveVitalEdit() {
 
 function deleteVitalRow() {
   if (_editVitalIdx < 0) return;
-  if (!confirm('¿Eliminar este registro de signos vitales?')) return;
-  S.history.splice(_editVitalIdx, 1);
-  closeEditVital();
-  renderVitalTable();
-  drawChart();
-  autoSave();
-  if (navigator.vibrate) navigator.vibrate([50,30,50]);
+  showConfirm('¿Eliminar este registro?', 'Signos vitales de ' + (S.history[_editVitalIdx]||{}).hora, '🗑 Eliminar', '#ff1744', function() {
+    S.history.splice(_editVitalIdx, 1);
+    closeEditVital();
+    renderVitalTable();
+    drawChart();
+    autoSave();
+    if (navigator.vibrate) navigator.vibrate([50,30,50]);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2071,13 +2607,15 @@ function saveFarm2() {
 
 function deleteFarm2() {
   if (_editFarmIdx < 0) return;
-  if (!confirm('¿Eliminar este fármaco del registro?')) return;
-  S.farms.splice(_editFarmIdx, 1);
-  closeEditFarm2();
-  renderFarms();
-  var st = document.getElementById('st-farms'); if(st) st.textContent = S.farms.length;
-  autoSave();
-  if (navigator.vibrate) navigator.vibrate([50,30,50]);
+  var f = S.farms[_editFarmIdx] || {};
+  showConfirm('¿Eliminar ' + (f.n||'este fármaco') + '?', f.d + ' · ' + f.v, '🗑 Eliminar', '#ff1744', function() {
+    S.farms.splice(_editFarmIdx, 1);
+    closeEditFarm2();
+    renderFarms();
+    var st = document.getElementById('st-fm'); if(st) st.textContent = S.farms.length;
+    autoSave();
+    if (navigator.vibrate) navigator.vibrate([50,30,50]);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2235,6 +2773,11 @@ function restoreState(caso) {
 }
 
 function loadCaso(id) {
+  if (!window.__ACCESS_GRANTED) {
+    try { if (typeof showToast === 'function') showToast('🔒 Acceso requerido'); } catch(e) {}
+    return;
+  }
+
   var casos = getCasos();
   var caso  = casos.find(function(c){ return c.id === id; });
   if (!caso) { showToast('Error: caso no encontrado'); return; }
@@ -2244,194 +2787,963 @@ function loadCaso(id) {
   showToast('📂 Cargado: ' + (caso.pac && caso.pac.nombre ? caso.pac.nombre : 'Sin nombre'));
 }
 
-function deleteCaso(id) {
-  if (!confirm('Eliminar este caso del historial?')) return;
-  var casos = getCasos().filter(function(c){ return c.id !== id; });
-  saveCasos(casos);
-  refreshHistorial();
+// ═══════════════════════════════════════════════════════════════
+// CUSTOM CONFIRM MODAL (Safari PWA blocks native confirm())
+// ═══════════════════════════════════════════════════════════════
+var _confirmCb = null;
+
+function showConfirm(msg, sub, okLabel, okColor, cb) {
+  _confirmCb = cb;
+  var m = document.getElementById('confirm-modal');
+  var mEl = document.getElementById('confirm-msg');
+  var sEl = document.getElementById('confirm-sub');
+  var bEl = document.getElementById('confirm-ok-btn');
+  if (mEl) mEl.textContent = msg || '';
+  if (sEl) sEl.textContent = sub || '';
+  if (bEl) { bEl.textContent = okLabel || 'Confirmar'; bEl.style.background = okColor || '#ff1744'; }
+  if (m)   m.style.display = 'flex';
+}
+function confirmOk() {
+  var m = document.getElementById('confirm-modal');
+  if (m) m.style.display = 'none';
+  if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+}
+function confirmCancel() {
+  var m = document.getElementById('confirm-modal');
+  if (m) m.style.display = 'none';
+  _confirmCb = null;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// HISTORIAL DE CASOS
+// ═══════════════════════════════════════════════════════════════
 function refreshHistorial() {
+  if (!window.__ACCESS_GRANTED) {
+    try {
+      var el0 = document.getElementById('historial-list');
+      if (el0) el0.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px;line-height:1.8">Acceso requerido.</div>';
+    } catch(e) {}
+    try { if (typeof showToast === 'function') showToast('🔒 Inicia sesión para ver casos guardados'); } catch(e) {}
+    return;
+  }
+
   var el = document.getElementById('historial-list');
   if (!el) return;
   var casos = getCasos();
   if (!casos.length) {
-    el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:28px 16px;font-size:13px;line-height:1.7">No hay casos guardados.<br>Presiona "Nuevo Paciente" y el caso<br>se guardará automáticamente.</div>';
+    el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:28px 16px;font-size:13px;line-height:1.9">No hay casos guardados.<br><span style="color:#1e2d44">Se guardan automáticamente al registrar.</span></div>';
     return;
   }
-  el.innerHTML = casos.map(function(c) {
-    var nombre  = (c.pac && c.pac.nombre) ? c.pac.nombre : 'Sin nombre';
-    var edad    = (c.pac && c.pac.edad)   ? c.pac.edad+'a' : '';
-    var exp     = (c.pac && c.pac.exp)    ? '· Exp '+c.pac.exp : '';
-    var tipoAn  = (c.pac && c.pac.tipoAn) ? c.pac.tipoAn.split('—')[0].trim().split(' ').slice(0,3).join(' ') : '';
-    var nVit    = (c.history || []).length;
-    var nFar    = (c.farms   || []).length;
-    var fecha   = c.fecha || '';
-    var isCurr  = S._casoId === c.id;
-    var cid = c.id;    var card = '<div style="background:#04060d;border:1.5px solid '+(isCurr?'#00e5ff':'#1e2d44')+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;position:relative">';    card += isCurr ? '<div style="position:absolute;top:10px;right:44px;font-size:9px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:1px">● Activo</div>' : '';    card += '<div style="font-size:16px;font-weight:800;color:#dde8ff;margin-bottom:3px;padding-right:36px">'+nombre+' <span style="font-size:12px;color:#3d5a78;font-weight:400">'+edad+' '+exp+'</span></div>';    card += '<div style="font-size:11px;color:#00e5ff;margin-bottom:5px">'+tipoAn+'</div>';    card += '<div style="font-size:10px;color:#3d5a78">'+fecha+' · '+nVit+' vitales · '+nFar+' farmacos</div>';    card += '<button style="position:absolute;top:12px;right:12px;background:transparent;border:none;color:#ff1744;font-size:20px;cursor:pointer;padding:2px 6px" id="del_'+cid+'">🗑</button>';    card += '</div>';    return card;  }).join('');
+  // Build with DOM nodes so onclick always works on iPhone
+  el.innerHTML = '';
+  casos.forEach(function(c) {
+    var nombre = (c.pac && c.pac.nombre) ? c.pac.nombre : 'Sin nombre';
+    var edad   = (c.pac && c.pac.edad)   ? ' · ' + c.pac.edad + 'a' : '';
+    var exp    = (c.pac && c.pac.exp)    ? ' · Exp ' + c.pac.exp : '';
+    var cx     = (c.pac && c.pac.cx)     ? c.pac.cx : '';
+    var nVit   = (c.history || []).length;
+    var nFar   = (c.farms   || []).length;
+    var fecha  = c.fecha || '';
+    var isCurr = S._casoId === c.id;
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#04060d;border:2px solid ' + (isCurr ? '#00e5ff' : '#1e2d44')
+      + ';border-radius:14px;padding:16px;margin-bottom:12px;position:relative';
+
+    if (isCurr) {
+      var badge = document.createElement('div');
+      badge.style.cssText = 'position:absolute;top:12px;right:12px;font-size:9px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:1px';
+      badge.textContent = '● Activo';
+      card.appendChild(badge);
+    }
+
+    var nameDiv = document.createElement('div');
+    nameDiv.style.cssText = 'font-size:17px;font-weight:800;color:#dde8ff;margin-bottom:3px;padding-right:' + (isCurr ? '70px' : '8px');
+    nameDiv.textContent = nombre + edad + exp;
+    card.appendChild(nameDiv);
+
+    if (cx) {
+      var cxDiv = document.createElement('div');
+      cxDiv.style.cssText = 'font-size:12px;color:#00e5ff;margin-bottom:4px';
+      cxDiv.textContent = cx;
+      card.appendChild(cxDiv);
+    }
+
+    var infoDiv = document.createElement('div');
+    infoDiv.style.cssText = 'font-size:11px;color:#3d5a78;margin-bottom:12px';
+    infoDiv.textContent = fecha + ' · ' + nVit + ' vitales · ' + nFar + ' farmacos';
+    card.appendChild(infoDiv);
+
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px';
+
+    var btnAbrir = document.createElement('button');
+    btnAbrir.style.cssText = 'padding:11px;font-size:13px;font-weight:700;background:rgba(0,229,255,.1);border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;cursor:pointer';
+    btnAbrir.textContent = '📂 Abrir y editar';
+    (function(id) {
+      btnAbrir.addEventListener('click', function(e) { e.stopPropagation(); loadCaso(id); });
+    })(c.id);
+
+    var btnElim = document.createElement('button');
+    btnElim.style.cssText = 'padding:11px;font-size:13px;font-weight:700;background:rgba(255,23,68,.1);border:1.5px solid #ff1744;border-radius:10px;color:#ff1744;cursor:pointer';
+    btnElim.textContent = '🗑 Eliminar';
+    (function(id) {
+      btnElim.addEventListener('click', function(e) { e.stopPropagation(); deleteCaso(id); });
+    })(c.id);
+
+    btnRow.appendChild(btnAbrir);
+    btnRow.appendChild(btnElim);
+    card.appendChild(btnRow);
+    el.appendChild(card);
+  });
 }
 
-function loginAndNew() {
-  var nombre = document.getElementById('login-user').value.trim();
-  var inst   = document.getElementById('login-inst').value.trim();
-  localStorage.setItem(USER_KEY, JSON.stringify({nombre:nombre, inst:inst}));
+// ═══════════════════════════════════════════════════════════════
+// DELETE FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
 
-  // Reset state for new patient
-  S._casoId     = 'caso_' + Date.now();
-  S.pac         = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
-                   dx:'',cx:'',tipoAn:'',asa:'II',med:nombre,ciru:'',inst:inst};
-  S.history     = [];
-  S.farms       = [];
-  S.ventHist    = [];
-  S.liqHora     = [];
-  S.hourBuckets = {};
-  S.alerts      = [];
-  S.hrAlarms    = [];
-  S.phases      = {an:null,cx:null,fincx:null,fin:null};
-
-  // Clear UI
-  ['time-an','time-cx','time-fincx','time-fin'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro','eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  renderVitalTable(); renderFarms(); renderHourBuckets(); calcLiq(); drawChart();
-
-  hideLogin();
-  updateTopbar();
-  showToast('✅ Nuevo paciente — ' + (nombre ? 'Bienvenido Dr. '+nombre : 'Listo'));
-  setTimeout(openPacModal, 400);
+function deleteCaso(id) {
+  showConfirm(
+    '¿Eliminar este caso?',
+    'Se elimina del historial permanentemente',
+    '🗑 Eliminar', '#ff1744',
+    function() {
+      var casos = getCasos().filter(function(c){ return c.id !== id; });
+      saveCasos(casos);
+      if (S._casoId === id) S._casoId = null;
+      refreshHistorial();
+      showToast('🗑 Caso eliminado');
+    }
+  );
 }
 
-function showLogin() {
+function deleteVitalRow() {
+  if (_editVitalIdx < 0) return;
+  var hora = (S.history[_editVitalIdx] || {}).hora || '';
+  showConfirm(
+    '¿Eliminar registro de vitales?',
+    'Hora: ' + hora,
+    '🗑 Eliminar', '#ff1744',
+    function() {
+      S.history.splice(_editVitalIdx, 1);
+      closeEditVital();
+      renderVitalTable();
+      try { drawChart(); } catch(e) {}
+      autoSave();
+      if (navigator.vibrate) navigator.vibrate([50,30,50]);
+    }
+  );
+}
+
+function deleteFarm2() {
+  if (_editFarmIdx < 0) return;
+  var f = S.farms[_editFarmIdx] || {};
+  showConfirm(
+    '¿Eliminar ' + (f.n || 'este fármaco') + '?',
+    (f.d || '') + (f.v ? ' · ' + f.v : ''),
+    '🗑 Eliminar', '#ff1744',
+    function() {
+      S.farms.splice(_editFarmIdx, 1);
+      closeEditFarm2();
+      renderFarms();
+      var st = document.getElementById('st-fm');
+      if (st) st.textContent = S.farms.length;
+      autoSave();
+      if (navigator.vibrate) navigator.vibrate([50,30,50]);
+    }
+  );
+}
+
+function deleteLiqRow() {
+  if (_editLiqIdx < 0) return;
+  var hora = (S.liqHora[_editLiqIdx] || {}).hora || '';
+  showConfirm(
+    '¿Eliminar registro de hora?',
+    'Hora: ' + hora,
+    '🗑 Eliminar', '#ff1744',
+    function() {
+      S.liqHora.splice(_editLiqIdx, 1);
+      var acum = 0;
+      S.liqHora.forEach(function(r, i) { acum += r.balHr; S.liqHora[i].acum = acum; });
+      closeEditLiq();
+      var b = document.getElementById('liq-tbody');
+      if (b) {
+        if (!S.liqHora.length) {
+          b.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
+        } else {
+          b.innerHTML = S.liqHora.map(function(r, i) {
+            return '<tr onclick="openEditLiq(' + i + ')" style="cursor:pointer">'
+              + '<td class="hl" style="font-weight:800">' + r.hora + '</td><td>' + r.nacl + '</td><td>' + r.hart + '</td>'
+              + '<td class="' + (r.sang > 300 ? 'wc' : '') + '">' + r.sang + '</td><td>' + r.diu + '</td>'
+              + '<td class="' + (r.balHr < 0 ? 'wc' : '') + '">' + (r.balHr >= 0 ? '+' : '') + r.balHr + '</td>'
+              + '<td class="' + (r.acum < -500 ? 'dc' : r.acum < 0 ? 'wc' : 'hl') + '">' + (r.acum >= 0 ? '+' : '') + r.acum + '</td>'
+              + '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td></tr>';
+          }).join('');
+        }
+      }
+      autoSave();
+      if (navigator.vibrate) navigator.vibrate([50,30,50]);
+    }
+  );
+}
+
+function deleteVentRow() {
+  if (_editVentIdx < 0) return;
+  var hora = (S.ventHist[_editVentIdx] || {}).hora || '';
+  showConfirm(
+    '¿Eliminar registro de ventilador?',
+    'Hora: ' + hora,
+    '🗑 Eliminar', '#ff1744',
+    function() {
+      S.ventHist.splice(_editVentIdx, 1);
+      closeEditVent();
+      var tb = document.getElementById('vent-tbody');
+      if (tb) {
+        if (!S.ventHist.length) {
+          tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
+        } else {
+          tb.innerHTML = S.ventHist.map(function(r, i) {
+            return '<tr onclick="openEditVent(' + i + ')" style="cursor:pointer">'
+              + '<td class="hl">' + r.hora + '</td><td>' + r.modo + '</td><td>' + r.fio2 + '%</td>'
+              + '<td>' + r.vc + '</td><td>' + r.fr + '</td><td>' + r.peep + '</td>'
+              + '<td class="' + (r.ppeak > 30 ? 'dc' : '') + '">' + r.ppeak + '</td>'
+              + '<td class="' + (r.etco2 > 45 || r.etco2 < 30 ? 'wc' : '') + '">' + r.etco2 + '</td>'
+              + '<td>' + r.vm + '</td>'
+              + '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td></tr>';
+          }).join('');
+        }
+      }
+      autoSave();
+      if (navigator.vibrate) navigator.vibrate([50,30,50]);
+    }
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ELIMINAR ALERTA
+// ═══════════════════════════════════════════════════════════════
+function deleteAlert(idx) {
+  S.alerts.splice(idx, 1);
+  // Re-render alert list
+  var el = document.getElementById('alert-list');
+  if (!el) return;
+  el.innerHTML = '';
+  S.alerts.forEach(function(a, i) {
+    var div = document.createElement('div');
+    div.className = 'alert ' + a.type;
+    var ic = a.type==='danger' ? '🚨' : a.type==='warn' ? '⚠️' : 'ℹ️';
+    div.style.cssText = 'display:flex;align-items:center;gap:8px';
+    div.innerHTML = '<span class="alert-icon">'+ic+'</span>'
+      + '<div style="flex:1"><div>'+a.msg+'</div><span class="alert-time">'+a.hora+'</span></div>'
+      + '<button onclick="deleteAlert('+i+')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;flex-shrink:0">🗑</button>';
+    el.appendChild(div);
+  });
+  var badge = document.getElementById('alert-badge');
+  if (badge) badge.textContent = S.alerts.filter(function(a){ return a.type==='danger'; }).length || '';
   autoSave();
-  var u = getUser();
-  document.getElementById('login-user').value = u.nombre || '';
-  document.getElementById('login-inst').value = u.inst   || '';
-  refreshHistorial();
-  document.getElementById('login-screen').style.display = 'block';
-}
-
-function hideLogin() {
-  document.getElementById('login-screen').style.display = 'none';
 }
 
 // Auto-save every 90 seconds
 setInterval(function(){ if(S.pac.nombre||S.history.length||S.farms.length) autoSave(); }, 90000);
 
-// ── On startup ──
-(function initApp() {
+// ── On startup (deferred to after DOM is fully loaded) ──
+// ─── PERFIL FUNCTIONS ───
+function lsMostrarPerfil(u) {
+  var formEl  = document.getElementById('ls-perfil-form');
+  var savedEl = document.getElementById('ls-perfil-guardado');
+  var nomEl   = document.getElementById('ls-nombre-display');
+  var instEl  = document.getElementById('ls-inst-display');
+  if (!u || !u.nombre) {
+    if (formEl)  formEl.style.display  = 'block';
+    if (savedEl) savedEl.style.display = 'none';
+  } else {
+    if (nomEl)   nomEl.textContent  = u.nombre;
+    if (instEl)  instEl.textContent = u.inst  || '';
+    var emailDispEl = document.getElementById('ls-email-display');
+    if (emailDispEl) emailDispEl.textContent = u.email ? '✉️ ' + u.email : '';
+    if (formEl)  formEl.style.display  = 'none';
+    if (savedEl) savedEl.style.display = 'block';
+    // Keep inputs in sync
+    var lu = document.getElementById('login-user'); if(lu) lu.value = u.nombre;
+    var li = document.getElementById('login-inst'); if(li) li.value = u.inst || '';
+    var le = document.getElementById('login-email'); if(le) le.value = u.email || '';
+  }
+}
+
+function lsGuardarPerfil() {
+  var nombre = (document.getElementById('login-user').value || '').trim();
+  if (!nombre) { showToast('⚠️ Escribe tu nombre primero'); return; }
+  var inst   = (document.getElementById('login-inst').value  || '').trim();
+  var email  = (document.getElementById('login-email').value || '').trim();
+  var u = {nombre: nombre, inst: inst, email: email};
+  localStorage.setItem(USER_KEY, JSON.stringify(u));
+  lsMostrarPerfil(u);
+  showToast('✅ Perfil guardado: ' + nombre);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function lsCambiarPerfil() {
+  var formEl  = document.getElementById('ls-perfil-form');
+  var savedEl = document.getElementById('ls-perfil-guardado');
+  if (formEl)  formEl.style.display  = 'block';
+  if (savedEl) savedEl.style.display = 'none';
+}
+
+// ─── INIT APP ───
+window.addEventListener('load', function() {
   var u     = getUser();
   var casos = getCasos();
+  lsMostrarPerfil(u);
+  if (casos.length > 0) { restoreState(casos[0]); }
+  refreshHistorial();
+  showLogin(); setAccessUI(false);
+});
 
-  document.getElementById('login-user').value = u.nombre || '';
-  document.getElementById('login-inst').value = u.inst   || '';
 
-  if (casos.length > 0) {
-    // Restore last case silently, then show login screen
-    restoreState(casos[0]);
-    refreshHistorial();
-    document.getElementById('login-screen').style.display = 'block';
+// ───────────────────────────────────────────────
+// LOGIN SCREEN CONTROLS (added)
+// ───────────────────────────────────────────────
+function showLogin() {
+  var ls = document.getElementById('login-screen');
+  if (ls) { ls.style.display = 'block'; ls.style.opacity = ''; ls.style.visibility = ''; }
+  document.body.style.overflow = 'hidden';
+  // ✕ solo aparece si ya hay sesión activa (usuario abre historial desde la app)
+  var cb = document.getElementById('btn-close-login');
+  if (cb) cb.style.display = window.__ACCESS_GRANTED ? 'block' : 'none';
+  try { if (window.__ACCESS_GRANTED) refreshHistorial(); } catch(e) {}
+}
+
+function hideLogin() {
+  // Solo permite cerrar si hay sesión activa
+  if (!window.__ACCESS_GRANTED) {
+    try { showToast('🔒 Inicia sesión para continuar.'); } catch(e) {}
+    return;
+  }
+  var ls = document.getElementById('login-screen');
+  if (ls) ls.style.display = 'none';
+  document.body.style.overflow = '';
+  // Ocultar el ✕ cuando se cierra el panel
+  var cb = document.getElementById('btn-close-login');
+  if (cb) cb.style.display = 'none';
+}
+
+
+// ───────────────────────────────────────────────
+// ACCESS GATE helpers (show/hide profile sections)
+// ───────────────────────────────────────────────
+function setAccessUI(isAuthed) {
+  window.__ACCESS_GRANTED = !!isAuthed;
+  var pf = document.getElementById('ls-perfil-form');
+  var ps = document.getElementById('ls-perfil-guardado');
+  var hc = document.getElementById('historial-list');
+  var rb = document.getElementById('btn-refresh-hist');
+  var cb = document.getElementById('btn-close-login');
+
+  // Secciones sensibles
+  if (pf) pf.style.display = isAuthed ? 'block' : 'none';
+  if (ps) ps.style.display = isAuthed ? ((getUser() && getUser().nombre) ? 'block' : 'none') : 'none';
+
+  // Botón cerrar (solo si ya estás autorizado)
+  if (cb) cb.style.display = 'none'; // se muestra solo cuando showLogin() es llamado post-auth
+
+  // Botón refresh historial (solo si autorizado)
+  if (rb) {
+    rb.disabled = !isAuthed;
+    rb.style.opacity = isAuthed ? '1' : '0.45';
+    rb.style.pointerEvents = isAuthed ? 'auto' : 'none';
+    rb.title = isAuthed ? 'Actualizar' : 'Acceso requerido';
+  }
+
+  if (!isAuthed) {
+    try {
+      if (hc) hc.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px;line-height:1.8">Acceso requerido.</div>';
+    } catch(e) {}
   } else {
-    // First ever launch — show login
-    refreshHistorial();
-    document.getElementById('login-screen').style.display = 'block';
+    try { refreshHistorial(); } catch(e) {}
+  }
+}
+
+
+
+
+
+/* === CLINICAL SUMMARY PATCH v1 ===
+   Objetivo (práctica anestésica):
+   - Vitales/ventilador: NO se suman. Se reporta ÚLTIMO, PROMEDIO, MÍN–MÁX.
+   - Fármacos: conteo total, primera/última hora, y top por frecuencia (no suma de dosis por unidades mixtas).
+=== */
+
+(function(){
+  function _num(v){ var n = Number(v); return isFinite(n) ? n : null; }
+  function _avg(arr){ var s=0,c=0; for(var i=0;i<arr.length;i++){ if(arr[i]!==null){ s+=arr[i]; c++; } } return c? (s/c): null; }
+  function _min(arr){ var m=null; for(var i=0;i<arr.length;i++){ var v=arr[i]; if(v===null) continue; m = (m===null)? v : Math.min(m,v); } return m; }
+  function _max(arr){ var m=null; for(var i=0;i<arr.length;i++){ var v=arr[i]; if(v===null) continue; m = (m===null)? v : Math.max(m,v); } return m; }
+  function _fmt0(v){ return v===null ? '—' : String(Math.round(v)); }
+  function _fmt1(v){ return v===null ? '—' : String(Math.round(v*10)/10); }
+  function _timeToMin(h){ if(!h || typeof h!=='string' || h.indexOf(':')<0) return null; var p=h.split(':'),hh=parseInt(p[0],10),mm=parseInt(p[1],10); if(!isFinite(hh)||!isFinite(mm)) return null; return hh*60+mm; }
+  function _minToTime(m){ if(m===null) return '—'; var hh=Math.floor(m/60)%24, mm=m%60; return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+
+  // ─────────────────────────────────────────────────────────
+  // VITALES: extender renderVitalTable() agregando resumen
+  // ─────────────────────────────────────────────────────────
+  var _origRenderVitalTable = window.renderVitalTable;
+  window.renderVitalTable = function(){
+    if (typeof _origRenderVitalTable === 'function') _origRenderVitalTable();
+    var b = document.getElementById('vital-tbody');
+    if(!b || !window.S || !S.history || !S.history.length) return;
+    // Evita duplicar
+    if (b.querySelector('tr[data-summary="vital"]')) return;
+
+    var tas = S.history.map(function(r){ return _num(r.tas); });
+    var tad = S.history.map(function(r){ return _num(r.tad); });
+    var pam = S.history.map(function(r){
+      if (_num(r.pam)!==null) return _num(r.pam);
+      var TAS=_num(r.tas), TAD=_num(r.tad);
+      return (TAS===null||TAD===null) ? null : (TAD + (TAS-TAD)/3);
+    });
+    var fc   = S.history.map(function(r){ return _num(r.fc); });
+    var fr   = S.history.map(function(r){ return _num(r.fr); });
+    var spo2 = S.history.map(function(r){ return _num(r.spo2); });
+    var temp = S.history.map(function(r){ return _num(r.temp); });
+
+    var last = S.history[S.history.length-1] || {};
+    var lastPam = (_num(last.pam)!==null) ? _num(last.pam) : ((_num(last.tas)!==null && _num(last.tad)!==null) ? (_num(last.tad)+(_num(last.tas)-_num(last.tad))/3) : null);
+
+    function row(label, cTas,cTad,cPam,cFc,cFr,cSp,cTp,note){
+      return '<tr data-summary="vital" style="background:rgba(0,229,255,.06)">'
+        + '<td class="hl" style="font-weight:900">'+label+'</td>'
+        + '<td style="font-weight:800">'+cTas+'</td>'
+        + '<td style="font-weight:800">'+cTad+'</td>'
+        + '<td style="font-weight:900;color:#d500f9">'+cPam+'</td>'
+        + '<td style="font-weight:900;color:var(--orange)">'+cFc+'</td>'
+        + '<td style="font-weight:800">'+cFr+'</td>'
+        + '<td style="font-weight:900;color:var(--green)">'+cSp+'</td>'
+        + '<td style="font-weight:900;color:var(--yellow)">'+cTp+'</td>'
+        + '<td style="color:var(--muted);font-size:11px">'+(note||'')+'</td>'
+        + '</tr>';
+    }
+
+    var header = '<tr data-summary="vital"><td colspan="9" style="text-align:center;color:var(--muted);padding:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border);background:rgba(255,255,255,.02)">Resumen clínico — '+S.history.length+' registros</td></tr>';
+    var rLast = row('ÚLTIMO', _fmt0(_num(last.tas)), _fmt0(_num(last.tad)), _fmt0(lastPam), _fmt0(_num(last.fc)), _fmt0(_num(last.fr)), _fmt0(_num(last.spo2)), _fmt1(_num(last.temp)), '');
+    var rAvg  = row('PROM', _fmt0(_avg(tas)), _fmt0(_avg(tad)), _fmt0(_avg(pam)), _fmt0(_avg(fc)), _fmt0(_avg(fr)), _fmt0(_avg(spo2)), _fmt1(_avg(temp)), '');
+    var rMM   = row('MÍN–MÁX', _fmt0(_min(tas))+'–'+_fmt0(_max(tas)), _fmt0(_min(tad))+'–'+_fmt0(_max(tad)), _fmt0(_min(pam))+'–'+_fmt0(_max(pam)), _fmt0(_min(fc))+'–'+_fmt0(_max(fc)), _fmt0(_min(fr))+'–'+_fmt0(_max(fr)), _fmt0(_min(spo2))+'–'+_fmt0(_max(spo2)), _fmt1(_min(temp))+'–'+_fmt1(_max(temp)), '');
+    b.insertAdjacentHTML('beforeend', header + rLast + rAvg + rMM);
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // VENTILADOR: post-procesar tabla y agregar resumen
+  // ─────────────────────────────────────────────────────────
+  function addVentSummary(){
+    var b = document.getElementById('vent-tbody');
+    if(!b || !window.S || !S.ventHist || !S.ventHist.length) return;
+    if (b.querySelector('tr[data-summary="vent"]')) return;
+
+    var fio2  = S.ventHist.map(function(r){ return _num(r.fio2); });
+    var vc    = S.ventHist.map(function(r){ return _num(r.vc); });
+    var fr    = S.ventHist.map(function(r){ return _num(r.fr); });
+    var peep  = S.ventHist.map(function(r){ return _num(r.peep); });
+    var ppeak = S.ventHist.map(function(r){ return _num(r.ppeak); });
+    var etco2 = S.ventHist.map(function(r){ return _num(r.etco2); });
+    var vm    = S.ventHist.map(function(r){ return _num(r.vm); });
+
+    // En tu flujo usas unshift(), así que el último registro está en [0]
+    var last = S.ventHist[0] || {};
+
+    var header = '<tr data-summary="vent"><td colspan="10" style="text-align:center;color:var(--muted);padding:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border);background:rgba(255,255,255,.02)">Resumen ventilatorio — '+S.ventHist.length+' registros</td></tr>';
+
+    function row(label, modo, cFio2,cVc,cFr,cPeep,cPpeak,cEt,cVm){
+      return '<tr data-summary="vent" style="background:rgba(0,229,255,.06)">'
+        + '<td class="hl" style="font-weight:900">'+label+'</td>'
+        + '<td style="font-weight:800">'+(modo||'—')+'</td>'
+        + '<td style="font-weight:900;color:var(--green)">'+cFio2+'</td>'
+        + '<td style="font-weight:900;color:var(--cyan)">'+cVc+'</td>'
+        + '<td style="font-weight:900;color:var(--orange)">'+cFr+'</td>'
+        + '<td style="font-weight:900">'+cPeep+'</td>'
+        + '<td style="font-weight:900">'+cPpeak+'</td>'
+        + '<td style="font-weight:900">'+cEt+'</td>'
+        + '<td style="font-weight:900">'+cVm+'</td>'
+        + '<td></td>'
+        + '</tr>';
+    }
+
+    var rLast = row('ÚLTIMO', last.modo, _fmt0(_num(last.fio2))+'%', _fmt0(_num(last.vc)), _fmt0(_num(last.fr)), _fmt0(_num(last.peep)), _fmt0(_num(last.ppeak)), _fmt0(_num(last.etco2)), _fmt1(_num(last.vm)));
+    var rAvg  = row('PROM', '—', _fmt0(_avg(fio2))+'%', _fmt0(_avg(vc)), _fmt0(_avg(fr)), _fmt0(_avg(peep)), _fmt0(_avg(ppeak)), _fmt0(_avg(etco2)), _fmt1(_avg(vm)));
+    var rMM   = row('MÍN–MÁX', '—', _fmt0(_min(fio2))+'–'+_fmt0(_max(fio2))+'%', _fmt0(_min(vc))+'–'+_fmt0(_max(vc)), _fmt0(_min(fr))+'–'+_fmt0(_max(fr)), _fmt0(_min(peep))+'–'+_fmt0(_max(peep)), _fmt0(_min(ppeak))+'–'+_fmt0(_max(ppeak)), _fmt0(_min(etco2))+'–'+_fmt0(_max(etco2)), _fmt1(_min(vm))+'–'+_fmt1(_max(vm)));
+
+    b.insertAdjacentHTML('beforeend', header + rLast + rAvg + rMM);
+  }
+
+  // Wrap regVent to add summary after it re-renders tbody
+  var _origRegVent = window.regVent;
+  window.regVent = function(){
+    if (typeof _origRegVent === 'function') _origRegVent();
+    addVentSummary();
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // FÁRMACOS: extender renderFarms() agregando resumen clínico
+  // ─────────────────────────────────────────────────────────
+  var _origRenderFarms = window.renderFarms;
+  window.renderFarms = function(){
+    if (typeof _origRenderFarms === 'function') _origRenderFarms();
+    var el = document.getElementById('farm-list');
+    if(!el || !window.S || !S.farms || !S.farms.length) return;
+
+    // Evita duplicar
+    if (el.querySelector('[data-summary="farms"]')) return;
+
+    var n = S.farms.length;
+    var times = S.farms.map(function(f){ return _timeToMin(f.h); }).filter(function(x){return x!==null;});
+    var firstT = times.length ? _minToTime(Math.min.apply(null, times)) : '—';
+    var lastT  = times.length ? _minToTime(Math.max.apply(null, times)) : '—';
+
+    var freq = {};
+    for (var i=0;i<S.farms.length;i++){
+      var name = (S.farms[i].n || '—').trim();
+      freq[name] = (freq[name]||0) + 1;
+    }
+    var top = Object.keys(freq).map(function(k){return [k,freq[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var topHtml = top.map(function(x){
+      return '<span class="badge" style="margin-right:6px">'+x[0]+': '+x[1]+'</span>';
+    }).join(' ');
+
+    var box = document.createElement('div');
+    box.setAttribute('data-summary','farms');
+    box.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px';
+    box.innerHTML = '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resumen de fármacos</div>'
+      + '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">'
+      + '<div><span style="color:var(--muted)">Total:</span> <b style="color:var(--orange)">'+n+'</b></div>'
+      + '<div><span style="color:var(--muted)">Primero:</span> <b>'+firstT+'</b></div>'
+      + '<div><span style="color:var(--muted)">Último:</span> <b>'+lastT+'</b></div>'
+      + '</div>'
+      + (topHtml ? ('<div style="margin-top:8px">'+topHtml+'</div>') : '');
+
+    // Insert summary at top of list
+    el.insertBefore(box, el.firstChild);
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // Recalcular resúmenes al cargar/restaurar
+  // ─────────────────────────────────────────────────────────
+  window.addEventListener('load', function(){
+    try { window.renderVitalTable(); } catch(e){}
+    try { addVentSummary(); } catch(e){}
+    try { window.renderFarms(); } catch(e){}
+  });
+
+  // Hook restoreState if exists
+  var _origRestore = window.restoreState;
+  if (typeof _origRestore === 'function') {
+    window.restoreState = function(caso){
+      _origRestore(caso);
+      try { window.renderVitalTable(); } catch(e){}
+      try { addVentSummary(); } catch(e){}
+      try { window.renderFarms(); } catch(e){}
+    };
+  }
+
+})();
+
+/* === MISSING HANDLERS PATCH v1 === */
+
+/* === MISSING HANDLERS PATCH v1 ===
+   Completa funciones que están referenciadas en onclick pero no estaban definidas.
+   (iOS PWA falla silenciosamente si falta alguna.)
+=== */
+
+// ── LOGIN: Nuevo paciente desde historial ──
+function hasCurrentData(){
+  try{
+    return !!(
+      (S && S.pac && (S.pac.nombre || S.pac.exp || S.pac.dx || S.pac.cx)) ||
+      (S && S.history && S.history.length) ||
+      (S && S.farms && S.farms.length) ||
+      (S && S.ventHist && S.ventHist.length) ||
+      (S && S.liqHora && S.liqHora.length)
+    );
+  }catch(e){ return false; }
+}
+
+function resetForNewCase(){
+  // Caso nuevo
+  S._casoId = null;
+  S.vitals = {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0};
+  S.history = [];
+  S.farms = [];
+  S.ventHist = [];
+  S.liqHora = [];
+  S.alerts = [];
+  S.hrAlarms = [];
+  S.hourBuckets = {};
+  S.phases = {an:null,cx:null,fin:null};
+  S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',dx:'',cx:'',tipoAn:'',asa:'II',med:'',ciru:'',inst:''};
+
+  // Limpia UI básica
+  ['m-nombre','m-edad','m-exp','m-peso','m-dx','m-cx','m-anest','m-ciru','m-inst',
+   'in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
+   'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro',
+   'time-an','time-cx','time-fin',
+   'fn','fd','fnota','fh'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+
+  try{ updateTopbar(); }catch(e){}
+  try{ renderVitalTable(); drawChart(); }catch(e){}
+  try{ renderFarms(); }catch(e){}
+  try{ calcLiq(); }catch(e){}
+  try{ document.getElementById('vent-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>'; }catch(e){}
+}
+
+function _doNewPatient(){
+  // Seguridad: autosave antes de reset
+  try{ if(hasCurrentData()) autoSave(true); }catch(e){ try{ autoSave(); }catch(_){} }
+
+  // Prefill médico e institución desde perfil
+  var u = getUser();
+  resetForNewCase();
+  if(u && u.nombre){ S.pac.med = u.nombre; }
+  if(u && u.inst){ S.pac.inst = u.inst; }
+  try{ updateTopbar(); }catch(e){}
+  try{ hideLogin(); }catch(e){}
+  try{ openPacModal(); }catch(e){}
+}
+
+function loginAndNew(){
+  if(typeof showConfirm==='function' && hasCurrentData()){
+    showConfirm('¿Iniciar nuevo paciente?', 'Se guardará automáticamente el caso actual y se reiniciará.', '➕ Nuevo', '#00e676', _doNewPatient);
+  } else {
+    _doNewPatient();
+  }
+}
+
+// ── MODAL EDITAR LÍQUIDOS ──
+var _editLiqIdx = -1;
+function openEditLiq(idx){
+  _editLiqIdx = idx;
+  var r = (S.liqHora||[])[idx];
+  if(!r) return;
+  document.getElementById('el-nacl').value = r.nacl || 0;
+  document.getElementById('el-hart').value = r.hart || 0;
+  document.getElementById('el-sang').value = r.sang || 0;
+  document.getElementById('el-diu').value  = r.diu  || 0;
+  document.getElementById('edit-liq-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeEditLiq(){
+  var m=document.getElementById('edit-liq-modal');
+  if(m) m.style.display='none';
+  document.body.style.overflow='';
+}
+function _renderLiqTable(){
+  var b=document.getElementById('liq-tbody');
+  if(!b) return;
+  if(!S.liqHora || !S.liqHora.length){
+    b.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
+    return;
+  }
+  b.innerHTML=S.liqHora.map(function(r,i){
+    return '<tr onclick="openEditLiq('+i+')" style="cursor:pointer">'
+      + '<td class="hl" style="font-weight:800">'+r.hora+'</td><td>'+r.nacl+'</td><td>'+r.hart+'</td>'
+      + '<td class="'+(r.sang>300?'wc':'')+'">'+r.sang+'</td><td>'+r.diu+'</td>'
+      + '<td class="'+(r.balHr<0?'wc':'')+'">'+(r.balHr>=0?'+':'')+r.balHr+'</td>'
+      + '<td class="'+(r.acum<-500?'dc':r.acum<0?'wc':'hl')+'">'+(r.acum>=0?'+':'')+r.acum+'</td>'
+      + '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td></tr>';
+  }).join('');
+}
+function saveLiqEdit(){
+  if(_editLiqIdx<0) return;
+  var nacl=parseInt(document.getElementById('el-nacl').value)||0;
+  var hart=parseInt(document.getElementById('el-hart').value)||0;
+  var sang=parseInt(document.getElementById('el-sang').value)||0;
+  var diu =parseInt(document.getElementById('el-diu').value)||0;
+  var r=S.liqHora[_editLiqIdx];
+  if(!r) return;
+  var balHr=(nacl+hart)-(sang+diu);
+  S.liqHora[_editLiqIdx] = {hora:r.hora,nacl:nacl,hart:hart,sang:sang,diu:diu,balHr:balHr,acum:0};
+  // Recalcular acumulado
+  var acum=0;
+  S.liqHora.forEach(function(x,i){ acum += (x.balHr||0); S.liqHora[i].acum = acum; });
+  closeEditLiq();
+  _renderLiqTable();
+  try{ autoSave(); }catch(e){}
+  try{ calcLiq(); }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+// ── MODAL EDITAR VENTILADOR ──
+var _editVentIdx = -1;
+function openEditVent(idx){
+  _editVentIdx = idx;
+  var r=(S.ventHist||[])[idx];
+  if(!r) return;
+  document.getElementById('ev2-hora').value  = r.hora || '';
+  document.getElementById('ev2-modo').value  = r.modo || '';
+  document.getElementById('ev2-fio2').value  = r.fio2 || 0;
+  document.getElementById('ev2-vc').value    = r.vc || 0;
+  document.getElementById('ev2-fr').value    = r.fr || 0;
+  document.getElementById('ev2-peep').value  = r.peep || 0;
+  document.getElementById('ev2-ppeak').value = r.ppeak || 0;
+  document.getElementById('ev2-etco2').value = r.etco2 || 0;
+  document.getElementById('ev2-vm').value    = r.vm || 0;
+  document.getElementById('edit-vent-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeEditVent(){
+  var m=document.getElementById('edit-vent-modal');
+  if(m) m.style.display='none';
+  document.body.style.overflow='';
+}
+function _renderVentTable(){
+  var b=document.getElementById('vent-tbody');
+  if(!b) return;
+  if(!S.ventHist || !S.ventHist.length){
+    b.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
+    return;
+  }
+  b.innerHTML=S.ventHist.map(function(r,i){
+    return '<tr onclick="openEditVent('+i+')" style="cursor:pointer">'
+      + '<td class="hl">'+r.hora+'</td><td>'+r.modo+'</td><td>'+r.fio2+'%</td>'
+      + '<td>'+r.vc+'</td><td>'+r.fr+'</td><td>'+r.peep+'</td>'
+      + '<td class="'+(r.ppeak>30?'dc':'')+'">'+r.ppeak+'</td>'
+      + '<td class="'+((r.etco2>45||r.etco2<30)?'wc':'')+'">'+r.etco2+'</td>'
+      + '<td>'+r.vm+'</td>'
+      + '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td></tr>';
+  }).join('');
+  // Si existe el resumen ventilatorio del patch, lo vuelve a aplicar
+  try{ if(window.renderVentTable) window.renderVentTable(); }catch(e){}
+}
+function saveVentEdit(){
+  if(_editVentIdx<0) return;
+  var r=S.ventHist[_editVentIdx];
+  if(!r) return;
+  var fio2=parseFloat(document.getElementById('ev2-fio2').value)||0;
+  var vc=parseFloat(document.getElementById('ev2-vc').value)||0;
+  var fr=parseFloat(document.getElementById('ev2-fr').value)||0;
+  var peep=parseFloat(document.getElementById('ev2-peep').value)||0;
+  var ppeak=parseFloat(document.getElementById('ev2-ppeak').value)||0;
+  var etco2=parseFloat(document.getElementById('ev2-etco2').value)||0;
+  var vm=parseFloat(document.getElementById('ev2-vm').value)|| (vc*fr/1000);
+  S.ventHist[_editVentIdx] = {
+    hora: document.getElementById('ev2-hora').value || r.hora,
+    modo: document.getElementById('ev2-modo').value || r.modo,
+    fio2:fio2, vc:vc, fr:fr, peep:peep, ppeak:ppeak, etco2:etco2, vm: vm.toFixed(1)
+  };
+  closeEditVent();
+  _renderVentTable();
+  try{ autoSave(); }catch(e){}
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+
+// ── MODAL EDIT FARM LEGACY (no usado): stubs para evitar errores ──
+function closeEditFarm(){
+  var m=document.getElementById('edit-farm-modal');
+  if(m) m.style.display='none';
+  document.body.style.overflow='';
+}
+function saveFarmEdit(){
+  // Este modal legacy no se usa; evitar romper.
+  closeEditFarm();
+  try{ showToast('ℹ️ Usa el editor de fármacos (lista)'); }catch(e){}
+}
+function deleteFarmRow(){
+  closeEditFarm();
+  try{ showToast('ℹ️ Usa el editor de fármacos (lista)'); }catch(e){}
+}
+
+
+/* === FARM VIA SUMMARY PATCH v1 === */
+
+/* === FARM VIA SUMMARY PATCH v1 ===
+   Agrega al resumen de fármacos el desglose por VÍA (IV/IM/IT/etc.).
+   - No suma dosis (unidades mixtas), solo cuenta administraciones por vía.
+=== */
+(function(){
+  function addViaBreakdown(){
+    try{
+      if(!window.S || !S.farms || !S.farms.length) return;
+      var list = document.getElementById('farm-list');
+      if(!list) return;
+      var box = list.querySelector('[data-summary="farms"]');
+      if(!box) return;
+      if(box.getAttribute('data-via') === '1') return; // idempotente
+
+      // Conteo por vía
+      var via = {};
+      for(var i=0;i<S.farms.length;i++){
+        var v = (S.farms[i].v || '—').trim();
+        via[v] = (via[v]||0) + 1;
+      }
+      var vias = Object.keys(via).sort(function(a,b){ return via[b]-via[a]; });
+      var viaHtml = vias.map(function(k){
+        // Color semántico simple: IV verde, neuraxial/epidural amarillo, otros cyan
+        var col = 'var(--cyan)';
+        var kl = k.toLowerCase();
+        if(kl==='iv') col='var(--green)';
+        else if(kl.includes('epid') || kl.includes('it') || kl.includes('raqui') || kl.includes('espinal')) col='var(--yellow)';
+        return '<span class="badge" style="margin-right:6px;color:'+col+'">'+k+': '+via[k]+'</span>';
+      }).join(' ');
+
+      var wrap = document.createElement('div');
+      wrap.setAttribute('data-via','1');
+      wrap.style.cssText = 'margin-top:8px;border-top:1px solid var(--border);padding-top:8px';
+      wrap.innerHTML = '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Por vía</div>'
+        + (viaHtml || '<span style="color:var(--muted)">—</span>');
+
+      box.appendChild(wrap);
+      box.setAttribute('data-via','1');
+    }catch(e){}
+  }
+
+  // Wrap renderFarms to always apply
+  var _orig = window.renderFarms;
+  if(typeof _orig === 'function'){
+    window.renderFarms = function(){
+      _orig();
+      addViaBreakdown();
+    };
+  }
+
+  // Apply on load and after restoreState
+  window.addEventListener('load', function(){ setTimeout(addViaBreakdown, 50); });
+  var _restore = window.restoreState;
+  if(typeof _restore === 'function'){
+    window.restoreState = function(caso){
+      _restore(caso);
+      setTimeout(addViaBreakdown, 50);
+    };
   }
 })();
+
 </script>
 
-<!-- ══════════════════════════════════════════════════════
-     PANTALLA DE LOGIN / HISTORIAL  (z-index 500)
-════════════════════════════════════════════════════════ -->
-<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#04060d;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 30px">
 
-  <!-- Header -->
-  <div style="background:linear-gradient(180deg,#0a0f1c 0%,#04060d 100%);padding:50px 24px 24px;text-align:center;border-bottom:1px solid #1e2d44">
-    <div style="font-size:38px;font-weight:900;color:#00e5ff;letter-spacing:-1px">Aneste<span style="color:#dde8ff">Sys</span></div>
-    <div style="font-size:11px;color:#3d5a78;letter-spacing:3px;text-transform:uppercase;margin-top:6px">Registro Anestésico Pro</div>
-  </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc }
+    from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-  <div style="max-width:440px;margin:0 auto;padding:20px 16px">
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkukNH93KZYH_Nt9kSFUZxjLVJ5R_wufg",
+    authDomain: "anestesys.firebaseapp.com",
+    projectId: "anestesys",
+    storageBucket: "anestesys.firebasestorage.app",
+    messagingSenderId: "387101539211",
+    appId: "1:387101539211:web:96667e3d8b6808c546cd8e",
+    measurementId: "G-R8EXVZ9YMY"
+  };
 
-    <!-- Formulario de usuario -->
-    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:16px;padding:20px;margin-bottom:16px">
-      <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">👤 Mi Usuario</div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Nombre del Anestesiólogo</label>
-        <input type="text" id="login-user" placeholder="Dr. / Dra. ..." style="width:100%;padding:12px 14px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:10px;color:#dde8ff;box-sizing:border-box">
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Institución (opcional)</label>
-        <input type="text" id="login-inst" placeholder="Hospital / Clínica..." style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:10px;color:#dde8ff;box-sizing:border-box">
-      </div>
-      <button onclick="loginAndNew()" style="width:100%;padding:15px;font-size:15px;font-weight:800;background:#00e676;color:#04060d;border:none;border-radius:12px;cursor:pointer;letter-spacing:0.5px">➕ Nuevo Paciente</button>
-    </div>
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
 
-    <!-- Historial guardado -->
-    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:16px;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
-        <button onclick="refreshHistorial()" style="background:none;border:1px solid #1e2d44;border-radius:8px;color:#3d5a78;font-size:13px;padding:5px 10px;cursor:pointer">↻ Actualizar</button>
-      </div>
-      <div id="historial-list">
-        <div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px">Cargando historial...</div>
-      </div>
-    </div>
+  // ── helpers UI (siempre via window para cruzar el boundary module↔global) ──
+  const _showLogin    = () => { if(typeof window.showLogin    === 'function') window.showLogin();        };
+  const _hideLogin    = () => { if(typeof window.hideLogin    === 'function') window.hideLogin();        };
+  const _setAccessUI  = (v) => { if(typeof window.setAccessUI === 'function') window.setAccessUI(v);    };
+  const _setLoginBtn  = (loading) => {
+    const btn = document.getElementById('login-btn');
+    if (!btn) return;
+    btn.disabled    = loading;
+    btn.textContent = loading ? '⏳ Validando...' : 'Iniciar sesión';
+    btn.style.opacity = loading ? '0.6' : '1';
+  };
 
-  </div>
-</div>
+  function setAccessMsg(msg, color) {
+    const el = document.getElementById('access-msg');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = color || '#3d5a78';
+  }
+  // también en window para que el script global pueda usarla
+  window.setAccessMsg = setAccessMsg;
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL EDITAR SIGNO VITAL  (z-index 400)
-════════════════════════════════════════════════════════ -->
-<div id="edit-vital-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
-  <div style="max-width:480px;margin:0 auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Vitales</div>
-      <button onclick="closeEditVital()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
-    </div>
-    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ev-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Sistólica</label><input type="number" id="ev-tas" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Diastólica</label><input type="number" id="ev-tad" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">PAM</label><input type="number" id="ev-pam" placeholder="auto" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #d500f9;border-radius:8px;color:#d500f9;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FC (lpm)</label><input type="number" id="ev-fc" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FR (rpm)</label><input type="number" id="ev-fr" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">SpO2 (%)</label><input type="number" id="ev-spo2" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Temp (°C)</label><input type="number" id="ev-temp" step="0.1" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ffd600;border-radius:8px;color:#ffd600;box-sizing:border-box"></div>
-        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onclick="deleteVitalRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
-      <button onclick="saveVitalEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
-    </div>
-  </div>
-</div>
+  function todayYYYYMMDD() {
+    const d  = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL EDITAR FÁRMACO  (z-index 400)
-════════════════════════════════════════════════════════ -->
-<div id="edit-farm-modal2" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
-  <div style="max-width:480px;margin:0 auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div style="font-size:18px;font-weight:800;color:#ff6d00">✏️ Editar Fármaco</div>
-      <button onclick="closeEditFarm2()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
-    </div>
-    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
-      <div style="margin-bottom:12px"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Fármaco</label><input type="text" id="ef2-nombre" style="width:100%;padding:12px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Dosis</label><input type="text" id="ef2-dosis" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Vía</label><input type="text" id="ef2-via" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ef2-hora" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Indicación</label><input type="text" id="ef2-nota" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onclick="deleteFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
-      <button onclick="saveFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:#ff6d00;border:none;border-radius:12px;color:#fff;cursor:pointer">✓ Guardar</button>
-    </div>
-  </div>
-</div>
+  async function isUserActive(user) {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    if (data.active !== true) return false;
+    if (data.paid_until && String(data.paid_until) < todayYYYYMMDD()) return false;
+    return true;
+  }
+
+  // ── LOGIN ──
+  window.doLogin = async function () {
+    const email = (document.getElementById('auth-email')?.value || '').trim();
+    const pass  = (document.getElementById('auth-pass')?.value  || '').trim();
+    if (!email || !pass) {
+      setAccessMsg('⚠️ Escribe tu email y contraseña.', '#ffd600');
+      return;
+    }
+    _setLoginBtn(true);
+    setAccessMsg('🔄 Iniciando sesión...', '#3d5a78');
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged se encarga del resto
+    } catch (e) {
+      const msgs = {
+        'auth/invalid-credential':    '🚫 Email o contraseña incorrectos.',
+        'auth/user-not-found':        '🚫 Usuario no encontrado.',
+        'auth/wrong-password':        '🚫 Contraseña incorrecta.',
+        'auth/too-many-requests':     '⏳ Demasiados intentos. Espera unos minutos.',
+        'auth/network-request-failed':'📶 Sin conexión. Verifica tu internet.',
+      };
+      setAccessMsg(msgs[e.code] || '🚫 Error: ' + e.message, '#ff1744');
+      _setLoginBtn(false);
+    }
+  };
+
+  // ── LOGOUT ──
+  window.doLogout = async function () {
+    try { await signOut(auth); } catch(e) {}
+    _showLogin();
+    _setAccessUI(false);
+    setAccessMsg('🔐 Sesión cerrada.');
+  };
+
+  // ── AUTH STATE LISTENER (el corazón del sistema) ──
+  onAuthStateChanged(auth, async (user) => {
+    _setLoginBtn(false);
+
+    if (!user) {
+      // No hay sesión
+      _showLogin();
+      _setAccessUI(false);
+      setAccessMsg('🔐 Inicia sesión para continuar.');
+      return;
+    }
+
+    // Hay sesión → validar en Firestore
+    setAccessMsg('🔄 Validando tu acceso...', '#3d5a78');
+    try {
+      const ok = await isUserActive(user);
+      if (!ok) {
+        await signOut(auth);
+        _showLogin();
+        _setAccessUI(false);
+        setAccessMsg('⛔ Cuenta inactiva o suscripción vencida. Contacta al administrador.', '#ff1744');
+        return;
+      }
+      // ✅ Autorizado
+      _setAccessUI(true);
+      _hideLogin();
+      setAccessMsg('✅ Acceso autorizado — ' + (user.email || ''), '#00e676');
+      try { if(typeof window.showToast === 'function') window.showToast('✅ Bienvenido, ' + (user.email || '')); } catch(e) {}
+    } catch(e) {
+      // Error de red o Firestore
+      _showLogin();
+      _setAccessUI(false);
+      setAccessMsg('⚠️ No se pudo validar acceso. Verifica tu conexión.', '#ffd600');
+    }
+  });
+</script>
+
 </body>
 </html>
