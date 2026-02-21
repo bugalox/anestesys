@@ -599,46 +599,92 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <!-- PHASE BUTTONS IMPROVED -->
       <div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);margin-bottom:12px;font-weight:700">⏱ Control de Fases</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:0">
 
-          <div style="display:flex;align-items:center;gap:10px">
-            <button class="btn sm" id="btn-an" onclick="startPhase('an')" style="min-width:110px;background:var(--cyan)">▶ Inicio Anest.</button>
-            <div style="flex:1">
-              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora de inicio (editable)</div>
-              <input type="time" id="time-an" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('an',this.value)">
+          <!-- ══ ANESTESIA ══ -->
+          <div style="background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.15);border-radius:12px;padding:10px;margin-bottom:8px">
+            <div style="font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px">🫁 Anestesia</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <button class="btn sm" id="btn-an" onclick="startPhase('an')" style="min-width:90px;background:var(--cyan);font-size:11px">▶ Inicio</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora inicio</div>
+                <input type="time" id="time-an" style="width:100%;font-size:13px;padding:7px 9px" oninput="editPhaseTime('an',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Corriendo</div>
+                <div style="font-size:13px;font-weight:700;color:var(--cyan)" id="dur-an">--:--</div>
+              </div>
             </div>
-            <div style="text-align:right;min-width:50px">
-              <div style="font-size:9px;color:var(--muted)">Duración</div>
-              <div style="font-size:14px;font-weight:700;color:var(--cyan)" id="dur-an">--:--</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn sm r" id="btn-fin-an" onclick="endPhase('an')" style="min-width:90px;font-size:11px">■ Fin anest.</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora fin</div>
+                <input type="time" id="time-fin-an" style="width:100%;font-size:13px;padding:7px 9px" oninput="editEndPhaseTime('an',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Total</div>
+                <div style="font-size:13px;font-weight:700;color:var(--red)" id="dur-fin-an">--:--</div>
+              </div>
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px">
-            <button class="btn sm o" id="btn-cx" onclick="startPhase('cx')" style="min-width:110px">▶ Inicio Cx</button>
-            <div style="flex:1">
-              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora de inicio (editable)</div>
-              <input type="time" id="time-cx" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('cx',this.value)">
+          <!-- ══ CIRUGÍA ══ -->
+          <div style="background:rgba(255,109,0,.04);border:1px solid rgba(255,109,0,.15);border-radius:12px;padding:10px;margin-bottom:8px">
+            <div style="font-size:9px;color:var(--orange);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px">🔪 Cirugía</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <button class="btn sm o" id="btn-cx" onclick="startPhase('cx')" style="min-width:90px;font-size:11px">▶ Inicio</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora inicio</div>
+                <input type="time" id="time-cx" style="width:100%;font-size:13px;padding:7px 9px" oninput="editPhaseTime('cx',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Corriendo</div>
+                <div style="font-size:13px;font-weight:700;color:var(--orange)" id="dur-cx">--:--</div>
+              </div>
             </div>
-            <div style="text-align:right;min-width:50px">
-              <div style="font-size:9px;color:var(--muted)">Duración</div>
-              <div style="font-size:14px;font-weight:700;color:var(--orange)" id="dur-cx">--:--</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn sm r" id="btn-fin-cx" onclick="endPhase('cx')" style="min-width:90px;font-size:11px">■ Fin cx</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora fin</div>
+                <input type="time" id="time-fin-cx" style="width:100%;font-size:13px;padding:7px 9px" oninput="editEndPhaseTime('cx',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Total</div>
+                <div style="font-size:13px;font-weight:700;color:var(--red)" id="dur-fin-cx">--:--</div>
+              </div>
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px">
-            <button class="btn sm r" id="btn-fin" onclick="startPhase('fin')" style="min-width:110px">■ Finalizar</button>
-            <div style="flex:1">
-              <div style="font-size:9px;color:var(--muted);margin-bottom:3px">Hora fin (editable)</div>
-              <input type="time" id="time-fin" style="width:100%;font-size:14px;padding:8px 10px" oninput="editPhaseTime('fin',this.value)">
+          <!-- ══ ISQUEMIA / TORNIQUETE ══ -->
+          <div style="background:rgba(255,214,0,.04);border:1px solid rgba(255,214,0,.15);border-radius:12px;padding:10px;margin-bottom:8px">
+            <div style="font-size:9px;color:var(--yellow);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px">🩺 Torniquete / Isquemia</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <button class="btn sm y" id="btn-isq-ini" onclick="startIsquemia()" style="min-width:90px;font-size:11px">▶ Inicio</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora inicio</div>
+                <input type="time" id="time-isq-ini" style="width:100%;font-size:13px;padding:7px 9px" oninput="editIsquemiaTime('ini',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Corriendo</div>
+                <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="dur-isq">--:--</div>
+              </div>
             </div>
-            <div style="text-align:right;min-width:50px">
-              <div style="font-size:9px;color:var(--muted)">Total</div>
-              <div style="font-size:14px;font-weight:700;color:var(--red)" id="dur-fin">--:--</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn sm" id="btn-isq-fin" onclick="stopIsquemia()" style="min-width:90px;background:var(--orange);font-size:11px">■ Fin isq.</button>
+              <div style="flex:1">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Hora fin</div>
+                <input type="time" id="time-isq-fin" style="width:100%;font-size:13px;padding:7px 9px" oninput="editIsquemiaTime('fin',this.value)">
+              </div>
+              <div style="text-align:right;min-width:48px">
+                <div style="font-size:9px;color:var(--muted)">Total</div>
+                <div style="font-size:13px;font-weight:700;color:var(--orange)" id="dur-isq-total">--:--</div>
+              </div>
             </div>
           </div>
 
         </div>
-        <button class="btn r full" style="margin-top:12px" onclick="resetCronometros()">🔄 Reiniciar Cronómetros</button>
+
+        <button class="btn r full" style="margin-top:4px" onclick="resetCronometros()">🔄 Reiniciar Cronómetros</button>
       </div>
     </div>
   </div>
@@ -1347,7 +1393,7 @@ const S = {
   vitals: {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0},
   history: [],
   farms: [],
-  phases: {an:null,cx:null,fin:null},
+  phases: {an:null,finAn:null,cx:null,finCx:null,fin:null,isqIni:null,isqFin:null},
   ventHist: [],
   liqHora: [],
   alerts: [],
@@ -1472,34 +1518,54 @@ function nav(id, btn) {
 // CLOCK
 // ═══════════════════════════════════════════════
 function fmt(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
-function fmt2(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m';}
+function fmt2(ms){
+  if(ms < 0) return '--:--';  // fase del día anterior — no mostrar negativo
+  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m';
+}
 
 function tick() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX',{hour12:false});
 
-  if(S.phases.an){
-    const ms=now-S.phases.an, el=Math.floor(ms/1000);
-    document.getElementById('st-tan').textContent=fmt2(ms);
-    document.getElementById('dur-an').textContent=fmt2(ms);
-    if(!S.phases.fin){
-      const nx=Math.ceil((el+1)/3600)*3600-el;
-      const ts=String(Math.floor(nx/60)).padStart(2,'0')+':'+String(nx%60).padStart(2,'0');
-      document.getElementById('st-alarm').textContent=ts;
-      document.getElementById('alarm-big').textContent=ts;
-      // Hourly alarm check
-      const hr=Math.floor(el/3600);
-      if(el>0&&el%3600<3&&!S.hrAlarms.includes(hr)&&hr>0){S.hrAlarms.push(hr);fireHrAlarm(hr);}
+  // ── ANESTESIA ──
+  if(S.phases.an) {
+    if(S._frozenTan != null) {
+      // Finalizada — mostrar tiempo congelado
+      document.getElementById('st-tan').textContent = fmt2(S._frozenTan);
+      document.getElementById('dur-an').textContent  = fmt2(S._frozenTan);
+    } else {
+      // Corriendo
+      const ms  = now - S.phases.an;
+      const el  = Math.floor(ms / 1000);
+      document.getElementById('st-tan').textContent = fmt2(ms);
+      document.getElementById('dur-an').textContent  = fmt2(ms);
+      // Alarma horaria (solo si anestesia activa)
+      const nx = Math.ceil((el+1)/3600)*3600 - el;
+      const ts = String(Math.floor(nx/60)).padStart(2,'0') + ':' + String(nx%60).padStart(2,'0');
+      document.getElementById('st-alarm').textContent  = ts;
+      document.getElementById('alarm-big').textContent = ts;
+      const hr = Math.floor(el/3600);
+      if(el>0 && el%3600<3 && !S.hrAlarms.includes(hr) && hr>0) { S.hrAlarms.push(hr); fireHrAlarm(hr); }
     }
   }
-  if(S.phases.cx){
-    const ms=now-S.phases.cx;
-    document.getElementById('st-tcx').textContent=fmt2(ms);
-    document.getElementById('dur-cx').textContent=fmt2(ms);
+
+  // ── CIRUGÍA ──
+  if(S.phases.cx) {
+    if(S._frozenTcx != null) {
+      // Finalizada — mostrar tiempo congelado
+      document.getElementById('st-tcx').textContent = fmt2(S._frozenTcx);
+      document.getElementById('dur-cx').textContent  = fmt2(S._frozenTcx);
+    } else {
+      // Corriendo
+      const ms = now - S.phases.cx;
+      document.getElementById('st-tcx').textContent = fmt2(ms);
+      document.getElementById('dur-cx').textContent  = fmt2(ms);
+    }
   }
-  if(S.phases.fin && S.phases.an){
-    document.getElementById('dur-fin').textContent=fmt2(S.phases.fin-S.phases.an);
-  }
+
+  // ── ISQUEMIA ──
+  _tickIsquemia(now);
 }
 setInterval(tick,1000); tick();
 
@@ -1781,34 +1847,91 @@ function timeStrToDate(hhmm) {
 }
 
 function startPhase(p) {
-  const hora=getT();
-  const now=new Date();
-  if(p==='an'){
-    S.phases.an=now;
-    document.getElementById('ph-an').className='phase-pill active-phase';
-    document.getElementById('ph-an-t').textContent=hora;
-    document.getElementById('time-an').value=hora;
-    document.getElementById('btn-an').style.background='var(--green)';
-    document.getElementById('btn-an').textContent='✓ Anestesia';
-    addAlert('info','▶ Anestesia iniciada: '+hora,hora);
-  } else if(p==='cx'){
-    S.phases.cx=now;
-    document.getElementById('ph-cx').className='phase-pill active-phase';
-    document.getElementById('ph-cx-t').textContent=hora;
-    document.getElementById('time-cx').value=hora;
-    document.getElementById('btn-cx').style.background='var(--green)';
-    document.getElementById('btn-cx').textContent='✓ Cirugía';
-    addAlert('info','🔪 Cirugía iniciada: '+hora,hora);
-  } else {
-    S.phases.fin=now;
-    document.getElementById('ph-rec').className='phase-pill done';
-    document.getElementById('ph-rec-t').textContent=hora;
-    document.getElementById('time-fin').value=hora;
-    document.getElementById('btn-fin').style.background='var(--muted)';
-    document.getElementById('btn-fin').textContent='✓ Finalizado';
-    addAlert('info','■ Fin del procedimiento: '+hora,hora);
+  const hora = getT();
+  const now  = new Date();
+  if(p === 'an') {
+    S.phases.an = now;
+    document.getElementById('ph-an').className    = 'phase-pill active-phase';
+    document.getElementById('ph-an-t').textContent = hora;
+    document.getElementById('time-an').value       = hora;
+    document.getElementById('btn-an').style.background = 'var(--green)';
+    document.getElementById('btn-an').textContent  = '✓ Anestesia';
+    addAlert('info', '▶ Anestesia iniciada: ' + hora, hora);
+  } else if(p === 'cx') {
+    S.phases.cx = now;
+    document.getElementById('ph-cx').className    = 'phase-pill active-phase';
+    document.getElementById('ph-cx-t').textContent = hora;
+    document.getElementById('time-cx').value       = hora;
+    document.getElementById('btn-cx').style.background = 'var(--green)';
+    document.getElementById('btn-cx').textContent  = '✓ Cirugía';
+    addAlert('info', '🔪 Cirugía iniciada: ' + hora, hora);
   }
   if(navigator.vibrate) navigator.vibrate([50,30,50]);
+  try { autoSave(); } catch(e) {}
+}
+
+// ── Finalizar cronómetro independiente (an o cx) ──
+function endPhase(p) {
+  const hora = getT();
+  const now  = new Date();
+
+  if(p === 'an') {
+    if(!S.phases.an) { showToast('⚠️ Primero inicia anestesia'); return; }
+    S.phases.finAn = now;
+    var totalMs = now - S.phases.an;
+    document.getElementById('time-fin-an').value        = hora;
+    document.getElementById('dur-fin-an').textContent   = fmt2(totalMs);
+    document.getElementById('btn-fin-an').style.background = 'var(--muted)';
+    document.getElementById('btn-fin-an').textContent   = '✓ Fin anest.';
+    document.getElementById('ph-rec').className         = 'phase-pill done';
+    document.getElementById('ph-rec-t').textContent     = hora;
+    // Congelar el display de anestesia
+    S._frozenTan = totalMs;
+    addAlert('info', '■ Fin anestesia: ' + hora + ' · Total: ' + fmt2(totalMs), hora);
+
+  } else if(p === 'cx') {
+    if(!S.phases.cx) { showToast('⚠️ Primero inicia cirugía'); return; }
+    S.phases.finCx = now;
+    var totalMs = now - S.phases.cx;
+    document.getElementById('time-fin-cx').value        = hora;
+    document.getElementById('dur-fin-cx').textContent   = fmt2(totalMs);
+    document.getElementById('btn-fin-cx').style.background = 'var(--muted)';
+    document.getElementById('btn-fin-cx').textContent   = '✓ Fin cx';
+    // Congelar el display de cirugía
+    S._frozenTcx = totalMs;
+    addAlert('info', '🔪 Fin cirugía: ' + hora + ' · Total: ' + fmt2(totalMs), hora);
+  }
+
+  // Si ambas terminaron → cerrar isquemia si está activa
+  if(S.phases.finAn && S.phases.finCx) {
+    if(S.phases.isqIni && !S.phases.isqFin) {
+      S.phases.isqFin = now;
+      _updateIsqUI();
+    }
+  }
+  if(navigator.vibrate) navigator.vibrate([50,30,50]);
+  try { autoSave(); } catch(e) {}
+}
+
+// ── editar hora de FIN manualmente ──
+function editEndPhaseTime(p, val) {
+  if(!val) return;
+  const d = timeStrToDate(val);
+  if(p === 'an') {
+    S.phases.finAn = d;
+    if(S.phases.an) {
+      var ms = d - S.phases.an;
+      S._frozenTan = ms;
+      document.getElementById('dur-fin-an').textContent = fmt2(ms);
+    }
+  } else if(p === 'cx') {
+    S.phases.finCx = d;
+    if(S.phases.cx) {
+      var ms = d - S.phases.cx;
+      S._frozenTcx = ms;
+      document.getElementById('dur-fin-cx').textContent = fmt2(ms);
+    }
+  }
 }
 
 // Reset all timers and phases
@@ -1816,8 +1939,29 @@ function resetCronometros() {
   showConfirm('¿Reiniciar cronómetros?', 'Las fases se borran. Los vitales y fármacos se conservan.', '🔄 Reiniciar', '#ff6d00', _doResetCronometros);
 }
 function _doResetCronometros() {
-  S.phases = {an: null, cx: null, fin: null};
+  S.phases = {an: null, finAn: null, cx: null, finCx: null, fin: null, isqIni: null, isqFin: null};
+  S._frozenTan = null; S._frozenTcx = null;
   S.hrAlarms = [];
+  // Reset isquemia UI
+  // Reset fin buttons
+  var bFA=document.getElementById('btn-fin-an'); if(bFA){bFA.style.background='var(--red)';bFA.textContent='■ Fin anest.';}
+  var bFC=document.getElementById('btn-fin-cx'); if(bFC){bFC.style.background='var(--red)';bFC.textContent='■ Fin cx';}
+  var dFA=document.getElementById('dur-fin-an'); if(dFA) dFA.textContent='--:--';
+  var dFC=document.getElementById('dur-fin-cx'); if(dFC) dFC.textContent='--:--';
+  var tFA=document.getElementById('time-fin-an'); if(tFA) tFA.value='';
+  var tFC=document.getElementById('time-fin-cx'); if(tFC) tFC.value='';
+  var biIni=document.getElementById('btn-isq-ini');
+  var biEnd=document.getElementById('btn-isq-fin');
+  var tiIni=document.getElementById('time-isq-ini');
+  var tiFin=document.getElementById('time-isq-fin');
+  var dIsq=document.getElementById('dur-isq');
+  var dIsqT=document.getElementById('dur-isq-total');
+  if(biIni){biIni.style.background='var(--yellow)';biIni.textContent='▶ Inicio';biIni.disabled=false;}
+  if(biEnd){biEnd.style.background='var(--orange)';biEnd.textContent='■ Fin';}
+  if(tiIni) tiIni.value='';
+  if(tiFin) tiFin.value='';
+  if(dIsq)  dIsq.textContent='--:--';
+  if(dIsqT) dIsqT.textContent='--:--';
   // Reset displays
   ['an','cx','rec'].forEach(function(p) {
     const el = document.getElementById('ph-' + p);
@@ -1852,6 +1996,99 @@ function editPhaseTime(p, val) {
   if(p==='an'){ S.phases.an=d; document.getElementById('ph-an-t').textContent=val; }
   else if(p==='cx'){ S.phases.cx=d; document.getElementById('ph-cx-t').textContent=val; }
   else { S.phases.fin=d; document.getElementById('ph-rec-t').textContent=val; }
+}
+
+
+// ═══════════════════════════════════════════════
+// ISQUEMIA / TORNIQUETE
+// ═══════════════════════════════════════════════
+function startIsquemia() {
+  const now  = new Date();
+  const hora = getT();
+  S.phases.isqIni = now;
+  S.phases.isqFin = null;
+  var tIni = document.getElementById('time-isq-ini');
+  var bIni = document.getElementById('btn-isq-ini');
+  var bFin = document.getElementById('btn-isq-fin');
+  if(tIni) tIni.value = hora;
+  if(bIni) { bIni.style.background='var(--green)'; bIni.textContent='✓ Torniquete'; }
+  if(bFin) { bFin.style.background='var(--orange)'; bFin.disabled=false; }
+  addAlert('warn','🩺 Torniquete / Isquemia iniciada: '+hora, hora);
+  if(navigator.vibrate) navigator.vibrate([80,40,80]);
+  autoSave();
+}
+
+function stopIsquemia() {
+  if(!S.phases.isqIni) { showToast('⚠️ Primero inicia el torniquete'); return; }
+  const now  = new Date();
+  const hora = getT();
+  S.phases.isqFin = now;
+  var tFin = document.getElementById('time-isq-fin');
+  var bFin = document.getElementById('btn-isq-fin');
+  var bIni = document.getElementById('btn-isq-ini');
+  if(tFin) tFin.value = hora;
+  if(bFin) { bFin.style.background='var(--muted)'; bFin.textContent='✓ Fin torniquete'; }
+  if(bIni) bIni.disabled = true;
+  const totalMs = S.phases.isqFin - S.phases.isqIni;
+  var dTot = document.getElementById('dur-isq-total');
+  if(dTot) dTot.textContent = fmt2(totalMs);
+  addAlert('info','🩺 Torniquete liberado: '+hora+' · Isquemia: '+fmt2(totalMs), hora);
+  if(navigator.vibrate) navigator.vibrate([50,30,50]);
+  autoSave();
+}
+
+function editIsquemiaTime(tipo, val) {
+  if(!val) return;
+  const d = timeStrToDate(val);
+  if(tipo === 'ini') {
+    S.phases.isqIni = d;
+    var bIni = document.getElementById('btn-isq-ini');
+    if(bIni) { bIni.style.background='var(--green)'; bIni.textContent='✓ Torniquete'; }
+  } else {
+    S.phases.isqFin = d;
+    if(S.phases.isqIni) {
+      var dTot = document.getElementById('dur-isq-total');
+      if(dTot) dTot.textContent = fmt2(S.phases.isqFin - S.phases.isqIni);
+    }
+  }
+}
+
+function _updateIsqUI() {
+  var tIni = document.getElementById('time-isq-ini');
+  var tFin = document.getElementById('time-isq-fin');
+  var bIni = document.getElementById('btn-isq-ini');
+  var bFin = document.getElementById('btn-isq-fin');
+  var dTot = document.getElementById('dur-isq-total');
+  if(S.phases.isqIni) {
+    var h = S.phases.isqIni;
+    if(tIni) tIni.value = String(h.getHours()).padStart(2,'0')+':'+String(h.getMinutes()).padStart(2,'0');
+    if(bIni) { bIni.style.background='var(--green)'; bIni.textContent='✓ Torniquete'; }
+  }
+  if(S.phases.isqFin) {
+    var h2 = S.phases.isqFin;
+    if(tFin) tFin.value = String(h2.getHours()).padStart(2,'0')+':'+String(h2.getMinutes()).padStart(2,'0');
+    if(bFin) { bFin.style.background='var(--muted)'; bFin.textContent='✓ Fin torniquete'; }
+    if(bIni) bIni.disabled = true;
+    if(dTot && S.phases.isqIni) dTot.textContent = fmt2(S.phases.isqFin - S.phases.isqIni);
+  }
+}
+
+function _tickIsquemia(now) {
+  var dIsq  = document.getElementById('dur-isq');
+  if(!dIsq) return;
+  if(S.phases.isqIni && !S.phases.isqFin) {
+    // Activo — mostrar tiempo corriendo
+    var ms = now - S.phases.isqIni;
+    dIsq.textContent = fmt2(ms);
+    // Alerta si >60 min sin liberar
+    if(ms > 60*60*1000) dIsq.style.color='var(--red)';
+    else if(ms > 45*60*1000) dIsq.style.color='var(--orange)';
+    else dIsq.style.color='var(--yellow)';
+  } else if(S.phases.isqIni && S.phases.isqFin) {
+    // Ya terminó — mostrar tiempo total fijo
+    dIsq.textContent = fmt2(S.phases.isqFin - S.phases.isqIni);
+    dIsq.style.color='var(--muted)';
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -2657,16 +2894,22 @@ function serializeState() {
     alerts:      S.alerts,
     alarmCfg:    S.alarmCfg,
     phases: {
-      an:    S.phases.an    ? S.phases.an.toISOString()    : null,
-      cx:    S.phases.cx    ? S.phases.cx.toISOString()    : null,
-      fincx: S.phases.fincx ? S.phases.fincx.toISOString() : null,
-      fin:   S.phases.fin   ? S.phases.fin.toISOString()   : null
+      an:     S.phases.an     ? S.phases.an.toISOString()     : null,
+      finAn:  S.phases.finAn  ? S.phases.finAn.toISOString()  : null,
+      cx:     S.phases.cx     ? S.phases.cx.toISOString()     : null,
+      finCx:  S.phases.finCx  ? S.phases.finCx.toISOString()  : null,
+      fin:    S.phases.fin    ? S.phases.fin.toISOString()    : null,
+      isqIni: S.phases.isqIni ? S.phases.isqIni.toISOString() : null,
+      isqFin: S.phases.isqFin ? S.phases.isqFin.toISOString() : null,
     },
     timeInputs: {
-      an:    (document.getElementById('time-an')    || {value:''}).value,
-      cx:    (document.getElementById('time-cx')    || {value:''}).value,
-      fincx: (document.getElementById('time-fincx') || {value:''}).value,
-      fin:   (document.getElementById('time-fin')   || {value:''}).value
+      an:     (document.getElementById('time-an')      || {value:''}).value,
+      finAn:  (document.getElementById('time-fin-an')  || {value:''}).value,
+      cx:     (document.getElementById('time-cx')      || {value:''}).value,
+      finCx:  (document.getElementById('time-fin-cx')  || {value:''}).value,
+      fin:    (document.getElementById('time-fin')     || {value:''}).value,
+      isqIni: (document.getElementById('time-isq-ini') || {value:''}).value,
+      isqFin: (document.getElementById('time-isq-fin') || {value:''}).value,
     },
     liqInputs: {
       nacl: (document.getElementById('in-nacl')  || {value:''}).value,
@@ -2732,24 +2975,64 @@ function restoreState(caso) {
   S.hrAlarms    = [];
 
   var ph = caso.phases || {};
+  // Ajustar fases: si la fecha guardada es en el futuro (caso de ayer restaurado hoy),
+  // restar 24h para que el cronómetro sea positivo y correcto.
+  function _fixPhaseDate(val) {
+    if (!val) return null;
+    var d = new Date(val);
+    var now = new Date();
+    // Si la fecha es más de 1 minuto en el futuro, es del día anterior
+    while (d > now && (d - now) > 60000) {
+      d = new Date(d.getTime() - 86400000); // restar 24h
+    }
+    return d;
+  }
   S.phases = {
-    an:    ph.an    ? new Date(ph.an)    : null,
-    cx:    ph.cx    ? new Date(ph.cx)    : null,
-    fincx: ph.fincx ? new Date(ph.fincx) : null,
-    fin:   ph.fin   ? new Date(ph.fin)   : null
+    an:     _fixPhaseDate(ph.an),
+    finAn:  _fixPhaseDate(ph.finAn),
+    cx:     _fixPhaseDate(ph.cx),
+    finCx:  _fixPhaseDate(ph.finCx),
+    fin:    _fixPhaseDate(ph.fin),
+    isqIni: _fixPhaseDate(ph.isqIni),
+    isqFin: _fixPhaseDate(ph.isqFin),
   };
 
   // Phase buttons
   function setBtn(id, bg, txt) { var b=document.getElementById(id); if(b){b.style.background=bg;b.textContent=txt;} }
-  if(S.phases.an)    setBtn('btn-an',    'var(--green)',  '✓ Anestesia');
-  if(S.phases.cx)    setBtn('btn-cx',    'var(--green)',  '✓ Cx iniciada');
-  if(S.phases.fincx) setBtn('btn-fincx', '#00cc44',      '✓ Cx terminada');
-  if(S.phases.fin)   setBtn('btn-fin',   'var(--muted)',  '✓ Anest. terminada');
+  if(S.phases.an)    setBtn('btn-an',     'var(--green)', '✓ Anestesia');
+  if(S.phases.cx)    setBtn('btn-cx',     'var(--green)', '✓ Cirugía');
+  if(S.phases.finAn) {
+    setBtn('btn-fin-an', 'var(--muted)', '✓ Fin anest.');
+    S._frozenTan = S.phases.an ? S.phases.finAn - S.phases.an : null;
+    var dFA = document.getElementById('dur-fin-an');
+    if(dFA && S._frozenTan != null) dFA.textContent = fmt2(S._frozenTan);
+    var phRec = document.getElementById('ph-rec');
+    if(phRec) phRec.className = 'phase-pill done';
+  }
+  if(S.phases.finCx) {
+    setBtn('btn-fin-cx', 'var(--muted)', '✓ Fin cx');
+    S._frozenTcx = S.phases.cx ? S.phases.finCx - S.phases.cx : null;
+    var dFC = document.getElementById('dur-fin-cx');
+    if(dFC && S._frozenTcx != null) dFC.textContent = fmt2(S._frozenTcx);
+  }
+
+  // Restaurar isquemia UI
+  try { _updateIsqUI(); } catch(e) {}
 
   // Time inputs
   var ti = caso.timeInputs || {};
-  ['an','cx','fincx','fin'].forEach(function(k){
-    var el = document.getElementById('time-'+k); if(el && ti[k]) el.value = ti[k];
+  // Restore all time inputs
+  var _tmap = {
+    'time-an':      ti.an,
+    'time-fin-an':  ti.finAn,
+    'time-cx':      ti.cx,
+    'time-fin-cx':  ti.finCx,
+    'time-fin':     ti.fin,
+    'time-isq-ini': ti.isqIni,
+    'time-isq-fin': ti.isqFin,
+  };
+  Object.keys(_tmap).forEach(function(id){
+    var el = document.getElementById(id); if(el && _tmap[id]) el.value = _tmap[id];
   });
 
   // Liquid inputs
