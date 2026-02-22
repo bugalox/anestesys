@@ -766,13 +766,23 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <span>Permisible: <b style="color:var(--yellow)" id="sp-lbl">714 ml</b></span>
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">VSC</div>
-          <div style="font-size:22px;font-weight:800;color:var(--cyan)" id="vsc-lbl">4760 ml</div>
+        <!-- VSC editable -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">VSC (ml)</div>
+          <div style="font-size:20px;font-weight:800;color:var(--cyan);cursor:pointer" id="vsc-lbl"
+               onclick="editVSCModal()" title="Toca para editar">4760 ml</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">✏️ editable</div>
         </div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Diuresis/hr</div>
-          <div style="font-size:22px;font-weight:800;color:var(--cyan)" id="diu-hr">0.5 ml/kg/h</div>
+        <!-- Permisible editable -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Permisible (ml)</div>
+          <div style="font-size:20px;font-weight:800;color:var(--yellow);cursor:pointer" id="sp-lbl2"
+               onclick="editVSCModal()" title="Toca para editar">714 ml</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">✏️ editable</div>
+        </div>
+        <div style="grid-column:1/-1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Diuresis/hr</div>
+          <div style="font-size:20px;font-weight:800;color:var(--cyan)" id="diu-hr">0.5 ml/kg/h</div>
         </div>
       </div>
       <button class="btn full" style="margin-top:10px" onclick="addLiqHora()">+ Registrar Hora Actual</button>
@@ -1255,6 +1265,36 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 </div>
 
 <!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR VSC / SANGRADO PERMISIBLE
+════════════════════════════════════════════════════════ -->
+<div id="edit-vsc-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:400px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">🩸 VSC y Permisible</div>
+      <button onclick="closeVSCModal()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <!-- Info auto calculado -->
+    <div id="vsc-auto-info" style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:#3d5a78;line-height:1.7"></div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">VSC (ml)</label>
+          <input type="number" id="ev-vsc" style="width:100%;padding:12px;font-size:20px;font-weight:800;background:#04060d;border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Permisible (ml)</label>
+          <input type="number" id="ev-vsp" style="width:100%;padding:12px;font-size:20px;font-weight:800;background:#04060d;border:1.5px solid #ffd600;border-radius:10px;color:#ffd600;box-sizing:border-box">
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="resetVSCManual()" style="padding:14px;font-size:13px;font-weight:700;background:rgba(0,229,255,.1);border:1px solid #00e5ff;border-radius:12px;color:#00e5ff;cursor:pointer">↻ Recalcular auto</button>
+      <button onclick="saveVSCEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e5ff;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
      MODAL CONFIRMACIÓN CUSTOM (reemplaza confirm() bloqueado en Safari PWA)
 ════════════════════════════════════════════════════════ -->
 <div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(4,6,13,0.92);align-items:center;justify-content:center;align-items:center;justify-content:center;padding:20px" onclick="confirmCancel()">
@@ -1481,6 +1521,8 @@ function savePacModal() {
   // Update resumen institution line
   const instEl = document.getElementById('res-inst-header');
   if(instEl) instEl.textContent = S.pac.inst || 'Anestesiología · Registro Perioperatorio';
+  // Recalcular VSC y permisible con los nuevos datos del paciente
+  try { if(S._vscManual == null && S._vspManual == null) calcVSCyPermisible(); calcLiq(); } catch(e) {}
   closePacModal();
   if(navigator.vibrate) navigator.vibrate(30);
 }
@@ -2152,6 +2194,89 @@ function fireHrAlarm(hr) {
 // ═══════════════════════════════════════════════
 // LIQUIDOS
 // ═══════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════
+// VSC / SANGRADO PERMISIBLE — edición manual
+// ═══════════════════════════════════════════════
+function editVSCModal() {
+  const {vsc, vsp} = calcVSCyPermisible();
+  document.getElementById('ev-vsc').value = vsc;
+  document.getElementById('ev-vsp').value = vsp;
+  // Mostrar info del cálculo automático
+  var peso = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
+  var edad = parseInt(S.pac.edad) || 30;
+  var sexo = (S.pac.sexo || 'Masculino');
+  var factor = (sexo.toLowerCase().includes('fem') || sexo === 'F') ? 65 : 70;
+  if(edad < 1) factor = 80; else if(edad <= 5) factor = 75; else if(edad < 12) factor = 72;
+  var hto0 = (sexo.toLowerCase().includes('fem') || sexo === 'F') ? 42 : 45;
+  if(edad < 1) hto0 = 44; else if(edad <= 5) hto0 = 40;
+  var vscAuto = Math.round(peso * factor);
+  var vspAuto = Math.round(vscAuto * (hto0 - 21) / hto0);
+  document.getElementById('vsc-auto-info').innerHTML =
+    '<b style="color:#00e5ff">Cálculo automático</b><br>' +
+    'Paciente: ' + peso + ' kg · ' + edad + ' años · ' + sexo + '<br>' +
+    'Factor VSC: ' + factor + ' ml/kg   Hto ref: ' + hto0 + '%<br>' +
+    'VSC auto: <b>' + vscAuto + ' ml</b> &nbsp; Permisible auto: <b>' + vspAuto + ' ml</b>';
+  document.getElementById('edit-vsc-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVSCModal() {
+  document.getElementById('edit-vsc-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveVSCEdit() {
+  var v = parseInt(document.getElementById('ev-vsc').value);
+  var p = parseInt(document.getElementById('ev-vsp').value);
+  if(v > 0) S._vscManual = v;
+  if(p > 0) S._vspManual = p;
+  calcLiq();
+  closeVSCModal();
+  showToast('✅ VSC y permisible actualizados');
+}
+
+function resetVSCManual() {
+  S._vscManual = null;
+  S._vspManual = null;
+  const {vsc, vsp} = calcVSCyPermisible();
+  document.getElementById('ev-vsc').value = vsc;
+  document.getElementById('ev-vsp').value = vsp;
+  calcLiq();
+  showToast('↻ Recalculado automáticamente');
+}
+
+function calcVSCyPermisible() {
+  // VSC según sexo y peso
+  var peso  = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
+  var edad  = parseInt(S.pac.edad)  || 30;
+  var sexo  = (S.pac.sexo || 'Masculino').toLowerCase();
+  // Factor de volumen sanguíneo (ml/kg)
+  var vscFactor = sexo.includes('fem') || sexo === 'f' ? 65 : 70;
+  if(edad < 1)       vscFactor = 80;
+  else if(edad <= 5) vscFactor = 75;
+  else if(edad < 12) vscFactor = 72;
+  var vscCalc = Math.round(peso * vscFactor);
+  // Hematocrito de referencia según sexo/edad
+  var hto0 = sexo.includes('fem') || sexo === 'f' ? 42 : 45;
+  if(edad < 1)       hto0 = 44;
+  else if(edad <= 5) hto0 = 40;
+  // Sangrado permisible = VSC × (Hto inicial - Hto mínimo aceptable 21%) / Hto inicial
+  var htoMin = 21;
+  var vspCalc = Math.round(vscCalc * (hto0 - htoMin) / hto0);
+  // Si el usuario editó manualmente, respetar esos valores
+  var vscManual  = S._vscManual  != null  ? S._vscManual  : vscCalc;
+  var vspManual  = S._vspManual  != null  ? S._vspManual  : vspCalc;
+  // Actualizar displays
+  var vscEl = document.getElementById('vsc-lbl');
+  var spEl  = document.getElementById('sp-lbl');
+  if(vscEl) vscEl.textContent = vscManual + ' ml';
+  if(spEl)  spEl.textContent  = vspManual + ' ml';
+  var spEl2 = document.getElementById('sp-lbl2');
+  if(spEl2) spEl2.textContent = vspManual + ' ml';
+  return { vsc: vscManual, vsp: vspManual };
+}
+
 function calcLiq() {
   const get=id=>parseInt(document.getElementById(id).value)||0;
   const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
@@ -2166,15 +2291,16 @@ function calcLiq() {
   bb.style.color=bal>0?'var(--green)':bal<-300?'var(--red)':'var(--yellow)';
   document.getElementById('st-bal').textContent=(bal>=0?'+':'')+bal;
   document.getElementById('st-sang').textContent=sang;
-  // bar
-  const vsp=714,pct=Math.min(100,Math.round(sang/vsp*100));
+  // VSC y permisible dinámicos
+  const {vsc, vsp} = calcVSCyPermisible();
+  const pct=Math.min(100,Math.round(sang/vsp*100));
   document.getElementById('sang-bar').style.width=pct+'%';
-  document.getElementById('sang-pct').textContent=`${sang} ml (${pct}%)`;
+  document.getElementById('sang-pct').textContent=sang+' ml ('+pct+'%)';
   // diuresis/hr
   const hrs=S.phases.an?Math.max(0.5,(new Date()-S.phases.an)/3600000):2.5;
-  const dur=(diu/(S.pac.pesoC||56)/hrs).toFixed(2);
+  const dur=(diu/(parseFloat(S.pac.pesoC)||parseFloat(S.pac.peso)||70)/hrs).toFixed(2);
   document.getElementById('diu-hr').textContent=dur+' ml/kg/h';
-  if(sang>600&&!S._sangAlerted){S._sangAlerted=true;addAlert('danger','🩸 Sangrado >600ml — evaluar transfusión',getT());}
+  if(sang>vsp*0.8&&!S._sangAlerted){S._sangAlerted=true;addAlert('danger','🩸 Sangrado >80% del permisible — evaluar transfusión',getT());}
 }
 calcLiq();
 
@@ -2362,11 +2488,28 @@ function genRes() {
   const vl  = S.ventHist.length ? S.ventHist[0] : null;
   const sc  = calcAld();
   const hrs = Object.keys(S.hourBuckets);
-  const tAN = document.getElementById('time-an')  ? document.getElementById('time-an').value  : '--:--';
-  const tCX = document.getElementById('time-cx')  ? document.getElementById('time-cx').value  : '--:--';
-  const tFN = document.getElementById('time-fin') ? document.getElementById('time-fin').value : '--:--';
-  const durAN = document.getElementById('st-tan')  ? document.getElementById('st-tan').textContent  : '--';
-  const durCX = document.getElementById('st-tcx') ? document.getElementById('st-tcx').textContent : '--';
+  // ── Tiempos: usar los valores reales de inicio/fin y duraciones congeladas ──
+  function _tv(id) { var e=document.getElementById(id); return e ? e.value || '--:--' : '--:--'; }
+  function _tt(id) { var e=document.getElementById(id); return e ? e.textContent || '--:--' : '--:--'; }
+  const tAN  = _tv('time-an');
+  const tCX  = _tv('time-cx');
+  // Hora fin: usar fin de anestesia si existe, si no usar fin de cirugía, si no '--:--'
+  const tFinAN = _tv('time-fin-an');
+  const tFinCX = _tv('time-fin-cx');
+  const tFN  = tFinAN !== '--:--' ? tFinAN : (tFinCX !== '--:--' ? tFinCX : '--:--');
+  // Duraciones: usar valores congelados si existen
+  const durAN = S._frozenTan != null ? fmt2(S._frozenTan) : _tt('st-tan');
+  const durCX = S._frozenTcx != null ? fmt2(S._frozenTcx) : _tt('st-tcx');
+  // Tiempo total: desde inicio anestesia hasta fin más tardío de cualquier fase
+  var _totalMs = null;
+  if(S.phases.an) {
+    var _finRef = null;
+    if(S.phases.finAn && S.phases.finCx) _finRef = Math.max(S.phases.finAn.getTime(), S.phases.finCx.getTime());
+    else if(S.phases.finAn) _finRef = S.phases.finAn.getTime();
+    else if(S.phases.finCx) _finRef = S.phases.finCx.getTime();
+    if(_finRef) _totalMs = _finRef - S.phases.an.getTime();
+  }
+  const durTotal = _totalMs != null ? fmt2(_totalMs) : '--:--';
 
   // ── Screen version ──
   document.getElementById('res-pac').innerHTML = `
@@ -2470,6 +2613,11 @@ function genRes() {
             '<div style="border:1px solid #0077aa;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Anest.</div><div style="font-weight:800;font-size:11px;color:#0077aa">' + tAN + '</div></div>' +
             '<div style="border:1px solid #e67300;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Cx</div><div style="font-weight:800;font-size:11px;color:#e67300">' + tCX + '</div></div>' +
             '<div style="border:1px solid #cc0033;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Fin</div><div style="font-weight:800;font-size:11px;color:#cc0033">' + tFN + '</div></div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px">' +
+            '<div style="background:#e8f4fb;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Anest.</div><div style="font-weight:800;font-size:11px;color:#0077aa">' + durAN + '</div></div>' +
+            '<div style="background:#fff5ec;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Cx</div><div style="font-weight:800;font-size:11px;color:#e67300">' + durCX + '</div></div>' +
+            '<div style="background:#f8ecec;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Tiempo Total</div><div style="font-weight:800;font-size:11px;color:#cc0033">' + durTotal + '</div></div>' +
           '</div>' +
           '<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">' +
             '<div style="background:#f0f8ff;border:1px solid #cde;border-radius:4px;padding:4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Anest.</div><div style="font-weight:800;color:#0077aa">' + durAN + '</div></div>' +
@@ -2925,6 +3073,8 @@ function serializeState() {
       trau: (document.getElementById('eg-trau')  || {value:''}).value,
       oeg:  (document.getElementById('eg-otro')  || {value:''}).value
     },
+    vscManual: S._vscManual || null,
+    vspManual: S._vspManual || null,
     aldrete: {
       act:  (document.getElementById('al-act')  || {value:'2'}).value,
       resp: (document.getElementById('al-resp') || {value:'2'}).value,
@@ -3034,6 +3184,10 @@ function restoreState(caso) {
   Object.keys(_tmap).forEach(function(id){
     var el = document.getElementById(id); if(el && _tmap[id]) el.value = _tmap[id];
   });
+
+  // VSC manual overrides
+  S._vscManual = caso.vscManual || null;
+  S._vspManual = caso.vspManual || null;
 
   // Liquid inputs
   var li = caso.liqInputs || {};
@@ -3648,32 +3802,115 @@ function hasCurrentData(){
 }
 
 function resetForNewCase(){
-  // Caso nuevo
-  S._casoId = null;
-  S.vitals = {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0};
-  S.history = [];
-  S.farms = [];
-  S.ventHist = [];
-  S.liqHora = [];
-  S.alerts = [];
-  S.hrAlarms = [];
-  S.hourBuckets = {};
-  S.phases = {an:null,cx:null,fin:null};
-  S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',dx:'',cx:'',tipoAn:'',asa:'II',med:'',ciru:'',inst:''};
+  // ── Reset COMPLETO del estado ──
+  S._casoId    = null;
+  S.vitals     = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
+  S.history    = [];
+  S.farms      = [];
+  S.ventHist   = [];
+  S.liqHora    = [];
+  S.alerts     = [];
+  S.hrAlarms   = [];
+  S.hourBuckets= {};
+  S.phases     = {an:null, finAn:null, cx:null, finCx:null, fin:null, isqIni:null, isqFin:null};
+  S._frozenTan = null;
+  S._frozenTcx = null;
+  S._vscManual = null;
+  S._vspManual = null;
+  S._sangAlerted = false;
+  S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
+           dx:'',cx:'',tipoAn:'AGB -- Anestesia General Balanceada',asa:'II',
+           med:'',ciru:'',inst:''};
 
-  // Limpia UI básica
+  // ── Limpiar TODOS los inputs y selects del modal paciente ──
   ['m-nombre','m-edad','m-exp','m-peso','m-dx','m-cx','m-anest','m-ciru','m-inst',
-   'in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
-   'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro',
-   'time-an','time-cx','time-fin',
-   'fn','fd','fnota','fh'
+   'm-tipoan-nota','m-anlocal-dosis'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  try{ document.getElementById('m-sexo').value = 'Masculino'; }catch(e){}
+  try{ document.getElementById('m-asa').value  = 'II'; }catch(e){}
+  try{ document.getElementById('m-tipoan').value = 'AGB -- Anestesia General Balanceada'; }catch(e){}
+  try{ document.getElementById('m-tipoan2').value = ''; }catch(e){}
+  try{ document.getElementById('m-anlocal').value = ''; }catch(e){}
+  // Desmarcar guía
+  try{ document.querySelectorAll('input[name="guia"]').forEach(function(r){r.checked=false;}); }catch(e){}
+
+  // ── Limpiar todos los campos de líquidos ──
+  ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
+   'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'
   ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
+  // ── Limpiar cronómetros completamente ──
+  ['time-an','time-cx','time-fin','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+
+  // ── Reset botones de fases ──
+  var phBtns = {
+    'btn-an':     ['var(--cyan)',   '▶ Inicio'],
+    'btn-cx':     ['var(--orange)', '▶ Inicio'],
+    'btn-fin-an': ['var(--red)',    '■ Fin anest.'],
+    'btn-fin-cx': ['var(--red)',    '■ Fin cx'],
+    'btn-isq-ini':['var(--yellow)', '▶ Inicio'],
+    'btn-isq-fin':['var(--orange)', '■ Fin isq.'],
+  };
+  Object.keys(phBtns).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.style.background=phBtns[id][0]; el.textContent=phBtns[id][1]; el.disabled=false; }
+  });
+
+  // ── Reset displays de duración ──
+  ['dur-an','dur-cx','dur-fin-an','dur-fin-cx','dur-isq','dur-isq-total',
+   'st-tan','st-tcx'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='--:--'; });
+
+  // ── Reset pills de fase ──
+  ['ph-an','ph-cx','ph-rec'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.className='phase-pill';
+  });
+  ['ph-an-t','ph-cx-t','ph-rec-t'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='--:--';
+  });
+
+  // ── Reset alarma ──
+  try{ document.getElementById('st-alarm').textContent='60:00'; }catch(e){}
+  try{ document.getElementById('alarm-big').textContent='60:00'; }catch(e){}
+
+  // ── Reset sliders a valores default ──
+  var sliderDefs = {
+    'sl-tas':135,'sl-tad':91,'sl-fc':100,'sl-spo2':93,'sl-fr':17,'sl-temp':37.0
+  };
+  Object.keys(sliderDefs).forEach(function(id){
+    var sl=document.getElementById(id); if(sl) sl.value=sliderDefs[id];
+    upV(id.replace('sl-',''), sliderDefs[id]);
+  });
+
+  // ── Limpiar campos de fármaco ──
+  ['fn','fd','fnota','fh'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+
+  // ── Aldrete: reset a máximo ──
+  ['al-act','al-resp','al-circ','al-conc','al-sat'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='2';
+  });
+  try{ calcAld(); }catch(e){}
+
+  // ── Render vacíos ──
   try{ updateTopbar(); }catch(e){}
   try{ renderVitalTable(); drawChart(); }catch(e){}
   try{ renderFarms(); }catch(e){}
   try{ calcLiq(); }catch(e){}
-  try{ document.getElementById('vent-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>'; }catch(e){}
+  try{
+    var vb=document.getElementById('vent-tbody');
+    if(vb) vb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
+  }catch(e){}
+  try{
+    var ab=document.getElementById('alert-list');
+    if(ab) ab.innerHTML='';
+    var abd=document.getElementById('alert-badge');
+    if(abd){ abd.textContent='0'; abd.style.display='none'; }
+  }catch(e){}
+
+  showToast('✅ Nuevo caso iniciado');
 }
 
 function _doNewPatient(){
