@@ -58,6 +58,8 @@ body{
 /* ── STATUS CARDS ── */
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .stat-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.vbtn{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:7px;color:var(--white);font-size:11px;font-weight:700;padding:5px 9px;cursor:pointer;min-width:34px;text-align:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.vbtn:active{background:rgba(255,255,255,.18);transform:scale(.95)}
 .statcard{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:10px 12px;position:relative;overflow:hidden}
 .statcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .statcard.c-cyan::before{background:var(--cyan)}
@@ -299,6 +301,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   </div>
   <div style="display:flex;align-items:center;gap:6px">
     <button onclick="autoSave(true)" style="background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Guardar caso">💾</button>
+    <button onclick="toggleBigScreen()" style="background:rgba(0,229,255,.08);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Pantalla grande" id="btn-bigscreen">⛶</button>
     <button onclick="showLogin()" style="background:rgba(0,229,255,.1);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Historial de casos">📁</button>
     <div class="topbar-clock" id="clock">00:00:00</div>
   </div>
@@ -466,6 +469,118 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       </div>
     </div>
 
+    <!-- ══ PREOPERATORIO ══ -->
+    <div style="background:var(--s1);border:1px solid rgba(255,23,68,.25);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);margin-bottom:12px;font-weight:700">🩺 Valoración Preoperatoria</div>
+
+      <!-- Alergias -->
+      <div class="field">
+        <label>Alergias conocidas</label>
+        <input type="text" id="m-alergias" placeholder="Ninguna / Penicilina / Látex...">
+      </div>
+
+      <!-- Ayuno -->
+      <div class="field-row">
+        <div class="field">
+          <label>Horas de ayuno</label>
+          <input type="number" id="m-ayuno" placeholder="h" min="0" max="24">
+        </div>
+        <div class="field">
+          <label>Último alimento</label>
+          <select id="m-ayuno-tipo">
+            <option value="">— Tipo —</option>
+            <option>Sólidos</option>
+            <option>Líquidos claros</option>
+            <option>Leche materna</option>
+            <option>Fórmula</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Antecedentes relevantes -->
+      <div class="field">
+        <label>Antecedentes médicos relevantes</label>
+        <textarea id="m-antecedentes" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="HTA, DM, cardiopatía, EPOC, hepatopatía..."></textarea>
+      </div>
+
+      <!-- Medicamentos crónicos -->
+      <div class="field">
+        <label>Medicamentos crónicos</label>
+        <textarea id="m-medcronicos" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="Metformina, Losartán, Metoprolol..."></textarea>
+      </div>
+
+      <!-- Vía aérea: Mallampati -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px">🦷 Evaluación Vía Aérea</div>
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field">
+            <label>Mallampati</label>
+            <select id="m-mallampati">
+              <option value="">— Grado —</option>
+              <option value="I">I — Uvula visible completa</option>
+              <option value="II">II — Paladar blando + uvula parcial</option>
+              <option value="III">III — Solo paladar blando</option>
+              <option value="IV">IV — Solo paladar duro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Apertura bucal</label>
+            <select id="m-apertura">
+              <option value="">—</option>
+              <option>Normal (≥3 cm)</option>
+              <option>Reducida (1-3 cm)</option>
+              <option>Muy reducida (&lt;1 cm)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Distancia tiromentoniana</label>
+            <select id="m-dtm">
+              <option value="">—</option>
+              <option>Normal (≥6.5 cm)</option>
+              <option>Reducida (6-6.5 cm)</option>
+              <option>Corta (&lt;6 cm)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Antec. intubación difícil</label>
+            <select id="m-antid">
+              <option value="No">No</option>
+              <option value="Sí">Sí</option>
+              <option value="Desconocido">Desconocido</option>
+            </select>
+          </div>
+        </div>
+        <!-- Score LEMON simplificado -->
+        <div id="lemon-alert" style="display:none;background:rgba(255,23,68,.12);border:1px solid var(--red);border-radius:8px;padding:8px;margin-top:6px;font-size:11px;color:var(--red);font-weight:700">
+          ⚠️ Vía aérea difícil probable — Preparar plan B
+        </div>
+      </div>
+
+      <!-- Premedicación -->
+      <div class="field">
+        <label>Premedicación</label>
+        <input type="text" id="m-premed" placeholder="Midazolam 2mg IV / Nada...">
+      </div>
+
+      <!-- Categoría del caso -->
+      <div class="field">
+        <label>Categoría del caso</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <label id="cat-priv-lbl" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,229,255,.08);border:2px solid var(--cyan);border-radius:10px;cursor:pointer;transition:all .2s">
+            <input type="radio" name="cat-caso" value="privado" id="cat-privado" checked style="width:18px;height:18px;accent-color:var(--cyan)">
+            <div><div style="font-size:13px;font-weight:700;color:var(--cyan)">🔒 Privado</div><div style="font-size:10px;color:var(--muted)">Solo visible para ti</div></div>
+          </label>
+          <label id="cat-hosp-lbl" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,230,118,.05);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s">
+            <input type="radio" name="cat-caso" value="hospital" id="cat-hospital" style="width:18px;height:18px;accent-color:var(--green)">
+            <div><div style="font-size:13px;font-weight:700;color:var(--green)">🏥 Hospital</div><div style="font-size:10px;color:var(--muted)">Caso institucional</div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EQUIPO MÉDICO ══ -->
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:12px;font-weight:700">👨‍⚕️ Equipo Médico</div>
       <div class="field"><label>Anestesiólogo responsable</label><input type="text" id="m-anest" placeholder="Dr. / Dra. ..."></div>
@@ -501,10 +616,35 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="statcard c-yellow"><label>💧 Balance</label><div class="val" id="st-bal">0</div><div class="unit">ml total</div></div>
     <div class="statcard c-red" id="sc-sang"><label>🩸 Sangrado</label><div class="val" id="st-sang">0</div><div class="unit">ml</div></div>
   </div>
-  <div class="stat-row-3" style="margin-bottom:10px">
+  <div class="stat-row-3" style="margin-bottom:6px">
     <div class="statcard c-purple"><label>🔔 Alarma en</label><div class="val" style="font-size:22px" id="st-alarm">60:00</div></div>
     <div class="statcard c-green"><label>💊 Fármacos</label><div class="val" id="st-fm">0</div></div>
     <div class="statcard c-cyan"><label>📊 Registros</label><div class="val" id="st-reg">0</div></div>
+  </div>
+  <!-- EtCO2 + BIS mini-bar en monitor -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;padding:0 0 2px">
+    <div style="background:var(--s1);border:1px solid rgba(213,0,249,.3);border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">EtCO₂</div>
+        <div style="font-size:26px;font-weight:900;color:var(--purple);line-height:1" id="mon-etco2">38</div>
+        <div style="font-size:9px;color:var(--muted)">mmHg</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="adjEtco2(1)" style="width:36px;height:36px;border-radius:8px;background:rgba(213,0,249,.15);border:1px solid var(--purple);color:var(--purple);font-size:18px;font-weight:800;cursor:pointer;line-height:1">+</button>
+        <button onclick="adjEtco2(-1)" style="width:36px;height:36px;border-radius:8px;background:rgba(213,0,249,.1);border:1px solid var(--purple);color:var(--purple);font-size:18px;font-weight:800;cursor:pointer;line-height:1">−</button>
+      </div>
+    </div>
+    <div style="background:var(--s1);border:1px solid rgba(255,214,0,.25);border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">BIS</div>
+        <div style="font-size:26px;font-weight:900;color:var(--yellow);line-height:1" id="mon-bis">--</div>
+        <div style="font-size:9px;color:var(--muted)" id="mon-bis-lbl">sin dato</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="adjBis(5)" style="width:36px;height:36px;border-radius:8px;background:rgba(255,214,0,.15);border:1px solid var(--yellow);color:var(--yellow);font-size:18px;font-weight:800;cursor:pointer;line-height:1">+</button>
+        <button onclick="adjBis(-5)" style="width:36px;height:36px;border-radius:8px;background:rgba(255,214,0,.1);border:1px solid var(--yellow);color:var(--yellow);font-size:18px;font-weight:800;cursor:pointer;line-height:1">−</button>
+      </div>
+    </div>
   </div>
 
   <!-- VITALES -->
@@ -528,7 +668,11 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="vslider-row">
         <div class="vslider-top">
           <span class="vslider-label">TA Sistólica</span>
-          <span><span class="vslider-val" id="dv-tas" style="color:var(--cyan)">135</span><span class="vslider-unit">mmHg</span></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjV('tas',-5)" class="vbtn">−5</button>
+            <span><span class="vslider-val" id="dv-tas" style="color:var(--cyan)">135</span><span class="vslider-unit">mmHg</span></span>
+            <button onclick="adjV('tas',5)" class="vbtn">+5</button>
+          </div>
         </div>
         <input type="range" id="sl-tas" min="60" max="220" value="135" oninput="upV('tas',this.value)">
       </div>
@@ -536,7 +680,11 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="vslider-row">
         <div class="vslider-top">
           <span class="vslider-label">TA Diastólica</span>
-          <span><span class="vslider-val" id="dv-tad" style="color:var(--cyan)">91</span><span class="vslider-unit">mmHg</span></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjV('tad',-5)" class="vbtn">−5</button>
+            <span><span class="vslider-val" id="dv-tad" style="color:var(--cyan)">91</span><span class="vslider-unit">mmHg</span></span>
+            <button onclick="adjV('tad',5)" class="vbtn">+5</button>
+          </div>
         </div>
         <input type="range" id="sl-tad" min="30" max="130" value="91" oninput="upV('tad',this.value)">
       </div>
@@ -555,7 +703,11 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="vslider-row">
         <div class="vslider-top">
           <span class="vslider-label">Frecuencia Cardíaca</span>
-          <span><span class="vslider-val" id="dv-fc" style="color:var(--orange)">100</span><span class="vslider-unit">lpm</span></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjV('fc',-5)" class="vbtn">−5</button>
+            <span><span class="vslider-val" id="dv-fc" style="color:var(--orange)">100</span><span class="vslider-unit">lpm</span></span>
+            <button onclick="adjV('fc',5)" class="vbtn">+5</button>
+          </div>
         </div>
         <input type="range" id="sl-fc" min="30" max="200" value="100" oninput="upV('fc',this.value)">
       </div>
@@ -563,7 +715,11 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="vslider-row">
         <div class="vslider-top">
           <span class="vslider-label">SpO2</span>
-          <span><span class="vslider-val" id="dv-spo2" style="color:var(--green)">93</span><span class="vslider-unit">%</span></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjV('spo2',-1)" class="vbtn">−1</button>
+            <span><span class="vslider-val" id="dv-spo2" style="color:var(--green)">93</span><span class="vslider-unit">%</span></span>
+            <button onclick="adjV('spo2',1)" class="vbtn">+1</button>
+          </div>
         </div>
         <input type="range" id="sl-spo2" min="70" max="100" value="93" oninput="upV('spo2',this.value)">
       </div>
@@ -898,11 +1054,19 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 <!-- ══ FÁRMACOS ══ -->
 <div class="page" id="page-farm">
+  <!-- Dosis acumulada resumen -->
+  <div id="farm-acum-bar" style="display:none;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:8px">
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700">💊 Dosis acumulada del procedimiento</div>
+    <div id="farm-acum-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+
   <div class="section">
-    <div class="section-header"><h2>💊 Nuevo Medicamento</h2></div>
+    <div class="section-header"><h2>💊 Nuevo Medicamento</h2>
+      <button class="btn sm" style="background:rgba(255,109,0,.15);border-color:var(--orange);color:var(--orange)" onclick="openDosisCalc()">⚖️ Calc. dosis</button>
+    </div>
     <div class="section-body">
       <div class="field"><label>Fármaco</label>
-        <input type="text" id="fn" list="fdl" placeholder="Buscar o escribir...">
+        <input type="text" id="fn" list="fdl" placeholder="Buscar o escribir..." oninput="sugerirDosis(this.value)">
         <datalist id="fdl">
           <option value="Fentanilo"><option value="Sufentanilo"><option value="Morfina">
           <option value="Propofol"><option value="Ketamina"><option value="Midazolam"><option value="Etomidato">
@@ -916,6 +1080,8 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
           <option value="Ketorolaco"><option value="Tramadol"><option value="Dipirona"><option value="Dexketoprofeno">
         </datalist>
       </div>
+      <!-- Sugerencia dosis/peso -->
+      <div id="farm-dosis-hint" style="display:none;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;color:var(--cyan)"></div>
       <div class="field-row">
         <div class="field"><label>Dosis</label><input type="text" id="fd" placeholder="ej. 100 mcg"></div>
         <div class="field"><label>Vía</label>
@@ -925,6 +1091,20 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="field-row">
         <div class="field"><label>Hora exacta</label><input type="time" id="fh"></div>
         <div class="field"><label>Indicación</label><input type="text" id="fnota" placeholder="Para qué..."></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo de administración</label>
+          <select id="ftipo">
+            <option value="Bolo">Bolo / Dosis única</option>
+            <option value="Infusión">Infusión continua</option>
+            <option value="Goteo">Goteo</option>
+          </select>
+        </div>
+        <div class="field" id="farm-vel-field" style="display:none">
+          <label>Velocidad</label>
+          <input type="text" id="fvel" placeholder="mcg/kg/min / ml/h">
+        </div>
       </div>
       <button class="btn o full" onclick="addFarm()">+ Registrar Medicamento</button>
     </div>
@@ -1007,6 +1187,83 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div id="res-aldrete" class="res-section"></div>
   </div>
 
+  <!-- POSTOPERATORIO UCPA -->
+  <div class="section" style="margin-top:12px">
+    <div class="section-header"><h2>🏥 Post-Operatorio / UCPA</h2></div>
+    <div class="section-body">
+      <!-- EVA Dolor -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px">Dolor (EVA 0–10)</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" id="po-eva" min="0" max="10" value="0" step="1" style="flex:1" oninput="updEVA(this.value)">
+          <div style="min-width:48px;text-align:center">
+            <div style="font-size:28px;font-weight:900;color:var(--green)" id="po-eva-val">0</div>
+            <div style="font-size:9px;color:var(--muted)" id="po-eva-lbl">Sin dolor</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Síntomas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px">Náusea / Vómito</label>
+          <select id="po-nausea" style="width:100%">
+            <option value="No">No</option>
+            <option value="Náusea leve">Náusea leve</option>
+            <option value="Náusea moderada">Náusea moderada</option>
+            <option value="Vómito">Vómito</option>
+            <option value="Vómito profuso">Vómito profuso</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px">Escalofrío</label>
+          <select id="po-shivering">
+            <option value="No">No</option>
+            <option value="Leve">Leve</option>
+            <option value="Moderado">Moderado</option>
+            <option value="Intenso">Intenso</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Analgesia postop -->
+      <div class="field" style="margin-bottom:10px">
+        <label>Analgesia postoperatoria indicada</label>
+        <input type="text" id="po-analgesia" placeholder="Ketorolaco 30mg c/8h + Paracetamol 1g...">
+      </div>
+
+      <!-- Horas UCPA + egreso -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px">Ingreso UCPA</label>
+          <input type="time" id="po-ingucpa" style="width:100%;padding:10px;font-size:15px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white);box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px">Egreso a piso</label>
+          <input type="time" id="po-egreso" style="width:100%;padding:10px;font-size:15px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white);box-sizing:border-box">
+        </div>
+      </div>
+
+      <!-- Destino al egreso -->
+      <div class="field">
+        <label>Destino al egreso</label>
+        <select id="po-destino">
+          <option>Piso general</option>
+          <option>UCI / UTI</option>
+          <option>Domicilio</option>
+          <option>Terapia intermedia</option>
+          <option>Otro</option>
+        </select>
+      </div>
+
+      <!-- Notas postop -->
+      <div class="field">
+        <label>Observaciones postoperatorias</label>
+        <textarea id="po-notas" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="Extubado en sala, tolerando vía oral, sin complicaciones..."></textarea>
+      </div>
+    </div>
+  </div>
+
   <!-- ALDRETE -->
   <div class="section" style="margin-top:12px">
     <div class="section-header"><h2>📋 Escala Aldrete</h2></div>
@@ -1030,6 +1287,43 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 </div><!-- /res -->
 
 </div><!-- /pages -->
+
+<!-- ══ PANTALLA GRANDE ══ -->
+<div id="bigscreen-overlay" style="display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)">
+  <!-- Close button -->
+  <button onclick="toggleBigScreen()" style="position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:44px;height:44px;color:#fff;font-size:20px;cursor:pointer;line-height:44px;text-align:center">✕</button>
+  <!-- Patient name -->
+  <div id="bs-nombre" style="font-size:13px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;padding:0 60px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%"></div>
+  <!-- Vital numbers grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;width:100%;padding:0 12px;gap:4px;flex:1;align-content:center">
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">TA mmHg</div>
+      <div style="font-size:52px;font-weight:900;color:#00e5ff;line-height:1" id="bs-ta">--/--</div>
+    </div>
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">FC lpm</div>
+      <div style="font-size:52px;font-weight:900;color:#ff6d00;line-height:1" id="bs-fc">--</div>
+    </div>
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">SpO₂ %</div>
+      <div style="font-size:52px;font-weight:900;color:#00e676;line-height:1" id="bs-spo2">--</div>
+    </div>
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">EtCO₂ mmHg</div>
+      <div style="font-size:52px;font-weight:900;color:#d500f9;line-height:1" id="bs-etco2">--</div>
+    </div>
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">PAM mmHg</div>
+      <div style="font-size:52px;font-weight:900;color:#d500f9;line-height:1" id="bs-pam">--</div>
+    </div>
+    <div style="background:#0a1a2a;border-radius:14px;padding:10px;text-align:center">
+      <div style="font-size:9px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">T. Anest.</div>
+      <div style="font-size:38px;font-weight:900;color:#00e5ff;line-height:1" id="bs-timer">--:--</div>
+    </div>
+  </div>
+  <!-- Registrar button in bigscreen -->
+  <button onclick="registrar();flashBigScreen()" style="margin:12px auto;width:calc(100% - 24px);padding:18px;font-size:16px;font-weight:800;background:linear-gradient(135deg,#00e676,#00c853);border:none;border-radius:14px;color:#000;cursor:pointer;letter-spacing:.5px">📌 Registrar Punto</button>
+</div>
 
 <!-- ══ BANNER MODO SOLO LECTURA ══ -->
 <div id="readonly-banner" style="display:none;position:fixed;bottom:68px;left:0;right:0;z-index:200;
@@ -1268,14 +1562,21 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
     <!-- ══ CASOS GUARDADOS (visible post-login) ══ -->
     <div style="background:#080d1a;border:1px solid #1e2d44;border-radius:20px;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:800;color:#00e5ff;
-                    text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
-        <button id="btn-refresh-hist" onclick="refreshHistorial()"
-                style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);
-                       border-radius:8px;color:#00e5ff;font-size:14px;
-                       width:32px;height:32px;cursor:pointer;line-height:32px;text-align:center;padding:0">
-          ↻
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
+        <button id="btn-refresh-hist" onclick="refreshHistorial()" style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:8px;color:#00e5ff;font-size:14px;width:32px;height:32px;cursor:pointer;line-height:32px;text-align:center;padding:0">↻</button>
+      </div>
+      <!-- Category tabs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <button id="hist-tab-priv" onclick="setHistTab('privado')"
+                style="padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;
+                       background:rgba(0,229,255,.15);border:2px solid #00e5ff;color:#00e5ff;transition:all .2s">
+          🔒 Privado
+        </button>
+        <button id="hist-tab-hosp" onclick="setHistTab('hospital')"
+                style="padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;
+                       background:rgba(0,0,0,0);border:2px solid #1e2d44;color:#3d5a78;transition:all .2s">
+          🏥 Hospital
         </button>
       </div>
       <div id="historial-list">
@@ -1493,6 +1794,22 @@ function openPacModal() {
   if(S.pac.med) document.getElementById('m-anest').value = S.pac.med;
   if(S.pac.ciru) document.getElementById('m-ciru').value = S.pac.ciru;
   if(S.pac.inst) document.getElementById('m-inst').value = S.pac.inst;
+  // Preop fields
+  var _pfill = function(id, val) { var e=document.getElementById(id); if(e&&val) e.value=val; };
+  _pfill('m-alergias',     S.pac.alergias);
+  _pfill('m-ayuno',        S.pac.ayuno);
+  _pfill('m-ayuno-tipo',   S.pac.ayunoTipo);
+  _pfill('m-antecedentes', S.pac.antecedentes);
+  _pfill('m-medcronicos',  S.pac.medCronicos);
+  _pfill('m-mallampati',   S.pac.mallampati);
+  _pfill('m-apertura',     S.pac.aperturaBucal);
+  _pfill('m-dtm',          S.pac.dtm);
+  _pfill('m-antid',        S.pac.antID);
+  _pfill('m-premed',       S.pac.premed);
+  // Category
+  var cat = S.pac.categoria || 'privado';
+  var catRadio = document.querySelector('input[name="cat-caso"][value="'+cat+'"]');
+  if(catRadio) catRadio.checked = true;
   document.getElementById('pac-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
@@ -1540,6 +1857,20 @@ function savePacModal() {
   S.pac.med    = document.getElementById('m-anest').value.trim();
   S.pac.ciru   = document.getElementById('m-ciru').value.trim();
   S.pac.inst   = document.getElementById('m-inst').value.trim();
+  // Preoperatorio
+  S.pac.alergias     = (document.getElementById('m-alergias')    ||{value:''}).value.trim();
+  S.pac.ayuno        = (document.getElementById('m-ayuno')       ||{value:''}).value;
+  S.pac.ayunoTipo    = (document.getElementById('m-ayuno-tipo')  ||{value:''}).value;
+  S.pac.antecedentes = (document.getElementById('m-antecedentes')||{value:''}).value.trim();
+  S.pac.medCronicos  = (document.getElementById('m-medcronicos') ||{value:''}).value.trim();
+  S.pac.mallampati   = (document.getElementById('m-mallampati')  ||{value:''}).value;
+  S.pac.aperturaBucal= (document.getElementById('m-apertura')    ||{value:''}).value;
+  S.pac.dtm          = (document.getElementById('m-dtm')         ||{value:''}).value;
+  S.pac.antID        = (document.getElementById('m-antid')       ||{value:'No'}).value;
+  S.pac.premed       = (document.getElementById('m-premed')      ||{value:''}).value.trim();
+  // Categoría
+  var catEl = document.querySelector('input[name="cat-caso"]:checked');
+  S.pac.categoria = catEl ? catEl.value : 'privado';
   // Update topbar
   updateTopbar();
   // Update resumen institution line
@@ -1632,6 +1963,8 @@ function tick() {
 
   // ── ISQUEMIA ──
   _tickIsquemia(now);
+  // ── PANTALLA GRANDE ──
+  if(_bigScreenOn) updateBigScreen();
 }
 setInterval(tick,1000); tick();
 
@@ -2272,6 +2605,244 @@ function resetVSCManual() {
 
 
 // ═══════════════════════════════════════════════
+// EtCO2 + BIS — controles monitor principal
+// ═══════════════════════════════════════════════
+S.etco2 = 38;
+S.bis   = null;
+
+function adjEtco2(delta) {
+  S.etco2 = Math.max(0, Math.min(80, (S.etco2||38) + delta));
+  var el = document.getElementById('mon-etco2');
+  if(el) el.textContent = S.etco2;
+  // Color warning
+  if(el) el.style.color = S.etco2 > 50 ? 'var(--red)' : S.etco2 < 30 ? 'var(--yellow)' : 'var(--purple)';
+  // Sync with ventilator slider
+  var sv = document.getElementById('sv-etco2');
+  if(sv) { sv.value = S.etco2; upVent('etco2', S.etco2, ' mmHg'); }
+  if(navigator.vibrate) navigator.vibrate(15);
+}
+
+function adjBis(delta) {
+  if(S.bis === null) S.bis = 50;
+  S.bis = Math.max(0, Math.min(100, S.bis + delta));
+  var el  = document.getElementById('mon-bis');
+  var lbl = document.getElementById('mon-bis-lbl');
+  if(el) el.textContent = S.bis;
+  if(lbl) {
+    if(S.bis >= 80)       { lbl.textContent = 'Consciente'; lbl.style.color='var(--red)'; }
+    else if(S.bis >= 60)  { lbl.textContent = 'Sedado'; lbl.style.color='var(--yellow)'; }
+    else if(S.bis >= 40)  { lbl.textContent = 'Anestesia ✓'; lbl.style.color='var(--green)'; }
+    else                  { lbl.textContent = 'Profundo'; lbl.style.color='var(--orange)'; }
+  }
+  if(navigator.vibrate) navigator.vibrate(15);
+}
+
+// ═══════════════════════════════════════════════
+// adjV — ajuste con botones +/- para vitales
+// ═══════════════════════════════════════════════
+function adjV(key, delta) {
+  var sl = document.getElementById('sl-' + key);
+  if(!sl) return;
+  var newVal = Math.max(parseFloat(sl.min), Math.min(parseFloat(sl.max), parseFloat(sl.value) + delta));
+  sl.value = newVal;
+  upV(key, newVal);
+  if(navigator.vibrate) navigator.vibrate(15);
+}
+
+// ═══════════════════════════════════════════════
+// updEVA — escala de dolor postoperatorio
+// ═══════════════════════════════════════════════
+function updEVA(val) {
+  var v = parseInt(val);
+  var el  = document.getElementById('po-eva-val');
+  var lbl = document.getElementById('po-eva-lbl');
+  var labels = ['Sin dolor','Muy leve','Leve','Molesto','Moderado','Moderado-intenso','Intenso','Muy intenso','Severo','Muy severo','Insoportable'];
+  var colors = ['var(--green)','var(--green)','var(--green)','var(--yellow)','var(--yellow)','var(--orange)','var(--orange)','var(--red)','var(--red)','var(--red)','var(--red)'];
+  if(el) { el.textContent = v; el.style.color = colors[v]; }
+  if(lbl) { lbl.textContent = labels[v]; lbl.style.color = colors[v]; }
+}
+
+// ═══════════════════════════════════════════════
+// Mallampati — alerta vía aérea difícil
+// ═══════════════════════════════════════════════
+function checkViaAerea() {
+  var mall  = (document.getElementById('m-mallampati') || {value:''}).value;
+  var antid = (document.getElementById('m-antid') || {value:'No'}).value;
+  var dtm   = (document.getElementById('m-dtm') || {value:''}).value;
+  var alert_el = document.getElementById('lemon-alert');
+  if(!alert_el) return;
+  var risk = mall === 'III' || mall === 'IV' || antid === 'Sí' || (dtm && dtm.includes('Corta'));
+  alert_el.style.display = risk ? 'block' : 'none';
+}
+
+// Wire up change handlers
+document.addEventListener('change', function(e) {
+  if(['m-mallampati','m-antid','m-dtm'].indexOf(e.target.id) >= 0) checkViaAerea();
+  if(e.target.name === 'cat-caso') {
+    // Visual feedback on category selection
+    var privLbl = document.getElementById('cat-priv-lbl');
+    var hospLbl = document.getElementById('cat-hosp-lbl');
+    if(!privLbl || !hospLbl) return;
+    if(e.target.value === 'privado') {
+      privLbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,229,255,.12);border:2px solid var(--cyan);border-radius:10px;cursor:pointer;transition:all .2s';
+      hospLbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,230,118,.03);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s';
+    } else {
+      hospLbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,230,118,.12);border:2px solid var(--green);border-radius:10px;cursor:pointer;transition:all .2s';
+      privLbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,229,255,.03);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s';
+    }
+  }
+  if(e.target.id === 'ftipo') {
+    document.getElementById('farm-vel-field').style.display = e.target.value === 'Infusión' || e.target.value === 'Goteo' ? 'block' : 'none';
+  }
+});
+
+// ═══════════════════════════════════════════════
+// DOSIS por peso — sugerencias automáticas
+// ═══════════════════════════════════════════════
+var DOSIS_REF = {
+  'Fentanilo':      {dosis:'1-3 mcg/kg', unidad:'mcg', factor:2},
+  'Sufentanilo':    {dosis:'0.1-0.3 mcg/kg', unidad:'mcg', factor:0.2},
+  'Morfina':        {dosis:'0.1-0.2 mg/kg', unidad:'mg', factor:0.15},
+  'Propofol':       {dosis:'1.5-2.5 mg/kg induccion', unidad:'mg', factor:2},
+  'Ketamina':       {dosis:'1-2 mg/kg IV', unidad:'mg', factor:1.5},
+  'Midazolam':      {dosis:'0.02-0.04 mg/kg', unidad:'mg', factor:0.03},
+  'Etomidato':      {dosis:'0.3 mg/kg', unidad:'mg', factor:0.3},
+  'Rocuronio':      {dosis:'0.6 mg/kg', unidad:'mg', factor:0.6},
+  'Vecuronio':      {dosis:'0.1 mg/kg', unidad:'mg', factor:0.1},
+  'Succinilcolina': {dosis:'1-1.5 mg/kg', unidad:'mg', factor:1.2},
+  'Neostigmina':    {dosis:'0.04-0.08 mg/kg', unidad:'mg', factor:0.05},
+  'Sugammadex':     {dosis:'2-4 mg/kg', unidad:'mg', factor:2},
+  'Atropina':       {dosis:'0.01-0.02 mg/kg', unidad:'mg', factor:0.015},
+  'Efedrina':       {dosis:'5-10 mg IV', unidad:'mg', factor:null},
+  'Dexametasona':   {dosis:'0.1-0.2 mg/kg', unidad:'mg', factor:0.1},
+  'Ketorolaco':     {dosis:'0.5 mg/kg (máx 30mg)', unidad:'mg', factor:0.5},
+  'Ondansetrón':    {dosis:'4-8 mg IV', unidad:'mg', factor:null},
+};
+
+function sugerirDosis(farmName) {
+  var hint = document.getElementById('farm-dosis-hint');
+  if(!hint) return;
+  var nombre = farmName.toLowerCase();
+  var ref = null;
+  Object.keys(DOSIS_REF).forEach(function(k){ if(nombre.includes(k.toLowerCase())) ref = DOSIS_REF[k]; });
+  if(!ref) { hint.style.display = 'none'; return; }
+  var peso = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 0;
+  var msg = '⚖️ Dosis referencia: ' + ref.dosis;
+  if(ref.factor && peso > 0) {
+    var calc = Math.round(ref.factor * peso * 10) / 10;
+    msg += ' → para ' + peso + 'kg: <b style="color:var(--cyan)">' + calc + ' ' + ref.unidad + '</b>';
+  }
+  hint.innerHTML = msg;
+  hint.style.display = 'block';
+}
+
+function openDosisCalc() {
+  var peso = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 0;
+  var rows = Object.keys(DOSIS_REF).map(function(k) {
+    var ref = DOSIS_REF[k];
+    var calc = (ref.factor && peso > 0) ? (Math.round(ref.factor * peso * 10)/10) + ' ' + ref.unidad : ref.dosis;
+    return '<tr style="border-bottom:1px solid #1e2d44"><td style="padding:7px 10px;color:#dde8ff;font-weight:700">' + k + '</td>' +
+           '<td style="padding:7px 10px;color:#3d5a78;font-size:11px">' + ref.dosis + '</td>' +
+           '<td style="padding:7px 10px;color:#00e5ff;font-weight:800">' + calc + '</td></tr>';
+  }).join('');
+  var modal = document.createElement('div');
+  modal.id = 'dosis-calc-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(4,6,13,.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))';
+  modal.innerHTML = '<div style="max-width:480px;margin:0 auto">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div style="font-size:17px;font-weight:800;color:#ff6d00">⚖️ Calculadora de Dosis</div>' +
+    '<button id="dc-close" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button></div>' +
+    (peso > 0 ? '<div style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#00e5ff">Paciente: <b>' + (S.pac.nombre||'Sin nombre') + '</b> · Peso: <b>' + peso + ' kg</b></div>' : '') +
+    '<table style="width:100%;border-collapse:collapse">' +
+    '<thead><tr style="background:#0a0f1c"><th style="padding:8px 10px;text-align:left;font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px">Fármaco</th><th style="padding:8px 10px;text-align:left;font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px">Dosis std</th><th style="padding:8px 10px;text-align:left;font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px">Para este px</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div>';
+  document.body.appendChild(modal);
+  document.getElementById('dc-close').addEventListener('click', function(){ modal.remove(); });
+}
+
+// ═══════════════════════════════════════════════
+// renderFarmAcum — dosis acumulada por fármaco
+// ═══════════════════════════════════════════════
+function renderFarmAcum() {
+  var bar = document.getElementById('farm-acum-bar');
+  var list = document.getElementById('farm-acum-list');
+  if(!bar || !list || !S.farms.length) { if(bar) bar.style.display='none'; return; }
+  bar.style.display = 'block';
+  var acum = {};
+  S.farms.forEach(function(f) {
+    var k = f.n;
+    if(!acum[k]) acum[k] = [];
+    acum[k].push(f.d);
+  });
+  list.innerHTML = Object.keys(acum).map(function(k) {
+    var doses = acum[k];
+    return '<div style="background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);border-radius:7px;padding:5px 8px;font-size:11px">' +
+      '<span style="color:#ff6d00;font-weight:700">' + k + '</span> ' +
+      '<span style="color:#3d5a78">×' + doses.length + '</span> ' +
+      '<span style="color:#dde8ff">' + doses.join(', ') + '</span></div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// PANTALLA GRANDE
+// ═══════════════════════════════════════════════
+var _bigScreenOn = false;
+function toggleBigScreen() {
+  _bigScreenOn = !_bigScreenOn;
+  var ov = document.getElementById('bigscreen-overlay');
+  if(!ov) return;
+  ov.style.display = _bigScreenOn ? 'flex' : 'none';
+  if(_bigScreenOn) updateBigScreen();
+}
+
+function updateBigScreen() {
+  if(!_bigScreenOn) return;
+  var nombre = document.getElementById('bs-nombre');
+  var ta     = document.getElementById('bs-ta');
+  var fc     = document.getElementById('bs-fc');
+  var spo2   = document.getElementById('bs-spo2');
+  var etco2  = document.getElementById('bs-etco2');
+  var pam    = document.getElementById('bs-pam');
+  var timer  = document.getElementById('bs-timer');
+  if(nombre) nombre.textContent = S.pac.nombre || 'Sin paciente';
+  if(ta)     ta.textContent = (S.vitals.tas||'--') + '/' + (S.vitals.tad||'--');
+  if(fc)     { fc.textContent = S.vitals.fc||'--'; fc.style.color = (S.vitals.fc>120||S.vitals.fc<45)?'var(--red)':'var(--orange)'; }
+  if(spo2)   { spo2.textContent = S.vitals.spo2||'--'; spo2.style.color = S.vitals.spo2<92?'var(--red)':'var(--green)'; }
+  if(etco2)  etco2.textContent = S.etco2||'--';
+  if(pam)    pam.textContent = Math.round((S.vitals.tad||0)+((S.vitals.tas||0)-(S.vitals.tad||0))/3)||'--';
+  if(timer)  timer.textContent = document.getElementById('st-tan') ? document.getElementById('st-tan').textContent : '--:--';
+}
+
+function flashBigScreen() {
+  var ov = document.getElementById('bigscreen-overlay');
+  if(!ov) return;
+  ov.style.background = '#003322';
+  setTimeout(function(){ ov.style.background = '#000'; }, 300);
+  showToast('✅ Punto registrado');
+}
+
+// ═══════════════════════════════════════════════
+// CONFIRMACIÓN VISUAL registro
+// ═══════════════════════════════════════════════
+var _origRegistrar = registrar;
+registrar = function() {
+  _origRegistrar();
+  updateBigScreen();
+  // Flash the register button green
+  var btn = document.getElementById('btn-registrar');
+  if(btn) {
+    var origBg = btn.style.background;
+    btn.style.background = 'var(--green)';
+    btn.textContent = '✅ ¡Registrado!';
+    setTimeout(function(){
+      btn.style.background = '';
+      btn.textContent = '📌 Registrar Punto';
+    }, 1200);
+  }
+};
+
+
+// ═══════════════════════════════════════════════
 // MODO SOLO LECTURA — casos históricos
 // ═══════════════════════════════════════════════
 function _showReadOnlyBanner(show) {
@@ -2529,9 +3100,12 @@ function addFarm() {
   const nota=document.getElementById('fnota').value.trim();
   const hEl=document.getElementById('fh').value;
   const h=hEl||getT();
+  const tipo=(document.getElementById('ftipo')||{value:'Bolo'}).value;
+  const vel =(document.getElementById('fvel') ||{value:''}).value.trim();
   if(!n){alert('Escribe el nombre del fármaco');return;}
-  S.farms.unshift({n,d:d||'—',v,h,nota});
+  S.farms.unshift({n,d:d||'—',v,h,nota,tipo,vel});
   renderFarms();
+  renderFarmAcum();
   document.getElementById('fn').value='';
   document.getElementById('fd').value='';
   document.getElementById('fnota').value='';
@@ -2662,6 +3236,11 @@ function genRes() {
     <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
     ${p.ciru ? '<div class="res-row"><span>Cirujano</span><span>' + p.ciru + '</span></div>' : ''}
     ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
+    ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
+    ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID previo: '+p.antID:'') + '</span></div>' : ''}
+    ${p.ayuno ? '<div class="res-row"><span>Ayuno</span><span>' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</span></div>' : ''}
+    ${p.antecedentes ? '<div class="res-row"><span>Antecedentes</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.antecedentes + '</span></div>' : ''}
+    ${p.premed ? '<div class="res-row"><span>Premedicación</span><span>' + p.premed + '</span></div>' : ''}
     <div class="res-row"><span>Inicio Anestesia</span><span>${tAN}</span></div>
     <div class="res-row"><span>Inicio Cirugía</span><span>${tCX}</span></div>
     <div class="res-row"><span>Fin</span><span>${tFN}</span></div>`;
@@ -2689,12 +3268,27 @@ function genRes() {
     <div class="res-row"><span>VC / FR / PEEP</span><span>${vl.vc}ml · ${vl.fr}rpm · ${vl.peep}cmH₂O</span></div>
     <div class="res-row"><span>P.Pico / EtCO2</span><span>${vl.ppeak}cmH₂O · ${vl.etco2}mmHg</span></div>` : '';
 
-  document.getElementById('res-aldrete').innerHTML = `
-    <div class="res-title">ESCALA ALDRETE</div>
-    <div style="display:flex;align-items:center;gap:16px;padding:8px 0">
-      <div style="font-size:44px;font-weight:800;color:${sc >= 9 ? 'var(--green)' : 'var(--yellow)'}">${sc}/10</div>
-      <div style="color:${sc >= 9 ? 'var(--green)' : 'var(--yellow)'}">${sc >= 9 ? '✓ Alta Autorizada' : '⚠ Observación'}</div>
-    </div>`;
+  document.getElementById('res-aldrete').innerHTML = (function(){
+    var evaV = (document.getElementById('po-eva')||{value:'0'}).value;
+    var nauV = (document.getElementById('po-nausea')||{value:'No'}).value;
+    var angV = (document.getElementById('po-analgesia')||{value:''}).value;
+    var ingV = (document.getElementById('po-ingucpa')||{value:''}).value;
+    var egrV = (document.getElementById('po-egreso')||{value:''}).value;
+    var dstV = (document.getElementById('po-destino')||{value:''}).value;
+    var notV = (document.getElementById('po-notas')||{value:''}).value;
+    return '<div class="res-title">ESCALA ALDRETE</div>' +
+      '<div style="display:flex;align-items:center;gap:16px;padding:8px 0">' +
+      '<div style="font-size:44px;font-weight:800;color:' + (sc>=9?'var(--green)':'var(--yellow)') + '">' + sc + '/10</div>' +
+      '<div style="color:' + (sc>=9?'var(--green)':'var(--yellow)') + '">' + (sc>=9?'✓ Alta Autorizada':'⚠ Observación') + '</div></div>' +
+      '<div class="res-title" style="margin-top:8px">POST-OPERATORIO / UCPA</div>' +
+      '<div class="res-row"><span>Dolor EVA</span><span>' + evaV + '/10</span></div>' +
+      '<div class="res-row"><span>Náusea/Vómito</span><span>' + nauV + '</span></div>' +
+      (angV?'<div class="res-row"><span>Analgesia postop</span><span>'+angV+'</span></div>':'') +
+      (ingV?'<div class="res-row"><span>Ingreso UCPA</span><span>'+ingV+'</span></div>':'') +
+      (egrV?'<div class="res-row"><span>Egreso UCPA</span><span>'+egrV+'</span></div>':'') +
+      '<div class="res-row"><span>Destino</span><span>'+dstV+'</span></div>' +
+      (notV?'<div class="res-row"><span>Notas</span><span style="max-width:60%;text-align:right;font-size:11px">'+notV+'</span></div>':'');
+  })();
 
   // ── PDF Helper ──
   function ST(t, color) { color = color || '#0077aa'; return '<div style="background:' + color + ';color:#fff;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;border-radius:4px;margin:10px 0 5px">' + t + '</div>'; }
@@ -2737,6 +3331,9 @@ function genRes() {
           (p.guia ? '<div style="font-size:7px;color:#444">Guía: ' + p.guia + '</div>' : '') +
           (p.anLocal ? '<div style="font-size:7px;color:#444">An. local: ' + p.anLocal + (p.anLocalDosis ? ' · ' + p.anLocalDosis : '') + '</div>' : '') +
           (p.tipoAnNota ? '<div style="font-size:7px;color:#555;font-style:italic;margin-top:2px">' + p.tipoAnNota + '</div>' : '') +
+          (p.alergias ? '<div style="font-size:7px;color:#c00;font-weight:800;margin-top:2px;background:#fee;padding:1px 3px;border-radius:2px">⚠ ALERGIA: ' + p.alergias + '</div>' : '') +
+          (p.mallampati ? '<div style="font-size:7px;color:#444">Mallampati: ' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID prev: '+p.antID:'') + '</div>' : '') +
+          (p.ayuno ? '<div style="font-size:7px;color:#444">Ayuno: ' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
@@ -3141,21 +3738,34 @@ function deleteFarm2() {
 // ═══════════════════════════════════════════════════════════════
 // SISTEMA DE LOGIN Y GUARDADO
 // ═══════════════════════════════════════════════════════════════
-var DB_KEY   = 'anestesys_casos';
-var USER_KEY = 'anestesys_user';
+var DB_KEY_PRIV = 'anestesys_casos_privado';
+var DB_KEY_HOSP = 'anestesys_casos_hospital';
+var USER_KEY    = 'anestesys_user';
 
 function getUser() {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || '{"nombre":"","inst":""}'); }
   catch(e) { return {nombre:'',inst:''}; }
 }
 
-function getCasos() {
-  try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
+function getCasos(cat) {
+  var key = (cat === 'hospital') ? DB_KEY_HOSP : DB_KEY_PRIV;
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); }
   catch(e) { return []; }
 }
 
-function saveCasos(arr) {
-  localStorage.setItem(DB_KEY, JSON.stringify(arr));
+function saveCasos(arr, cat) {
+  var key = (cat === 'hospital') ? DB_KEY_HOSP : DB_KEY_PRIV;
+  localStorage.setItem(key, JSON.stringify(arr));
+}
+
+function getCasoCategoria() {
+  return S.pac && S.pac.categoria === 'hospital' ? 'hospital' : 'privado';
+}
+
+function getAllCasos() {
+  var priv = getCasos('privado').map(function(c){ c._cat = 'privado'; return c; });
+  var hosp = getCasos('hospital').map(function(c){ c._cat = 'hospital'; return c; });
+  return priv.concat(hosp).sort(function(a,b){ return (b.savedAt||0)-(a.savedAt||0); });
 }
 
 function getCasoId() {
@@ -3214,12 +3824,36 @@ function serializeState() {
     },
     vscManual: S._vscManual || null,
     vspManual: S._vspManual || null,
+    etco2:     S.etco2 || 38,
+    bis:       S.bis   || null,
     aldrete: {
       act:  (document.getElementById('al-act')  || {value:'2'}).value,
       resp: (document.getElementById('al-resp') || {value:'2'}).value,
       circ: (document.getElementById('al-circ') || {value:'2'}).value,
       conc: (document.getElementById('al-conc') || {value:'2'}).value,
       sat:  (document.getElementById('al-sat')  || {value:'2'}).value
+    },
+    postop: {
+      eva:      (document.getElementById('po-eva')       || {value:'0'}).value,
+      nausea:   (document.getElementById('po-nausea')    || {value:'No'}).value,
+      shiver:   (document.getElementById('po-shivering') || {value:'No'}).value,
+      analgesia:(document.getElementById('po-analgesia') || {value:''}).value,
+      ingucpa:  (document.getElementById('po-ingucpa')   || {value:''}).value,
+      egreso:   (document.getElementById('po-egreso')    || {value:''}).value,
+      destino:  (document.getElementById('po-destino')   || {value:''}).value,
+      notas:    (document.getElementById('po-notas')     || {value:''}).value
+    },
+    preop: {
+      alergias:    (document.getElementById('m-alergias')    ||{value:''}).value,
+      ayuno:       (document.getElementById('m-ayuno')       ||{value:''}).value,
+      ayunoTipo:   (document.getElementById('m-ayuno-tipo')  ||{value:''}).value,
+      antecedentes:(document.getElementById('m-antecedentes')||{value:''}).value,
+      medCronicos: (document.getElementById('m-medcronicos') ||{value:''}).value,
+      mallampati:  (document.getElementById('m-mallampati')  ||{value:''}).value,
+      apertura:    (document.getElementById('m-apertura')    ||{value:''}).value,
+      dtm:         (document.getElementById('m-dtm')         ||{value:''}).value,
+      antID:       (document.getElementById('m-antid')       ||{value:'No'}).value,
+      premed:      (document.getElementById('m-premed')      ||{value:''}).value
     }
   };
 }
@@ -3228,11 +3862,12 @@ function autoSave(manual) {
   // Si estamos en modo sólo lectura (caso histórico), no sobreescribir
   if (S._readOnly && !manual) return;
   var state  = serializeState();
-  var casos  = getCasos();
+  var cat    = getCasoCategoria();
+  var casos  = getCasos(cat);
   var idx    = casos.findIndex(function(c){ return c.id === state.id; });
   if (idx >= 0) { casos[idx] = state; } else { casos.unshift(state); }
   if (casos.length > 50) casos.splice(50);
-  saveCasos(casos);
+  saveCasos(casos, cat);
   if (manual) {
     showToast('💾 Guardado: ' + (S.pac.nombre || 'Sin nombre'));
     if (navigator.vibrate) navigator.vibrate([30,30,30]);
@@ -3364,6 +3999,12 @@ function restoreState(caso) {
   // VSC manual overrides
   S._vscManual = caso.vscManual || null;
   S._vspManual = caso.vspManual || null;
+  S.etco2 = caso.etco2 != null ? caso.etco2 : 38;
+  S.bis   = caso.bis   != null ? caso.bis   : null;
+  // Sync EtCO2 display
+  try { var me = document.getElementById('mon-etco2'); if(me) { me.textContent = S.etco2; me.style.color = S.etco2>50?'var(--red)':S.etco2<30?'var(--yellow)':'var(--purple)'; } } catch(e){}
+  // Sync BIS display
+  try { if(S.bis != null) { adjBis(0); } } catch(e){}
 
   // Liquid inputs
   var li = caso.liqInputs || {};
@@ -3374,6 +4015,17 @@ function restoreState(caso) {
   // Aldrete
   var al = caso.aldrete || {};
   ['act','resp','circ','conc','sat'].forEach(function(k){ var el=document.getElementById('al-'+k); if(el&&al[k]) el.value=al[k]; });
+  // Postop
+  var po = caso.postop || {};
+  var _pset = function(id,val){ var e=document.getElementById(id); if(e&&val!=null) e.value=val; };
+  _pset('po-eva',       po.eva);       try{updEVA(po.eva||0);}catch(e){}
+  _pset('po-nausea',    po.nausea);
+  _pset('po-shivering', po.shiver);
+  _pset('po-analgesia', po.analgesia);
+  _pset('po-ingucpa',   po.ingucpa);
+  _pset('po-egreso',    po.egreso);
+  _pset('po-destino',   po.destino);
+  _pset('po-notas',     po.notas);
 
   // Refresh all UI
   updateTopbar();
@@ -3484,6 +4136,23 @@ function confirmCancel() {
 // ═══════════════════════════════════════════════════════════════
 // HISTORIAL DE CASOS
 // ═══════════════════════════════════════════════════════════════
+var _histTab = 'privado';
+function setHistTab(tab) {
+  _histTab = tab;
+  var tPriv = document.getElementById('hist-tab-priv');
+  var tHosp = document.getElementById('hist-tab-hosp');
+  if(tPriv && tHosp) {
+    if(tab === 'privado') {
+      tPriv.style.cssText = 'padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;background:rgba(0,229,255,.15);border:2px solid #00e5ff;color:#00e5ff;transition:all .2s';
+      tHosp.style.cssText = 'padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;background:rgba(0,0,0,0);border:2px solid #1e2d44;color:#3d5a78;transition:all .2s';
+    } else {
+      tHosp.style.cssText = 'padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;background:rgba(0,230,118,.15);border:2px solid #00e676;color:#00e676;transition:all .2s';
+      tPriv.style.cssText = 'padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;background:rgba(0,0,0,0);border:2px solid #1e2d44;color:#3d5a78;transition:all .2s';
+    }
+  }
+  refreshHistorial();
+}
+
 function refreshHistorial() {
   if (!window.__ACCESS_GRANTED) {
     try {
@@ -3496,7 +4165,7 @@ function refreshHistorial() {
 
   var el = document.getElementById('historial-list');
   if (!el) return;
-  var casos = getCasos();
+  var casos = getCasos(_histTab);
   if (!casos.length) {
     el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:28px 16px;font-size:13px;line-height:1.9">No hay casos guardados.<br><span style="color:#1e2d44">Se guardan automáticamente al registrar.</span></div>';
     return;
@@ -3508,10 +4177,28 @@ function refreshHistorial() {
     var edad   = (c.pac && c.pac.edad)   ? ' · ' + c.pac.edad + 'a' : '';
     var exp    = (c.pac && c.pac.exp)    ? ' · Exp ' + c.pac.exp : '';
     var cx     = (c.pac && c.pac.cx)     ? c.pac.cx : '';
+    var dx     = (c.pac && c.pac.dx)     ? c.pac.dx : '';
     var nVit   = (c.history || []).length;
     var nFar   = (c.farms   || []).length;
     var fecha  = c.fecha || '';
     var isCurr = S._casoId === c.id;
+    // Duración del procedimiento
+    var durStr = '';
+    if(c.phases && c.phases.an) {
+      var anMs = new Date(c.phases.an).getTime();
+      var finMs = 0;
+      if(c.phases.finAn) finMs = Math.max(finMs, new Date(c.phases.finAn).getTime());
+      if(c.phases.finCx) finMs = Math.max(finMs, new Date(c.phases.finCx).getTime());
+      if(finMs > anMs) {
+        var dur = finMs - anMs;
+        var dh = Math.floor(dur/3600000), dm = Math.floor((dur%3600000)/60000);
+        durStr = ' · ' + dh + 'h ' + String(dm).padStart(2,'0') + 'm';
+      }
+    }
+    // Categoria badge
+    var catBadge = _histTab === 'hospital'
+      ? '<span style="font-size:9px;background:rgba(0,230,118,.15);border:1px solid #00e676;border-radius:5px;color:#00e676;padding:2px 6px;font-weight:700">🏥 Hospital</span>'
+      : '<span style="font-size:9px;background:rgba(0,229,255,.1);border:1px solid #00e5ff;border-radius:5px;color:#00e5ff;padding:2px 6px;font-weight:700">🔒 Privado</span>';
 
     var card = document.createElement('div');
     card.style.cssText = 'background:#04060d;border:2px solid ' + (isCurr ? '#00e5ff' : '#1e2d44')
@@ -3536,10 +4223,21 @@ function refreshHistorial() {
       card.appendChild(cxDiv);
     }
 
+    if(dx) {
+      var dxDiv = document.createElement('div');
+      dxDiv.style.cssText = 'font-size:11px;color:#3d5a78;margin-bottom:2px';
+      dxDiv.textContent = 'Dx: ' + dx;
+      card.appendChild(dxDiv);
+    }
+
     var infoDiv = document.createElement('div');
-    infoDiv.style.cssText = 'font-size:11px;color:#3d5a78;margin-bottom:12px';
-    infoDiv.textContent = fecha + ' · ' + nVit + ' vitales · ' + nFar + ' farmacos';
+    infoDiv.style.cssText = 'font-size:11px;color:#3d5a78;margin-bottom:4px';
+    infoDiv.textContent = fecha + durStr + ' · ' + nVit + ' vitales · ' + nFar + ' fármacos';
+    var badgeDiv = document.createElement('div');
+    badgeDiv.style.cssText = 'margin-bottom:10px';
+    badgeDiv.innerHTML = catBadge;
     card.appendChild(infoDiv);
+    card.appendChild(badgeDiv);
 
     var btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px';
@@ -3575,8 +4273,11 @@ function deleteCaso(id) {
     'Se elimina del historial permanentemente',
     '🗑 Eliminar', '#ff1744',
     function() {
-      var casos = getCasos().filter(function(c){ return c.id !== id; });
-      saveCasos(casos);
+      var cat = 'privado';
+      // Find which category this case belongs to
+      if(getCasos('hospital').some(function(c){return c.id===id;})) cat = 'hospital';
+      var casos = getCasos(cat).filter(function(c){ return c.id !== id; });
+      saveCasos(casos, cat);
       if (S._casoId === id) S._casoId = null;
       refreshHistorial();
       showToast('🗑 Caso eliminado');
@@ -4039,6 +4740,8 @@ function resetForNewCase(){
   S.vitals     = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
   S.history    = [];
   S.farms      = [];
+  S.etco2      = 38;
+  S.bis        = null;
   S.ventHist   = [];
   S.liqHora    = [];
   S.alerts     = [];
@@ -4050,6 +4753,8 @@ function resetForNewCase(){
   S._vscManual = null;
   S._vspManual = null;
   S._sangAlerted = false;
+  S.etco2 = 38;
+  S.bis   = null;
   S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
            dx:'',cx:'',tipoAn:'AGB -- Anestesia General Balanceada',asa:'II',
            med:'',ciru:'',inst:''};
