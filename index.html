@@ -262,7 +262,25 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 /* swipe indicator for tables */
 .swipe-hint{font-size:10px;color:var(--muted);text-align:center;padding:4px;letter-spacing:1px}
+
+/* ── LANDSCAPE BIGSCREEN ── */
+@media (orientation: landscape) {
+  #bigscreen-overlay > div:nth-child(3) {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  #bigscreen-overlay > div:nth-child(3) > div {
+    font-size: 42px !important;
+  }
+}
+
+/* ── FR field in vital slider ── */
+.vslider-row input[type=range] { touch-action: pan-x; }
 </style>
+  <link rel="manifest" href="data:application/json,{%22name%22:%22AnesteSys%20PRO%22,%22short_name%22:%22AnesteSys%22,%22display%22:%22standalone%22,%22background_color%22:%22%2304060d%22,%22theme_color%22:%22%2300e5ff%22,%22start_url%22:%22/%22}">
+  <meta name="theme-color" content="#04060d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AnesteSys">
 </head>
 <body>
 <!-- ══ EDIT FARM MODAL ══ -->
@@ -296,7 +314,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 <div class="topbar">
   <div class="brand">Aneste<span>Sys</span></div>
   <div class="topbar-info" id="topbar-pac" onclick="openPacModal()" style="cursor:pointer;padding:4px 8px;border-radius:8px;border:1px dashed var(--border);min-width:120px">
-    <b id="tb-nombre">✏️ Nuevo Paciente</b><br>
+    <span id="tb-cat" style="font-size:11px;margin-right:3px" title="Privado">🔒</span><b id="tb-nombre">✏️ Nuevo Paciente</b><br>
     <span id="tb-sub" style="font-size:9px">Toca para editar</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
@@ -740,7 +758,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <input type="range" id="sl-temp" min="34" max="41" step="0.1" value="37.0" oninput="upV('temp',this.value)">
       </div>
 
-      <button class="btn g full" style="margin-bottom:10px" onclick="registrar()">📌 Registrar Punto</button>
+      <button class="btn g full" style="margin-bottom:10px" id="btn-registrar" onclick="registrar()">📌 Registrar Punto</button>
 
       <!-- CHART -->
       <canvas id="chart" height="320"></canvas>
@@ -851,7 +869,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="swipe-hint">← desliza la tabla →</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
-        <thead><tr><th>Hora</th><th>TAS</th><th>TAD</th><th>PAM</th><th>FC</th><th>FR</th><th>SpO2</th><th>Temp</th><th>Nota</th></tr></thead>
+        <thead><tr><th>Hora</th><th>TAS</th><th>TAD</th><th>PAM</th><th>FC</th><th>SpO₂</th><th>EtCO₂</th><th>Temp</th><th>Nota</th></tr></thead>
         <tbody id="vital-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
@@ -870,16 +888,16 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2>📥 Ingresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>NaCl 0.9% (ml)</label><input type="number" id="in-nacl" value="" placeholder="0" onchange="calcLiq()"></div>
-        <div class="field"><label>Sol. Hartman (ml)</label><input type="number" id="in-hart" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>NaCl 0.9% (ml)</label><input type="number" id="in-nacl" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Sol. Hartman (ml)</label><input type="number" id="in-hart" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Plasma/Coloides (ml)</label><input type="number" id="in-col" value="0" onchange="calcLiq()"></div>
-        <div class="field"><label>Paq. Globular (ml)</label><input type="number" id="in-pg" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Plasma/Coloides (ml)</label><input type="number" id="in-col" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Paq. Globular (ml)</label><input type="number" id="in-pg" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Medicamentos (ml)</label><input type="number" id="in-med" value="178" onchange="calcLiq()"></div>
-        <div class="field"><label>Otro (ml)</label><input type="number" id="in-otro" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Medicamentos (ml)</label><input type="number" id="in-med" oninput="calcLiq();debounceSave()" value="178" onchange="calcLiq()"></div>
+        <div class="field"><label>Otro (ml)</label><input type="number" id="in-otro" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
       </div>
       <div style="display:flex;justify-content:space-between;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
         <span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Total Ingresos</span>
@@ -892,16 +910,16 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2>📤 Egresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>P. Insensibles (ml)</label><input type="number" id="eg-ins" value="" placeholder="0" onchange="calcLiq()"></div>
-        <div class="field"><label>Req. Basal (ml)</label><input type="number" id="eg-bas" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>P. Insensibles (ml)</label><input type="number" id="eg-ins" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml)</label><input type="number" id="eg-bas" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Diuresis (ml)</label><input type="number" id="eg-diu" value="" placeholder="0" onchange="calcLiq()"></div>
-        <div class="field"><label>🩸 Sangrado (ml)</label><input type="number" id="eg-sang" value="" placeholder="0" onchange="calcLiq()" style="color:var(--red)"></div>
+        <div class="field"><label>Diuresis (ml)</label><input type="number" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>🩸 Sangrado (ml)</label><input type="number" id="eg-sang" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()" style="color:var(--red)"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Trauma Qx (ml)</label><input type="number" id="eg-trau" value="" placeholder="0" onchange="calcLiq()"></div>
-        <div class="field"><label>Otro (ml)</label><input type="number" id="eg-otro" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Trauma Qx (ml)</label><input type="number" id="eg-trau" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Otro (ml)</label><input type="number" id="eg-otro" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
       </div>
       <div style="display:flex;justify-content:space-between;background:rgba(255,23,68,.07);border:1px solid rgba(255,23,68,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
         <span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px">Total Egresos</span>
@@ -1068,16 +1086,42 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div class="field"><label>Fármaco</label>
         <input type="text" id="fn" list="fdl" placeholder="Buscar o escribir..." oninput="sugerirDosis(this.value)">
         <datalist id="fdl">
+          <!-- Opioides -->
           <option value="Fentanilo"><option value="Sufentanilo"><option value="Morfina">
-          <option value="Propofol"><option value="Ketamina"><option value="Midazolam"><option value="Etomidato">
-          <option value="Dexmedetomidina"><option value="Lidocaína 1%"><option value="Lidocaína 2%">
-          <option value="Lidocaína 10%"><option value="Bupivacaína 0.5%"><option value="Ropivacaína 0.75%">
-          <option value="Vecuronio"><option value="Rocuronio"><option value="Succinilcolina">
-          <option value="Atropina"><option value="Efedrina"><option value="Norepinefrina">
+          <option value="Tramadol"><option value="Remifentanilo"><option value="Buprenorfina">
+          <!-- Hipnóticos intravenosos -->
+          <option value="Propofol"><option value="Ketamina"><option value="Midazolam">
+          <option value="Etomidato"><option value="Tiopental"><option value="Dexmedetomidina">
+          <!-- Relajantes musculares -->
+          <option value="Rocuronio"><option value="Vecuronio"><option value="Cisatracurio">
+          <option value="Succinilcolina"><option value="Mivacurio">
+          <!-- Reversión BNM -->
+          <option value="Neostigmina"><option value="Sugammadex">
+          <option value="Atropina"><option value="Glicopirrolato">
+          <!-- Vasoactivos -->
+          <option value="Efedrina"><option value="Fenilefrina"><option value="Norepinefrina">
           <option value="Adrenalina"><option value="Dopamina"><option value="Dobutamina">
-          <option value="Neostigmina"><option value="Sugammadex"><option value="Dexametasona">
-          <option value="Ondansetrón"><option value="Metoclopramida"><option value="Paracetamol">
-          <option value="Ketorolaco"><option value="Tramadol"><option value="Dipirona"><option value="Dexketoprofeno">
+          <option value="Vasopresina"><option value="Nitroglicerina"><option value="Nitroprusiato">
+          <option value="Metaraminol">
+          <!-- AINE / Analgésicos -->
+          <option value="Ketorolaco"><option value="Paracetamol IV"><option value="Dipirona">
+          <option value="Dexketoprofeno"><option value="Diclofenaco"><option value="Ibuprofeno IV">
+          <option value="Celecoxib"><option value="Metamizol">
+          <!-- Antieméticos -->
+          <option value="Ondansetrón"><option value="Metoclopramida"><option value="Dexametasona">
+          <option value="Droperidol"><option value="Escopolamina">
+          <!-- Anticolinérgicos / Beta -->
+          <option value="Labetalol"><option value="Esmolol"><option value="Metoprolol">
+          <option value="Amiodarona"><option value="Lidocaína IV">
+          <!-- Corticoides -->
+          <option value="Dexametasona 4mg"><option value="Hidrocortisona"><option value="Metilprednisolona">
+          <!-- Anticoagulantes -->
+          <option value="Heparina"><option value="Protamina">
+          <!-- Otros -->
+          <option value="Neostigmina + Atropina"><option value="Sugammadex 200mg">
+          <option value="Insulina regular"><option value="Glucosa 50%">
+          <option value="Bicarbonato de sodio"><option value="Calcio gluconato">
+          <option value="Magnesio sulfato"><option value="Furosemida">
         </datalist>
       </div>
       <!-- Sugerencia dosis/peso -->
@@ -1164,6 +1208,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 <!-- ══ RESUMEN / PDF ══ -->
 <div class="page" id="page-res">
+  <div id="res-inst-header" style="font-size:10px;color:var(--muted);text-align:center;padding:4px 0;display:none"></div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <button class="btn g" onclick="genRes()">🔄 Generar</button>
     <button class="btn" onclick="genRes();document.getElementById('print-area').style.display='block';window.print();setTimeout(()=>document.getElementById('print-area').style.display='none',2000)">🖨️ Imprimir / PDF</button>
@@ -1755,19 +1800,35 @@ window.__ACCESS_GRANTED = false;
 // STATE
 // ═══════════════════════════════════════════════
 const S = {
-  vitals: {tas:135,tad:91,fc:100,spo2:93,fr:17,temp:37.0},
-  history: [],
-  farms: [],
-  phases: {an:null,finAn:null,cx:null,finCx:null,fin:null,isqIni:null,isqFin:null},
-  ventHist: [],
-  liqHora: [],
-  alerts: [],
-  alarmCfg: {tHi:160,tLo:80,fHi:120,fLo:45,sLo:92,tpHi:38.5},
-  pac: {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
-        dx:'',cx:'',tipoAn:'AGB -- Anestesia General Balanceada',asa:'II',
-        med:'',ciru:'',inst:''},
-  hrAlarms: [],
+  vitals:      {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0},
+  history:     [],
+  farms:       [],
+  phases:      {an:null, finAn:null, cx:null, finCx:null, isqIni:null, isqFin:null},
+  ventHist:    [],
+  liqHora:     [],
+  alerts:      [],
+  hrAlarms:    [],
+  hourBuckets: {},
   autoInterval: null,
+  alarmCfg:    {tHi:160, tLo:80, fHi:120, fLo:45, sLo:92, tpHi:38.5},
+  pac: {
+    nombre:'', edad:'', exp:'', sexo:'Masculino', peso:'', pesoI:'', pesoC:'', talla:'',
+    dx:'', cx:'', tipoAn:'AGB — Anestesia General Balanceada', tipoAn2:'', tipoAnNota:'',
+    asa:'II', med:'', ciru:'', inst:'',
+    guia:'', anLocal:'', anLocalDosis:'',
+    alergias:'', ayuno:'', ayunoTipo:'', antecedentes:'', medCronicos:'',
+    mallampati:'', aperturaBucal:'', dtm:'', antID:'No', premed:'',
+    categoria:'privado'
+  },
+  etco2:       38,
+  bis:         null,
+  _casoId:     null,
+  _readOnly:   false,
+  _frozenTan:  null,
+  _frozenTcx:  null,
+  _vscManual:  null,
+  _vspManual:  null,
+  _sangAlerted:false,
 };
 
 
@@ -1887,8 +1948,15 @@ function updateTopbar() {
   document.getElementById('tb-nombre').textContent = p.nombre || '✏️ Nuevo Paciente';
   const parts = [];
   if(p.edad) parts.push(p.edad+'a');
-  if(p.exp) parts.push('Exp '+p.exp);
-  if(p.asa) parts.push('ASA '+p.asa);
+  if(p.peso) parts.push(p.peso+'kg');
+  if(p.exp)  parts.push('Exp:'+p.exp);
+  if(p.asa)  parts.push('ASA '+p.asa);
+  if(p.alergias) parts.push('⚠ ALERGIA');
+  const catEl = document.getElementById('tb-cat');
+  if(catEl) {
+    catEl.textContent = p.categoria === 'hospital' ? '🏥' : '🔒';
+    catEl.title = p.categoria === 'hospital' ? 'Hospital' : 'Privado';
+  }
   document.getElementById('tb-sub').textContent = parts.length ? parts.join(' · ') : 'Toca para editar';
 }
 
@@ -1908,7 +1976,11 @@ function nav(id, btn) {
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='res') genRes();
+  window.scrollTo(0,0);
+  if(id==='res')     { try{genRes();}catch(e){} }
+  if(id==='monitor') { try{drawChart();}catch(e){} }
+  if(id==='farm')    { try{renderFarmAcum();}catch(e){} }
+  if(id==='vent')    { try{calcVentDerived();}catch(e){} }
 }
 
 // ═══════════════════════════════════════════════
@@ -1920,6 +1992,47 @@ function fmt2(ms){
   const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
   return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m';
 }
+
+// ═══════════════════════════════════════════════
+// DEBOUNCED AUTOSAVE — for liquid inputs
+// ═══════════════════════════════════════════════
+var _saveDebounce = null;
+function debounceSave() {
+  clearTimeout(_saveDebounce);
+  _saveDebounce = setTimeout(function() {
+    if(!S._readOnly && (S.pac.nombre || S.history.length)) {
+      try { autoSave(); } catch(e) {}
+    }
+  }, 3000); // save 3s after last input
+}
+
+
+// ═══════════════════════════════════════════════
+// WAKE LOCK — evitar que la pantalla se apague
+// durante el procedimiento
+// ═══════════════════════════════════════════════
+var _wakeLock = null;
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', function() { _wakeLock = null; });
+    } catch(e) { /* No soportado o denegado */ }
+  }
+}
+
+function releaseWakeLock() {
+  if(_wakeLock) { try { _wakeLock.release(); _wakeLock = null; } catch(e) {} }
+}
+
+// Solicitar wakeLock cuando empieza anestesia, liberar al finalizar
+document.addEventListener('visibilitychange', function() {
+  if(document.visibilityState === 'visible' && S.phases.an && S._frozenTan == null) {
+    requestWakeLock();
+  }
+});
+
 
 function tick() {
   const now = new Date();
@@ -1996,8 +2109,8 @@ function upV(key, val) {
   S.vitals[key] = parseFloat(val);
   const dv = document.getElementById('dv-'+key);
   const sl = document.getElementById('sl-'+key);
-  dv.textContent = val;
- updatePAM();
+  if(dv) dv.textContent = val;
+  updatePAM();
   const v = parseFloat(val);
   sl.className = '';
   dv.style.color = vColors[key];
@@ -2011,23 +2124,31 @@ function upV(key, val) {
 function registrar() {
   const hora = getT();
   const pam = Math.round(S.vitals.tad+(S.vitals.tas-S.vitals.tad)/3);
-  const row = {...S.vitals, hora, pam};
+  const row = {...S.vitals, hora, pam, etco2: S.etco2, bis: S.bis};
   S.history.push(row);
   renderVitalTable();
   drawChart();
   checkAlarms(row, hora);
   addToHourBucket('vital', row);
   if(navigator.vibrate) navigator.vibrate(30);
+  // Auto-save every 5 registros to prevent data loss
+  if(S.history.length % 5 === 0) { try { autoSave(); } catch(e) {} }
 }
 
 function checkAlarms(v, hora) {
   const c = S.alarmCfg;
   if(v.tas>=c.tHi) addAlert('danger',`⚠️ TA Sistólica ALTA: ${v.tas} mmHg`,hora);
   if(v.tas<=c.tLo) addAlert('danger',`⚠️ TA Sistólica BAJA: ${v.tas} mmHg`,hora);
+  const pam = v.pam || Math.round(v.tad+(v.tas-v.tad)/3);
+  if(pam < 60) addAlert('danger', `🚨 PAM BAJA: ${pam} mmHg — riesgo hipoperfusión`, hora);
   if(v.fc>=c.fHi) addAlert('warn',`⚠️ Taquicardia: FC ${v.fc} lpm`,hora);
   if(v.fc<=c.fLo) addAlert('danger',`🚨 Bradicardia: FC ${v.fc} lpm`,hora);
   if(v.spo2<=c.sLo) addAlert('danger',`🚨 SpO2 CRÍTICA: ${v.spo2}%`,hora);
+  if(v.spo2<=94 && v.spo2>c.sLo) addAlert('warn',`⚠️ SpO2 baja: ${v.spo2}%`,hora);
   if(v.temp>=c.tpHi) addAlert('warn',`⚠️ Hipertermia: ${v.temp}°C`,hora);
+  if(v.temp < 35.5) addAlert('warn', `⚠️ Hipotermia: ${v.temp}°C`, hora);
+  if(v.etco2 && v.etco2 > 50) addAlert('warn', `⚠️ EtCO₂ elevado: ${v.etco2} mmHg — hipoventilación`, hora);
+  if(v.etco2 && v.etco2 < 28) addAlert('warn', `⚠️ EtCO₂ bajo: ${v.etco2} mmHg — hiperventilación`, hora);
 }
 
 function renderVitalTable() {
@@ -2041,8 +2162,8 @@ function renderVitalTable() {
       <td>${r.tad}</td>
       <td style="color:#d500f9;font-weight:700">${r.pam||Math.round(r.tad+(r.tas-r.tad)/3)}</td>
       <td class="${r.fc>120||r.fc<45?'dc':''}">${r.fc}</td>
-      <td>${r.fr}</td>
       <td class="${r.spo2<92?'dc':r.spo2<94?'wc':''}">${r.spo2}</td>
+      <td class="${(r.etco2&&(r.etco2>50||r.etco2<30))?'wc':''}">${r.etco2||'--'}</td>
       <td class="${parseFloat(r.temp)>=38.5?'wc':''}">${r.temp}</td>
       <td style="color:var(--cyan);font-size:11px">${r.nota||'✏️'}</td>
     </tr>`).join('');
@@ -2228,7 +2349,7 @@ function changeVitalInterval() {
   const mins = parseInt(document.getElementById('vi-interval').value);
   if(!mins) return;
   S.autoInterval = setInterval(()=>{
-    if(S.phases.an&&!S.phases.fin){
+    if(S.phases.an && S._frozenTan == null){
       registrar();
       addAlert('info',`📊 Auto-registro c/${mins}min`,getT());
     }
@@ -2256,6 +2377,7 @@ function startPhase(p) {
     document.getElementById('btn-an').style.background = 'var(--green)';
     document.getElementById('btn-an').textContent  = '✓ Anestesia';
     addAlert('info', '▶ Anestesia iniciada: ' + hora, hora);
+    requestWakeLock();
   } else if(p === 'cx') {
     S.phases.cx = now;
     document.getElementById('ph-cx').className    = 'phase-pill active-phase';
@@ -2287,6 +2409,7 @@ function endPhase(p) {
     // Congelar el display de anestesia
     S._frozenTan = totalMs;
     addAlert('info', '■ Fin anestesia: ' + hora + ' · Total: ' + fmt2(totalMs), hora);
+    releaseWakeLock();
 
   } else if(p === 'cx') {
     if(!S.phases.cx) { showToast('⚠️ Primero inicia cirugía'); return; }
@@ -2375,7 +2498,7 @@ function _doResetCronometros() {
   document.getElementById('dur-an').textContent = '--:--';
   document.getElementById('dur-cx').textContent = '--:--';
   document.getElementById('dur-fin').textContent = '--:--';
-  ['time-an','time-cx','time-fin'].forEach(function(id) {
+  ['time-an','time-cx'].forEach(function(id) {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   ['btn-an','btn-cx','btn-fin'].forEach(function(id) {
@@ -2536,16 +2659,21 @@ function renderHourBuckets() {
 // HOURLY ALARM
 // ═══════════════════════════════════════════════
 function fireHrAlarm(hr) {
-  const msg='🔔 HORA '+hr+' — Revisar: líquidos, vitales, fármacos pendientes';
-  addAlert('warn',msg,getT());
-  // snapshot liquidos for this hour
-  const get=id=>parseInt(document.getElementById(id)?.value)||0;
-  // auto-snapshot for this hour on alarm
-  document.getElementById('alarm-box').classList.add('ringing');
-  setTimeout(()=>document.getElementById('alarm-box').classList.remove('ringing'),3000);
-  if('Notification' in window&&Notification.permission==='granted')
-    new Notification(`AnesteSys — Hora ${hr}`,{body:msg});
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+  const msg='🔔 HORA '+hr+' de anestesia — Revisar: líquidos, vitales, fármacos';
+  addAlert('warn', msg, getT());
+  // Auto-snapshot de líquidos a esta hora
+  try { forceHourSnapshot(); } catch(e) {}
+  // Visual alarm
+  var ab = document.getElementById('alarm-box');
+  if(ab) { ab.classList.add('ringing'); setTimeout(function(){ ab.classList.remove('ringing'); }, 4000); }
+  // Push notification
+  if('Notification' in window && Notification.permission==='granted') {
+    try { new Notification('AnesteSys — Hora '+hr, {body:msg, icon:'', tag:'hr-alarm'}); } catch(e){}
+  }
+  // Vibrate SOS pattern
+  if(navigator.vibrate) navigator.vibrate([300,100,300,100,300,500,100,100,100,100,100,500]);
+  // Show alarm toast
+  showToast('🔔 HORA '+hr+' — Revisar líquidos y vitales');
 }
 
 // ═══════════════════════════════════════════════
@@ -2700,23 +2828,50 @@ document.addEventListener('change', function(e) {
 // DOSIS por peso — sugerencias automáticas
 // ═══════════════════════════════════════════════
 var DOSIS_REF = {
-  'Fentanilo':      {dosis:'1-3 mcg/kg', unidad:'mcg', factor:2},
-  'Sufentanilo':    {dosis:'0.1-0.3 mcg/kg', unidad:'mcg', factor:0.2},
-  'Morfina':        {dosis:'0.1-0.2 mg/kg', unidad:'mg', factor:0.15},
-  'Propofol':       {dosis:'1.5-2.5 mg/kg induccion', unidad:'mg', factor:2},
-  'Ketamina':       {dosis:'1-2 mg/kg IV', unidad:'mg', factor:1.5},
-  'Midazolam':      {dosis:'0.02-0.04 mg/kg', unidad:'mg', factor:0.03},
-  'Etomidato':      {dosis:'0.3 mg/kg', unidad:'mg', factor:0.3},
-  'Rocuronio':      {dosis:'0.6 mg/kg', unidad:'mg', factor:0.6},
-  'Vecuronio':      {dosis:'0.1 mg/kg', unidad:'mg', factor:0.1},
-  'Succinilcolina': {dosis:'1-1.5 mg/kg', unidad:'mg', factor:1.2},
-  'Neostigmina':    {dosis:'0.04-0.08 mg/kg', unidad:'mg', factor:0.05},
-  'Sugammadex':     {dosis:'2-4 mg/kg', unidad:'mg', factor:2},
-  'Atropina':       {dosis:'0.01-0.02 mg/kg', unidad:'mg', factor:0.015},
-  'Efedrina':       {dosis:'5-10 mg IV', unidad:'mg', factor:null},
-  'Dexametasona':   {dosis:'0.1-0.2 mg/kg', unidad:'mg', factor:0.1},
-  'Ketorolaco':     {dosis:'0.5 mg/kg (máx 30mg)', unidad:'mg', factor:0.5},
-  'Ondansetrón':    {dosis:'4-8 mg IV', unidad:'mg', factor:null},
+  'Fentanilo':       {dosis:'1-3 mcg/kg IV', unidad:'mcg', factor:2},
+  'Sufentanilo':     {dosis:'0.1-0.3 mcg/kg', unidad:'mcg', factor:0.2},
+  'Remifentanilo':   {dosis:'0.05-0.3 mcg/kg/min infusión', unidad:'mcg/min', factor:null},
+  'Morfina':         {dosis:'0.1-0.2 mg/kg IV', unidad:'mg', factor:0.15},
+  'Tramadol':        {dosis:'1-2 mg/kg IV lento', unidad:'mg', factor:1.5},
+  'Propofol':        {dosis:'1.5-2.5 mg/kg inducción / 4-12 mg/kg/h TIVA', unidad:'mg', factor:2},
+  'Ketamina':        {dosis:'1-2 mg/kg IV / 4 mg/kg IM', unidad:'mg', factor:1.5},
+  'Midazolam':       {dosis:'0.02-0.04 mg/kg IV premedicación', unidad:'mg', factor:0.03},
+  'Etomidato':       {dosis:'0.3 mg/kg IV', unidad:'mg', factor:0.3},
+  'Dexmedetomidina': {dosis:'0.5-1 mcg/kg carga, luego 0.2-0.7 mcg/kg/h', unidad:'mcg', factor:0.7},
+  'Rocuronio':       {dosis:'0.6 mg/kg intubación / 0.1-0.2 mg/kg mantenimiento', unidad:'mg', factor:0.6},
+  'Vecuronio':       {dosis:'0.1 mg/kg intubación', unidad:'mg', factor:0.1},
+  'Cisatracurio':    {dosis:'0.15-0.2 mg/kg', unidad:'mg', factor:0.15},
+  'Succinilcolina':  {dosis:'1-1.5 mg/kg IV / 2-4 mg/kg IM', unidad:'mg', factor:1.2},
+  'Neostigmina':     {dosis:'0.04-0.08 mg/kg (máx 5mg)', unidad:'mg', factor:0.05},
+  'Sugammadex':      {dosis:'2 mg/kg rev. moderada / 4 mg/kg profunda / 16 mg/kg emergencia', unidad:'mg', factor:2},
+  'Atropina':        {dosis:'0.01-0.02 mg/kg IV (mín 0.1mg)', unidad:'mg', factor:0.015},
+  'Glicopirrolato':  {dosis:'0.01 mg/kg IV', unidad:'mg', factor:0.01},
+  'Efedrina':        {dosis:'5-10 mg IV en bolo', unidad:'mg', factor:null},
+  'Fenilefrina':     {dosis:'50-100 mcg IV bolo / 0.5-1 mcg/kg/min', unidad:'mcg', factor:null},
+  'Norepinefrina':   {dosis:'0.01-0.3 mcg/kg/min infusión', unidad:'mcg/min', factor:null},
+  'Adrenalina':      {dosis:'10-100 mcg IV bolo / 0.01-0.3 mcg/kg/min', unidad:'mcg', factor:null},
+  'Metaraminol':     {dosis:'0.5-2 mg IV bolo', unidad:'mg', factor:null},
+  'Dopamina':        {dosis:'2-20 mcg/kg/min infusión', unidad:'mcg/min', factor:null},
+  'Ketorolaco':      {dosis:'0.5 mg/kg IV (máx 30mg)', unidad:'mg', factor:0.5},
+  'Paracetamol IV':  {dosis:'15 mg/kg IV (máx 1g)', unidad:'mg', factor:15},
+  'Dipirona':        {dosis:'15-30 mg/kg IV lento (máx 2g)', unidad:'mg', factor:20},
+  'Dexketoprofeno':  {dosis:'0.5 mg/kg IV (máx 50mg)', unidad:'mg', factor:0.5},
+  'Ondansetrón':     {dosis:'4-8 mg IV profilaxis PONV', unidad:'mg', factor:null},
+  'Dexametasona':    {dosis:'0.1-0.2 mg/kg (máx 8mg PONV / 20mg antiedema)', unidad:'mg', factor:0.1},
+  'Dexametasona 4mg':{dosis:'4mg fijo PONV', unidad:'mg', factor:null},
+  'Metoclopramida':  {dosis:'0.1-0.15 mg/kg IV', unidad:'mg', factor:0.1},
+  'Furosemida':      {dosis:'0.5-1 mg/kg IV', unidad:'mg', factor:0.5},
+  'Labetalol':       {dosis:'5-20 mg IV lento', unidad:'mg', factor:null},
+  'Esmolol':         {dosis:'0.5 mg/kg carga / 50-300 mcg/kg/min', unidad:'mg', factor:0.5},
+  'Amiodarona':      {dosis:'5 mg/kg en 20 min (máx 300mg)', unidad:'mg', factor:5},
+  'Lidocaína IV':    {dosis:'1-1.5 mg/kg IV lento', unidad:'mg', factor:1.2},
+  'Heparina':        {dosis:'100 UI/kg IV cirugía vascular', unidad:'UI', factor:100},
+  'Protamina':       {dosis:'1mg por cada 100 UI heparina', unidad:'mg', factor:null},
+  'Hidrocortisona':  {dosis:'1-2 mg/kg IV', unidad:'mg', factor:1.5},
+  'Magnesio sulfato':{dosis:'30-50 mg/kg IV lento', unidad:'mg', factor:40},
+  'Glucosa 50%':     {dosis:'0.5-1 g/kg IV', unidad:'g', factor:0.5},
+  'Bicarbonato de sodio':{dosis:'1 mEq/kg IV', unidad:'mEq', factor:1},
+  'Sugammadex 200mg':{dosis:'200mg fijo para rev. moderada', unidad:'mg', factor:null},
 };
 
 function sugerirDosis(farmName) {
@@ -2984,7 +3139,7 @@ function calcVSCyPermisible() {
 }
 
 function calcLiq() {
-  const get=id=>parseInt(document.getElementById(id).value)||0;
+  const get=id=>{ const e=document.getElementById(id); return e?parseInt(e.value)||0:0; };
   const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
   const sang=get('eg-sang');
   const diu=get('eg-diu');
@@ -3007,6 +3162,9 @@ function calcLiq() {
   const dur=(diu/(parseFloat(S.pac.pesoC)||parseFloat(S.pac.peso)||70)/hrs).toFixed(2);
   document.getElementById('diu-hr').textContent=dur+' ml/kg/h';
   if(sang>vsp*0.8&&!S._sangAlerted){S._sangAlerted=true;addAlert('danger','🩸 Sangrado >80% del permisible — evaluar transfusión',getT());}
+  // Additional thresholds
+  var sangEl = document.getElementById('eg-sang');
+  if(sangEl) sangEl.style.borderColor = sang>vsp?'var(--red)':sang>vsp*0.6?'var(--yellow)':'';
 }
 calcLiq();
 
@@ -3050,10 +3208,25 @@ function addLiqHora() {
 const ventVals = {fio2:40,vc:400,fr:12,peep:5,ppeak:20,etco2:38};
 function upVent(k,v,u) {
   ventVals[k]=parseFloat(v);
-  document.getElementById('dvv-'+k).textContent=v+u;
+  var dvEl = document.getElementById('dvv-'+k);
+  if(dvEl) dvEl.textContent=v+(u||'');
+  // Sync EtCO2 monitor card
+  if(k==='etco2') {
+    S.etco2 = parseFloat(v);
+    var monEl = document.getElementById('mon-etco2');
+    if(monEl) {
+      monEl.textContent = S.etco2;
+      monEl.style.color = S.etco2>50?'var(--red)':S.etco2<30?'var(--yellow)':'var(--purple)';
+    }
+    // Sync monitor slider
+    var sv = document.getElementById('sv-etco2');
+    if(sv) sv.value = S.etco2;
+  }
   calcVentDerived();
 }
 function calcVentDerived() {
+  // Sync EtCO2 from monitor state
+  if(S.etco2 != null) ventVals.etco2 = S.etco2;
   const vm=(ventVals.vc*ventVals.fr/1000);
   document.getElementById('calc-vm').textContent=vm.toFixed(1)+' L/min';
   const comp=(ventVals.vc/Math.max(1,ventVals.ppeak-ventVals.peep));
@@ -3129,6 +3302,7 @@ function renderFarms() {
     </div>`).join('');
   document.getElementById('farm-badge').textContent=S.farms.length;
   document.getElementById('st-fm').textContent=S.farms.length;
+  try { renderFarmAcum(); } catch(e) {}
 }
 renderFarms();
 
@@ -3198,13 +3372,13 @@ function genRes() {
   const sc  = calcAld();
   const hrs = Object.keys(S.hourBuckets);
   // ── Tiempos: usar los valores reales de inicio/fin y duraciones congeladas ──
-  function _tv(id) { var e=document.getElementById(id); return e ? e.value || '--:--' : '--:--'; }
+  function _gtv(id) { var e=document.getElementById(id); return e ? e.value || '--:--' : '--:--'; }
   function _tt(id) { var e=document.getElementById(id); return e ? e.textContent || '--:--' : '--:--'; }
-  const tAN  = _tv('time-an');
-  const tCX  = _tv('time-cx');
+  const tAN  = _gtv('time-an');
+  const tCX  = _gtv('time-cx');
   // Hora fin: usar fin de anestesia si existe, si no usar fin de cirugía, si no '--:--'
-  const tFinAN = _tv('time-fin-an');
-  const tFinCX = _tv('time-fin-cx');
+  const tFinAN = _gtv('time-fin-an');
+  const tFinCX = _gtv('time-fin-cx');
   const tFN  = tFinAN !== '--:--' ? tFinAN : (tFinCX !== '--:--' ? tFinCX : '--:--');
   // Duraciones: usar valores congelados si existen
   const durAN = S._frozenTan != null ? fmt2(S._frozenTan) : _tt('st-tan');
@@ -3307,8 +3481,8 @@ function genRes() {
       '</td><td style="padding:3px 5px">' + r.tad +
       '</td><td style="padding:3px 5px;font-weight:700">' + pam +
       '</td><td style="padding:3px 5px;' + fcCl + '">' + r.fc +
-      '</td><td style="padding:3px 5px">' + r.fr +
       '</td><td style="padding:3px 5px;' + spCl + '">' + r.spo2 +
+      '</td><td style="padding:3px 5px;' + (r.etco2&&(r.etco2>50||r.etco2<28)?'color:orange;font-weight:800':'') + '">' + (r.etco2||'--') +
       '</td><td style="padding:3px 5px;' + tpCl + '">' + r.temp + '</td></tr>';
   }).join('');
 
@@ -3795,7 +3969,6 @@ function serializeState() {
       finAn:  S.phases.finAn  ? S.phases.finAn.toISOString()  : null,
       cx:     S.phases.cx     ? S.phases.cx.toISOString()     : null,
       finCx:  S.phases.finCx  ? S.phases.finCx.toISOString()  : null,
-      fin:    S.phases.fin    ? S.phases.fin.toISOString()    : null,
       isqIni: S.phases.isqIni ? S.phases.isqIni.toISOString() : null,
       isqFin: S.phases.isqFin ? S.phases.isqFin.toISOString() : null,
     },
@@ -3804,7 +3977,7 @@ function serializeState() {
       finAn:  (document.getElementById('time-fin-an')  || {value:''}).value,
       cx:     (document.getElementById('time-cx')      || {value:''}).value,
       finCx:  (document.getElementById('time-fin-cx')  || {value:''}).value,
-      fin:    (document.getElementById('time-fin')     || {value:''}).value,
+      // fin: removed (phase 'fin' no longer used)
       isqIni: (document.getElementById('time-isq-ini') || {value:''}).value,
       isqFin: (document.getElementById('time-isq-fin') || {value:''}).value,
     },
@@ -3824,8 +3997,8 @@ function serializeState() {
     },
     vscManual: S._vscManual || null,
     vspManual: S._vspManual || null,
-    etco2:     S.etco2 || 38,
-    bis:       S.bis   || null,
+    etco2:     (S.etco2 != null ? S.etco2 : 38),
+    bis:       (S.bis   != null ? S.bis   : null),
     aldrete: {
       act:  (document.getElementById('al-act')  || {value:'2'}).value,
       resp: (document.getElementById('al-resp') || {value:'2'}).value,
@@ -3925,7 +4098,6 @@ function restoreState(caso) {
     finAn:  _fixPhaseDate(ph.finAn),
     cx:     _fixPhaseDate(ph.cx),
     finCx:  _fixPhaseDate(ph.finCx),
-    fin:    _fixPhaseDate(ph.fin),
     isqIni: _fixPhaseDate(ph.isqIni),
     isqFin: _fixPhaseDate(ph.isqFin),
   };
@@ -3955,8 +4127,20 @@ function restoreState(caso) {
 
   // Phase buttons
   function setBtn(id, bg, txt) { var b=document.getElementById(id); if(b){b.style.background=bg;b.textContent=txt;} }
-  if(S.phases.an)    setBtn('btn-an',     'var(--green)', '✓ Anestesia');
-  if(S.phases.cx)    setBtn('btn-cx',     'var(--green)', '✓ Cirugía');
+  if(S.phases.an) {
+    setBtn('btn-an', 'var(--green)', '✓ Anestesia');
+    var phAn = document.getElementById('ph-an');
+    if(phAn) phAn.className = 'phase-pill ' + (S._frozenTan==null?'active-phase':'done');
+    var phAnT = document.getElementById('ph-an-t');
+    if(phAnT && S.phases.an) phAnT.textContent = String(S.phases.an.getHours()).padStart(2,'0')+':'+String(S.phases.an.getMinutes()).padStart(2,'0');
+  }
+  if(S.phases.cx) {
+    setBtn('btn-cx', 'var(--green)', '✓ Cirugía');
+    var phCx = document.getElementById('ph-cx');
+    if(phCx) phCx.className = 'phase-pill ' + (S._frozenTcx==null?'active-phase':'done');
+    var phCxT = document.getElementById('ph-cx-t');
+    if(phCxT && S.phases.cx) phCxT.textContent = String(S.phases.cx.getHours()).padStart(2,'0')+':'+String(S.phases.cx.getMinutes()).padStart(2,'0');
+  }
   if(S.phases.finAn) {
     setBtn('btn-fin-an', 'var(--muted)', '✓ Fin anest.');
     var dFA = document.getElementById('dur-fin-an');
@@ -3988,7 +4172,6 @@ function restoreState(caso) {
     'time-fin-an':  ti.finAn,
     'time-cx':      ti.cx,
     'time-fin-cx':  ti.finCx,
-    'time-fin':     ti.fin,
     'time-isq-ini': ti.isqIni,
     'time-isq-fin': ti.isqFin,
   };
@@ -4043,9 +4226,13 @@ function loadCaso(id) {
     return;
   }
 
-  var casos = getCasos();
-  var caso  = casos.find(function(c){ return c.id === id; });
+  // Search both categories
+  var casoPriv = getCasos('privado').find(function(c){ return c.id === id; });
+  var casoHosp = getCasos('hospital').find(function(c){ return c.id === id; });
+  var caso = casoPriv || casoHosp;
   if (!caso) { showToast('Error: caso no encontrado'); return; }
+  // Remember which category this case belongs to so autoSave goes to the right place
+  if(caso.pac) caso.pac.categoria = casoHosp ? 'hospital' : 'privado';
 
   // Guardar caso actual antes de cambiar (si tiene datos)
   if (hasCurrentData()) { try { autoSave(); } catch(e) {} }
@@ -4072,7 +4259,7 @@ function _resetUIOnly() {
   });
   // Borrar todos los inputs de tiempo, líquidos, fármacos
   var clearIds = [
-    'time-an','time-cx','time-fin','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin',
+    'time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin',
     'in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
     'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro',
     'fn','fd','fnota','fh'
@@ -4110,6 +4297,10 @@ function _resetUIOnly() {
 // CUSTOM CONFIRM MODAL (Safari PWA blocks native confirm())
 // ═══════════════════════════════════════════════════════════════
 var _confirmCb = null;
+  // EtCO2 + BIS display
+  try { var me=document.getElementById('mon-etco2'); if(me){me.textContent='38';me.style.color='var(--purple)';} }catch(e){}
+  try { var mb=document.getElementById('mon-bis'); if(mb) mb.textContent='--'; }catch(e){}
+  try { var mbl=document.getElementById('mon-bis-lbl'); if(mbl){mbl.textContent='sin dato';mbl.style.color='';} }catch(e){}
 
 function showConfirm(msg, sub, okLabel, okColor, cb) {
   _confirmCb = cb;
@@ -4735,32 +4926,30 @@ function hasCurrentData(){
 function resetForNewCase(){
   // ── Reset COMPLETO del estado ──
   S._casoId    = null;
-  S._readOnly  = false;
   try { _showReadOnlyBanner(false); } catch(e) {}
   S.vitals     = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
   S.history    = [];
   S.farms      = [];
   S.etco2      = 38;
   S.bis        = null;
+  S._readOnly  = false;
   S.ventHist   = [];
   S.liqHora    = [];
   S.alerts     = [];
   S.hrAlarms   = [];
   S.hourBuckets= {};
-  S.phases     = {an:null, finAn:null, cx:null, finCx:null, fin:null, isqIni:null, isqFin:null};
+  S.phases     = {an:null, finAn:null, cx:null, finCx:null, isqIni:null, isqFin:null};
   S._frozenTan = null;
   S._frozenTcx = null;
   S._vscManual = null;
   S._vspManual = null;
   S._sangAlerted = false;
-  S.etco2 = 38;
-  S.bis   = null;
   S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
            dx:'',cx:'',tipoAn:'AGB -- Anestesia General Balanceada',asa:'II',
            med:'',ciru:'',inst:''};
 
   // ── Limpiar TODOS los inputs y selects del modal paciente ──
-  ['m-nombre','m-edad','m-exp','m-peso','m-dx','m-cx','m-anest','m-ciru','m-inst',
+  ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx','m-anest','m-ciru','m-inst',
    'm-tipoan-nota','m-anlocal-dosis'
   ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   try{ document.getElementById('m-sexo').value = 'Masculino'; }catch(e){}
@@ -4777,7 +4966,7 @@ function resetForNewCase(){
   ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Limpiar cronómetros completamente ──
-  ['time-an','time-cx','time-fin','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
+  ['time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
   ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Reset botones de fases ──
