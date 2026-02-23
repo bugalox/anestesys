@@ -156,7 +156,7 @@ select option{background:var(--s1)}
   backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
   border-top:1px solid var(--border);
-  display:grid;grid-template-columns:repeat(6,1fr);
+  display:grid;grid-template-columns:repeat(7,1fr);
   padding:6px 4px;padding-bottom:calc(6px + var(--safe-bottom));
   flex-shrink:0;position:relative;z-index:50;
 }
@@ -304,6 +304,60 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 #readonly-banner.visible {
   transform: translateY(0) !important;
 }
+
+
+/* scrollbar-hide */
+.page::-webkit-scrollbar{display:none}
+.page{-ms-overflow-style:none;scrollbar-width:none}
+
+/* ── LABORATORIOS ─── */
+.lab-sec{background:var(--s1);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.lab-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--s2);border-bottom:1px solid var(--border)}
+.lab-sec-hdr h3{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.lab-sec-hdr h3 em{font-size:15px;font-style:normal}
+.lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 14px}
+.lab-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 12px 14px}
+.lab-f{display:flex;flex-direction:column;gap:4px}
+.lab-f label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.lab-field-inner{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:0 10px;height:44px;transition:border-color .15s}
+.lab-field-inner:focus-within{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.1)}
+.lab-field-inner.ok{border-color:var(--green)}
+.lab-field-inner.warn{border-color:var(--yellow)}
+.lab-field-inner.danger{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,23,68,.1)}
+.lab-inp{background:none;border:none;outline:none;color:var(--white);font-size:17px;font-weight:700;width:100%;font-variant-numeric:tabular-nums;-webkit-appearance:none}
+.lab-inp::placeholder{color:var(--muted);font-size:13px;font-weight:400}
+.lab-unit{font-size:9px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.lab-hint{font-size:9px;color:var(--muted);margin-top:2px}
+.lab-badge{font-size:9px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.lab-badge.nd{background:rgba(61,90,120,.2);color:var(--muted);border:1px solid var(--border)}
+.lab-badge.ok{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.lab-badge.warn{background:rgba(255,214,0,.12);color:var(--yellow);border:1px solid rgba(255,214,0,.3)}
+.lab-badge.danger{background:rgba(255,23,68,.12);color:var(--red);border:1px solid rgba(255,23,68,.3)}
+.lab-summary{margin:0 12px 12px;border-radius:10px;overflow:hidden;border:1px solid rgba(0,229,255,.1)}
+.lab-sum-row{display:flex;justify-content:space-between;font-size:11px;padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.04);background:rgba(0,229,255,.03)}
+.lab-sum-row:last-child{border-bottom:none}
+.lab-sum-lbl{color:var(--muted)}
+.lab-sum-val{font-weight:700;color:var(--white)}
+.lab-sum-val.alto{color:var(--red)}
+.lab-sum-val.bajo{color:var(--yellow)}
+.lab-sum-val.normal{color:var(--green)}
+
+
+/* ── Doctor Autocomplete ─────────────────────────── */
+.doc-wrap{position:relative}
+.doc-drop{position:absolute;left:0;right:0;top:calc(100% + 3px);
+  background:#0a0f1c;border:1px solid #00e5ff;border-radius:11px;
+  z-index:600;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.7)}
+.ddi{padding:11px 14px;border-bottom:1px solid #1e2d44;cursor:pointer}
+.ddi:last-child{border-bottom:none}
+.ddi:active,.ddi:hover{background:rgba(0,229,255,.08)}
+.ddi-name{font-size:13px;font-weight:700;color:#dde8ff}
+.ddi-ced{font-size:10px;color:#00e5ff;margin-top:2px}
+.ddi-save{display:flex;align-items:center;gap:6px;padding:10px 14px;
+  background:rgba(0,230,118,.06);border-top:1px solid #1e2d44;
+  cursor:pointer;font-size:11px;color:#00e676;font-weight:700}
+.ddi-save:active{background:rgba(0,230,118,.15)}
+/* ── Lab page already added above ─────────────────── */
 
 </style>
   <link rel="manifest" href="data:application/json,{%22name%22:%22AnesteSys%20PRO%22,%22short_name%22:%22AnesteSys%22,%22display%22:%22standalone%22,%22background_color%22:%22%2304060d%22,%22theme_color%22:%22%2300e5ff%22,%22start_url%22:%22/%22}">
@@ -631,8 +685,32 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <!-- ══ EQUIPO MÉDICO ══ -->
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:12px;font-weight:700">👨‍⚕️ Equipo Médico</div>
-      <div class="field"><label>Anestesiólogo responsable</label><input type="text" id="m-anest" placeholder="Dr. / Dra. ..."></div>
-      <div class="field"><label>Cirujano</label><input type="text" id="m-ciru" placeholder="Dr. / Dra. ..."></div>
+      <div class="field" style="margin-bottom:5px"><label>Anestesiólogo responsable</label>
+        <div class="doc-wrap">
+          <input type="text" id="m-anest" placeholder="Dr. / Dra. ..."
+            oninput="docSuggest('anest',this.value)"
+            onfocus="docSuggest('anest',this.value)">
+          <div id="doc-drop-anest" class="doc-drop" style="display:none"></div>
+        </div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Céd. Prof. Anest.</label>
+          <input type="text" id="m-anest-ced" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+        <div class="field" style="margin:0"><label>Céd. Esp. Anest.</label>
+          <input type="text" id="m-anest-ced-esp" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+      </div>
+      <div class="field" style="margin-bottom:5px"><label>Cirujano responsable</label>
+        <div class="doc-wrap">
+          <input type="text" id="m-ciru" placeholder="Dr. / Dra. ..."
+            oninput="docSuggest('ciru',this.value)"
+            onfocus="docSuggest('ciru',this.value)">
+          <div id="doc-drop-ciru" class="doc-drop" style="display:none"></div>
+        </div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Céd. Prof. Cir.</label>
+          <input type="text" id="m-ciru-ced" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+        <div class="field" style="margin:0"><label>Céd. Esp. Cir.</label>
+          <input type="text" id="m-ciru-ced-esp" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+      </div>
       <div class="field"><label>Institución / Servicio</label><input type="text" id="m-inst" placeholder="Hospital / Clínica / Servicio..."></div>
     </div>
 
@@ -717,9 +795,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <div class="vslider-top">
           <span class="vslider-label">TA Sistólica</span>
           <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="adjV('tas',-5)" class="vbtn">−5</button>
+            <button onclick="adjV('tas',-1)" class="vbtn">−1</button>
             <span><span class="vslider-val" id="dv-tas" style="color:var(--cyan)">135</span><span class="vslider-unit">mmHg</span></span>
-            <button onclick="adjV('tas',5)" class="vbtn">+5</button>
+            <button onclick="adjV('tas',1)" class="vbtn">+1</button>
           </div>
         </div>
         <input type="range" id="sl-tas" min="60" max="220" value="135" oninput="upV('tas',this.value)">
@@ -729,9 +807,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <div class="vslider-top">
           <span class="vslider-label">TA Diastólica</span>
           <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="adjV('tad',-5)" class="vbtn">−5</button>
+            <button onclick="adjV('tad',-1)" class="vbtn">−1</button>
             <span><span class="vslider-val" id="dv-tad" style="color:var(--cyan)">91</span><span class="vslider-unit">mmHg</span></span>
-            <button onclick="adjV('tad',5)" class="vbtn">+5</button>
+            <button onclick="adjV('tad',1)" class="vbtn">+1</button>
           </div>
         </div>
         <input type="range" id="sl-tad" min="30" max="130" value="91" oninput="upV('tad',this.value)">
@@ -752,9 +830,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <div class="vslider-top">
           <span class="vslider-label">Frecuencia Cardíaca</span>
           <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="adjV('fc',-5)" class="vbtn">−5</button>
+            <button onclick="adjV('fc',-1)" class="vbtn">−1</button>
             <span><span class="vslider-val" id="dv-fc" style="color:var(--orange)">100</span><span class="vslider-unit">lpm</span></span>
-            <button onclick="adjV('fc',5)" class="vbtn">+5</button>
+            <button onclick="adjV('fc',1)" class="vbtn">+1</button>
           </div>
         </div>
         <input type="range" id="sl-fc" min="30" max="200" value="100" oninput="upV('fc',this.value)">
@@ -1361,6 +1439,162 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   </div>
 </div><!-- /res -->
 
+<!-- ══ LABORATORIOS ══ -->
+<div class="page" id="page-lab">
+
+  <div style="background:linear-gradient(135deg,rgba(0,229,255,.07),rgba(213,0,249,.05));border:1px solid rgba(0,229,255,.18);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--cyan);font-weight:700;margin-bottom:3px">&#x1F9EA; Resultados de Laboratorio</div>
+      <div style="font-size:12px;color:var(--muted)" id="lab-fecha-lbl">Sin fecha registrada</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+      <input type="date" id="lab-fecha" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--cyan);font-size:11px;padding:5px 9px;outline:none" onchange="labFechaChange()">
+      <button onclick="labClearAll()" style="background:none;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:10px;padding:4px 10px;cursor:pointer">&#x1F5D1; Limpiar</button>
+    </div>
+  </div>
+
+  <div class="lab-sec">
+    <div class="lab-sec-hdr">
+      <h3><em>&#x1F9B8;&#x200D;</em>&#x1FA78; Biometría Hemática</h3>
+      <span id="lab-bh-badge" class="lab-badge nd">Sin datos</span>
+    </div>
+    <div class="lab-grid">
+      <div class="lab-f"><label>Hemoglobina</label>
+        <div class="lab-field-inner" id="fi-hb">
+          <input class="lab-inp" type="number" id="lab-hb" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('hb')">
+          <span class="lab-unit">g/dL</span>
+        </div>
+        <div class="lab-hint">H: 13.8–18.5 · M: 12.0–16.0</div>
+      </div>
+      <div class="lab-f"><label>Hematocrito</label>
+        <div class="lab-field-inner" id="fi-hto">
+          <input class="lab-inp" type="number" id="lab-hto" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('hto')">
+          <span class="lab-unit">%</span>
+        </div>
+        <div class="lab-hint">H: 41–53% · M: 36–46%</div>
+      </div>
+      <div class="lab-f"><label>Plaquetas</label>
+        <div class="lab-field-inner" id="fi-plt">
+          <input class="lab-inp" type="number" id="lab-plt" placeholder="—" inputmode="numeric" oninput="labInput('plt')">
+          <span class="lab-unit">×10³/µL</span>
+        </div>
+        <div class="lab-hint">150–400 ×10³/µL</div>
+      </div>
+      <div class="lab-f"><label>Leucocitos</label>
+        <div class="lab-field-inner" id="fi-leu">
+          <input class="lab-inp" type="number" id="lab-leu" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('leu')">
+          <span class="lab-unit">×10³/µL</span>
+        </div>
+        <div class="lab-hint">4.5–11.0 ×10³/µL</div>
+      </div>
+    </div>
+    <div id="lab-bh-summary" class="lab-summary" style="display:none"></div>
+  </div>
+
+  <div class="lab-sec">
+    <div class="lab-sec-hdr">
+      <h3><em>&#x23F1;</em> Tiempos de Coagulación</h3>
+      <span id="lab-coag-badge" class="lab-badge nd">Sin datos</span>
+    </div>
+    <div class="lab-grid-3">
+      <div class="lab-f"><label>TP</label>
+        <div class="lab-field-inner" id="fi-tp">
+          <input class="lab-inp" type="number" id="lab-tp" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('tp')">
+          <span class="lab-unit">seg</span>
+        </div>
+        <div class="lab-hint">10–14 seg</div>
+      </div>
+      <div class="lab-f"><label>TPT</label>
+        <div class="lab-field-inner" id="fi-tpt">
+          <input class="lab-inp" type="number" id="lab-tpt" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('tpt')">
+          <span class="lab-unit">seg</span>
+        </div>
+        <div class="lab-hint">25–35 seg</div>
+      </div>
+      <div class="lab-f"><label>INR</label>
+        <div class="lab-field-inner" id="fi-inr">
+          <input class="lab-inp" type="number" id="lab-inr" placeholder="—" step="0.01" inputmode="decimal" oninput="labInput('inr')">
+          <span class="lab-unit"></span>
+        </div>
+        <div class="lab-hint">0.8–1.2</div>
+      </div>
+    </div>
+    <div id="lab-coag-summary" class="lab-summary" style="display:none"></div>
+  </div>
+
+  <div class="lab-sec">
+    <div class="lab-sec-hdr">
+      <h3><em>&#x2697;&#xFE0F;</em> Química Sanguínea</h3>
+      <span id="lab-qs-badge" class="lab-badge nd">Sin datos</span>
+    </div>
+    <div class="lab-grid">
+      <div class="lab-f"><label>Glucosa</label>
+        <div class="lab-field-inner" id="fi-glu">
+          <input class="lab-inp" type="number" id="lab-glu" placeholder="—" inputmode="numeric" oninput="labInput('glu')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">70–100 mg/dL</div>
+      </div>
+      <div class="lab-f"><label>Urea</label>
+        <div class="lab-field-inner" id="fi-urea">
+          <input class="lab-inp" type="number" id="lab-urea" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('urea')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">17–49 mg/dL</div>
+      </div>
+      <div class="lab-f"><label>Creatinina</label>
+        <div class="lab-field-inner" id="fi-crea">
+          <input class="lab-inp" type="number" id="lab-crea" placeholder="—" step="0.01" inputmode="decimal" oninput="labInput('crea')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">H: 0.7–1.3 · M: 0.6–1.1</div>
+      </div>
+      <div class="lab-f"><label>BUN</label>
+        <div class="lab-field-inner" id="fi-bun">
+          <input class="lab-inp" type="number" id="lab-bun" placeholder="—" step="0.1" inputmode="decimal" oninput="labInput('bun')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">7–20 mg/dL</div>
+      </div>
+      <div class="lab-f"><label>Colesterol Total</label>
+        <div class="lab-field-inner" id="fi-col">
+          <input class="lab-inp" type="number" id="lab-col" placeholder="—" inputmode="numeric" oninput="labInput('col')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">&lt;200 mg/dL</div>
+      </div>
+      <div class="lab-f"><label>Triglicéridos</label>
+        <div class="lab-field-inner" id="fi-tg">
+          <input class="lab-inp" type="number" id="lab-tg" placeholder="—" inputmode="numeric" oninput="labInput('tg')">
+          <span class="lab-unit">mg/dL</span>
+        </div>
+        <div class="lab-hint">&lt;150 mg/dL</div>
+      </div>
+    </div>
+    <div id="lab-qs-summary" class="lab-summary" style="display:none"></div>
+  </div>
+
+  <div class="lab-sec">
+    <div class="lab-sec-hdr">
+      <h3><em>&#x2795;</em> Parámetros Adicionales</h3>
+      <button onclick="labAddExtra()" style="background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:8px;color:var(--cyan);font-size:11px;font-weight:700;padding:5px 13px;cursor:pointer">+ Agregar</button>
+    </div>
+    <div id="lab-extra-list">
+      <div data-ph="1" style="text-align:center;color:var(--muted);font-size:12px;padding:20px 16px">
+        Toca <b style="color:var(--cyan)">+ Agregar</b> para incluir un parámetro adicional
+      </div>
+    </div>
+  </div>
+
+  <div class="lab-sec" style="margin-bottom:20px">
+    <div class="lab-sec-hdr">
+      <h3><em>&#x1F4DD;</em> Notas / Interpretación</h3>
+    </div>
+    <div style="padding:10px 12px">
+      <textarea id="lab-notas" placeholder="Observaciones, valores críticos, interpretación clínica..." style="width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--white);font-size:13px;padding:10px 12px;outline:none;resize:none;font-family:inherit;line-height:1.5" oninput="labSave()"></textarea>
+    </div>
+  </div>
+</div><!-- /lab -->
 </div><!-- /pages -->
 
 <!-- ══ PANTALLA GRANDE ══ -->
@@ -1547,6 +1781,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <span class="icon">🚨</span><span class="label">Alertas</span>
     <span class="badge r" id="alert-badge" style="position:absolute;top:4px;right:6px;font-size:9px;padding:1px 5px;display:none">0</span>
   </button>
+  <button class="navbtn" onclick="nav('lab',this)" id="nb-lab">
+    <span class="icon">&#x1F9EA;</span><span class="label">Labs</span>
+  </button>
   <button class="navbtn" onclick="nav('res',this)" id="nb-res">
     <span class="icon">📄</span><span class="label">Resumen</span>
   </button>
@@ -1679,7 +1916,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div id="ls-nombre-display"
            style="font-size:20px;font-weight:800;color:#dde8ff;margin-bottom:4px"></div>
       <div id="ls-inst-display"
-           style="font-size:13px;color:#3d5a78;margin-bottom:2px"></div>
+           style="font-size:13px;color:#3d5a78;margin-bottom:4px"></div>
+      <div id="ls-cedulas-display"
+           style="font-size:11px;color:#00e5ff;font-weight:700;margin-bottom:4px"></div>
       <div id="ls-email-display"
            style="font-size:12px;color:#3d5a78;margin-bottom:16px"></div>
       <button onclick="loginAndNew()"
@@ -1715,6 +1954,14 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <input type="text" id="login-inst" placeholder="Hospital / Clínica..."
                style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
                       border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Cédula Profesional</label>
+          <input type="text" id="login-cedula" placeholder="00000000" inputmode="numeric"
+          style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Cédula de Especialidad</label>
+          <input type="text" id="login-cedula-esp" placeholder="00000000" inputmode="numeric"
+          style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box"></div>
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
@@ -1949,7 +2196,8 @@ const S = {
   pac: {
     nombre:'', edad:'', exp:'', sexo:'Masculino', peso:'', pesoI:'', pesoC:'', talla:'',
     dx:'', cx:'', tipoAn:'AGB — Anestesia General Balanceada', tipoAn2:'', tipoAnNota:'',
-    asa:'II', med:'', ciru:'', inst:'',
+    asa:'II', med:'', medCed:'', medCedEsp:'',
+    ciru:'', ciruCed:'', ciruCedEsp:'', inst:'',
     guia:'', anLocal:'', anLocalDosis:'',
     alergias:'', ayuno:'', ayunoTipo:'', antecedentes:'', medCronicos:'',
     mallampati:'', aperturaBucal:'', dtm:'', antID:'No', premed:'',
@@ -1974,7 +2222,8 @@ const S = {
 function openPacModal() {
   // Pre-fill if already saved
   if(S.pac.nombre) document.getElementById('m-nombre').value = S.pac.nombre;
-  if(S.pac.edad) document.getElementById('m-edad').value = S.pac.edad;
+  if(S.pac.edad)   document.getElementById('m-edad').value   = S.pac.edad;
+  try{var _te=document.getElementById('m-talla');if(_te&&S.pac.talla)_te.value=S.pac.talla;}catch(e){}
   if(S.pac.sexo) document.getElementById('m-sexo').value = S.pac.sexo;
   if(S.pac.exp) document.getElementById('m-exp').value = S.pac.exp;
   if(S.pac.asa) document.getElementById('m-asa').value = S.pac.asa;
@@ -1987,8 +2236,22 @@ function openPacModal() {
   if(S.pac.anLocal) document.getElementById('m-anlocal').value = S.pac.anLocal;
   if(S.pac.anLocalDosis) document.getElementById('m-anlocal-dosis').value = S.pac.anLocalDosis;
   if(S.pac.guia) { const el=document.querySelector('input[name="guia"][value="'+S.pac.guia+'"]'); if(el) el.checked=true; }
-  if(S.pac.med) document.getElementById('m-anest').value = S.pac.med;
-  if(S.pac.ciru) document.getElementById('m-ciru').value = S.pac.ciru;
+  if(S.pac.med)        document.getElementById('m-anest').value = S.pac.med;
+  try{document.getElementById('m-anest-ced').value     = S.pac.medCed    || '';}catch(e){}
+  try{document.getElementById('m-anest-ced-esp').value = S.pac.medCedEsp || '';}catch(e){}
+  if(S.pac.ciru)       document.getElementById('m-ciru').value  = S.pac.ciru;
+  try{document.getElementById('m-ciru-ced').value      = S.pac.ciruCed    || '';}catch(e){}
+  try{document.getElementById('m-ciru-ced-esp').value  = S.pac.ciruCedEsp || '';}catch(e){}
+  // Auto-fill anestesiologo from saved profile when blank
+  try {
+    var _pu = getUser();
+    var _ae = document.getElementById('m-anest');
+    if (_pu && _pu.nombre && _ae && !_ae.value) { _ae.value = _pu.nombre; }
+    var _ace  = document.getElementById('m-anest-ced');
+    var _acee = document.getElementById('m-anest-ced-esp');
+    if (_pu && _pu.cedula    && _ace  && !_ace.value)  _ace.value  = _pu.cedula;
+    if (_pu && _pu.cedulaEsp && _acee && !_acee.value) _acee.value = _pu.cedulaEsp;
+  } catch(e) {}
   if(S.pac.inst) document.getElementById('m-inst').value = S.pac.inst;
   // Preop fields
   var _pfill = function(id, val) { var e=document.getElementById(id); if(e&&val) e.value=val; };
@@ -2031,7 +2294,7 @@ function toggleAnFields() {
 
 function savePacModal() {
   const nombre = document.getElementById('m-nombre').value.trim();
-  if(!nombre) { alert('Escribe el nombre del paciente'); return; }
+  if(!nombre) { showToast('⚠️ Escribe el nombre del paciente'); return; }
   S.pac.nombre = nombre;
   S.pac.edad   = document.getElementById('m-edad').value;
   S.pac.sexo   = document.getElementById('m-sexo').value;
@@ -2050,9 +2313,13 @@ function savePacModal() {
   S.pac.anLocalDosis = document.getElementById('m-anlocal-dosis').value.trim();
   const guiaEl = document.querySelector('input[name="guia"]:checked');
   S.pac.guia = guiaEl ? guiaEl.value : '';
-  S.pac.med    = document.getElementById('m-anest').value.trim();
-  S.pac.ciru   = document.getElementById('m-ciru').value.trim();
-  S.pac.inst   = document.getElementById('m-inst').value.trim();
+  S.pac.med        = document.getElementById('m-anest').value.trim();
+  S.pac.medCed     = (document.getElementById('m-anest-ced')     || {value:''}).value.trim();
+  S.pac.medCedEsp  = (document.getElementById('m-anest-ced-esp') || {value:''}).value.trim();
+  S.pac.ciru       = document.getElementById('m-ciru').value.trim();
+  S.pac.ciruCed    = (document.getElementById('m-ciru-ced')      || {value:''}).value.trim();
+  S.pac.ciruCedEsp = (document.getElementById('m-ciru-ced-esp')  || {value:''}).value.trim();
+  S.pac.inst       = document.getElementById('m-inst').value.trim();
   // Preoperatorio
   S.pac.alergias     = (document.getElementById('m-alergias')    ||{value:''}).value.trim();
   S.pac.ayuno        = (document.getElementById('m-ayuno')       ||{value:''}).value;
@@ -2116,6 +2383,7 @@ function nav(id, btn) {
   if(id==='monitor') { try{drawChart();}catch(e){} }
   if(id==='farm')    { try{renderFarmAcum();}catch(e){} }
   if(id==='vent')    { try{calcVentDerived();}catch(e){} }
+  if(id==='lab')     { try{labLoad();}catch(e){} }
 }
 
 // ═══════════════════════════════════════════════
@@ -2135,8 +2403,12 @@ var _saveDebounce = null;
 function debounceSave() {
   clearTimeout(_saveDebounce);
   _saveDebounce = setTimeout(function() {
-    if(!S._readOnly && (S.pac.nombre || S.history.length)) {
-      try { autoSave(); } catch(e) {}
+    var _liq=['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
+      'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'].some(function(id){
+        var e=document.getElementById(id);return e&&parseInt(e.value)>0;
+      });
+    if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||_liq)){
+      try{autoSave();}catch(e){}
     }
   }, 3000); // save 3s after last input
 }
@@ -2257,6 +2529,12 @@ function upV(key, val) {
 }
 
 function registrar() {
+  if(S._readOnly){
+    showToast('🔒 Solo lectura — toca Editar caso primero');
+    return;
+  }
+  if(!S.phases.an && !S.history.length)
+    showToast('⚠️ Tip: inicia la fase Anestesia antes de registrar');
   const hora = getT();
   const pam = Math.round(S.vitals.tad+(S.vitals.tas-S.vitals.tad)/3);
   const row = {...S.vitals, hora, pam, etco2: S.etco2, bis: S.bis};
@@ -2284,6 +2562,8 @@ function checkAlarms(v, hora) {
   if(v.temp < 35.5) addAlert('warn', `⚠️ Hipotermia: ${v.temp}°C`, hora);
   if(v.etco2 && v.etco2 > 50) addAlert('warn', `⚠️ EtCO₂ elevado: ${v.etco2} mmHg — hipoventilación`, hora);
   if(v.etco2 && v.etco2 < 28) addAlert('warn', `⚠️ EtCO₂ bajo: ${v.etco2} mmHg — hiperventilación`, hora);
+  if(S.bis!=null&&S.bis<40) addAlert('danger',`BIS muy bajo (${S.bis}) — posible sobredosis`,hora);
+  if(S.bis!=null&&S.bis>70) addAlert('warn',`BIS elevado (${S.bis}) — verificar profundidad`,hora);
 }
 
 function renderVitalTable() {
@@ -2632,7 +2912,6 @@ function _doResetCronometros() {
   document.getElementById('alarm-big').textContent = '60:00';
   document.getElementById('dur-an').textContent = '--:--';
   document.getElementById('dur-cx').textContent = '--:--';
-  document.getElementById('dur-fin').textContent = '--:--';
   ['time-an','time-cx'].forEach(function(id) {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -3592,7 +3871,7 @@ function addFarm() {
   const h=hEl||getT();
   const tipo=(document.getElementById('ftipo')||{value:'Bolo'}).value;
   const vel =(document.getElementById('fvel') ||{value:''}).value.trim();
-  if(!n){alert('Escribe el nombre del fármaco');return;}
+  if(!n){showToast('⚠️ Escribe el nombre del fármaco');return;}
   S.farms.unshift({n,d:d||'—',v,h,nota,tipo,vel});
   renderFarms();
   renderFarmAcum();
@@ -3725,6 +4004,7 @@ function genRes() {
     ${p.tipoAnNota ? '<div class="res-row"><span>Notas técnica</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.tipoAnNota + '</span></div>' : ''}
     <div class="res-row"><span>ASA</span><span style="color:var(--yellow);font-weight:800">${p.asa||'—'}</span></div>
     <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
+          + (S.pac.medCed ? '<div class="pr-row-sub">Céd. Prof: ' + S.pac.medCed + (S.pac.medCedEsp ? ' / Esp: ' + S.pac.medCedEsp : '') + '</div>' : '')
     ${p.ciru ? '<div class="res-row"><span>Cirujano</span><span>' + p.ciru + '</span></div>' : ''}
     ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
     ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
@@ -3895,8 +4175,8 @@ function genRes() {
       '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
         '<thead><tr style="background:#0077aa;color:#fff">' +
           '<th style="padding:4px 5px">Hora</th><th style="padding:4px 5px">TA Sist.</th><th style="padding:4px 5px">TA Diast.</th>' +
-          '<th style="padding:4px 5px">PAM</th><th style="padding:4px 5px">FC</th><th style="padding:4px 5px">FR</th>' +
-          '<th style="padding:4px 5px">SpO2%</th><th style="padding:4px 5px">Temp°C</th>' +
+          '<th style="padding:4px 5px">PAM</th><th style="padding:4px 5px">FC</th>' +
+          '<th style="padding:4px 5px">SpO₂%</th><th style="padding:4px 5px">EtCO₂</th><th style="padding:4px 5px">Temp°C</th>' +
         '</tr></thead><tbody>' + vitalRows + '</tbody></table>' +
       '<div style="font-size:7px;color:#888;margin-top:3px">* Valores en rojo = fuera de límites</div>'
       : '<div style="color:#999;padding:8px;text-align:center">Sin registros de signos vitales</div>') +
@@ -4067,7 +4347,27 @@ function genRes() {
   '</div>';
 
   const sep = '<div style="page-break-before:always"></div>';
-  document.getElementById('print-area').innerHTML = pg1 + sep + pg2 + sep + pg3;
+
+  var _ld2 = (typeof labGetDataForPDF==='function') ? labGetDataForPDF() : null;
+  var labPdfSec = '';
+  if (_ld2) {
+    var _lf2 = [['Hemoglobina',_ld2.hb,'g/dL'],['Hematocrito',_ld2.hto,'%'],
+      ['Plaquetas',_ld2.plt,'x10³'],['Leucocitos',_ld2.leu,'x10³'],
+      ['TP',_ld2.tp,'seg'],['TPT',_ld2.tpt,'seg'],['INR',_ld2.inr,''],
+      ['Glucosa',_ld2.glu,'mg/dL'],['Urea',_ld2.urea,'mg/dL'],
+      ['Creatinina',_ld2.crea,'mg/dL'],['BUN',_ld2.bun,'mg/dL'],
+      ['Colesterol',_ld2.col,'mg/dL'],['Triglicéridos',_ld2.tg,'mg/dL']];
+    var _lr2 = _lf2.filter(function(x){return x[1]!==''&&x[1]!=null;});
+    if (_ld2.extra) _ld2.extra.forEach(function(e){if(e.value!=='') _lr2.push([e.name,e.value,e.unit]);});
+    if (_lr2.length) {
+      labPdfSec = '<div class="pr-section"><div class="pr-title">Laboratorios'
+        + (_ld2.fecha ? ' — ' + _ld2.fecha : '') + '</div>'
+        + _lr2.map(function(r){return '<div class="pr-row"><span>'+r[0]+'</span><span>'+r[1]+(r[2]?' '+r[2]:'')+'</span></div>';}).join('')
+        + (_ld2.notas ? '<div style="font-size:8px;color:#777;margin-top:4px">'+_ld2.notas+'</div>' : '')
+        + '</div>';
+    }
+  }
+  document.getElementById('print-area').innerHTML = pg1 + sep + labPdfSec + pg2 + sep + pg3;
 }
 
 function copiarRes() {
@@ -4075,7 +4375,7 @@ function copiarRes() {
   if(navigator.share){
     navigator.share({title:'Registro Anestésico — AnesteSys',text:t});
   } else {
-    navigator.clipboard.writeText(t).then(()=>alert('✓ Copiado — pega en WhatsApp, correo, Notes, etc.'));
+    navigator.clipboard.writeText(t).then(()=>showToast('✅ Copiado — pega en WhatsApp o correo'));
   }
 }
 
@@ -4674,6 +4974,12 @@ function refreshHistorial() {
   var el = document.getElementById('historial-list');
   if (!el) return;
   var casos = getCasos(_histTab);
+  // Auto-switch to the tab that has cases if current is empty
+  if(!casos.length){
+    var _xalt=_histTab==='privado'?'hospital':'privado';
+    if(getCasos(_xalt).length){_histTab=_xalt;casos=getCasos(_xalt);try{setHistTab(_xalt);}catch(e){}}
+  }
+  // Show empty state if truly no cases
   if (!casos.length) {
     el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:28px 16px;font-size:13px;line-height:1.9">No hay casos guardados.<br><span style="color:#1e2d44">Se guardan automáticamente al registrar.</span></div>';
     return;
@@ -4934,24 +5240,35 @@ function lsMostrarPerfil(u) {
     if (savedEl) savedEl.style.display = 'none';
   } else {
     if (nomEl)   nomEl.textContent  = u.nombre;
-    if (instEl)  instEl.textContent = u.inst  || '';
+    if (instEl) instEl.textContent = u.inst || '';
+    var _cdEl = document.getElementById('ls-cedulas-display');
+    if (_cdEl) {
+      var _cp = [];
+      if (u.cedula)    _cp.push('Céd. Prof: ' + u.cedula);
+      if (u.cedulaEsp) _cp.push('Céd. Esp: '  + u.cedulaEsp);
+      _cdEl.textContent = _cp.join('  ·  ');
+    }
     var emailDispEl = document.getElementById('ls-email-display');
     if (emailDispEl) emailDispEl.textContent = u.email ? '✉️ ' + u.email : '';
     if (formEl)  formEl.style.display  = 'none';
     if (savedEl) savedEl.style.display = 'block';
-    // Keep inputs in sync
-    var lu = document.getElementById('login-user'); if(lu) lu.value = u.nombre;
-    var li = document.getElementById('login-inst'); if(li) li.value = u.inst || '';
-    var le = document.getElementById('login-email'); if(le) le.value = u.email || '';
+    // Keep form inputs in sync
+    var lu  = document.getElementById('login-user');       if(lu)  lu.value  = u.nombre;
+    var li  = document.getElementById('login-inst');       if(li)  li.value  = u.inst || '';
+    var le  = document.getElementById('login-email');      if(le)  le.value  = u.email || '';
+    var lc  = document.getElementById('login-cedula');     if(lc)  lc.value  = u.cedula || '';
+    var lce = document.getElementById('login-cedula-esp'); if(lce) lce.value = u.cedulaEsp || '';
   }
 }
 
 function lsGuardarPerfil() {
   var nombre = (document.getElementById('login-user').value || '').trim();
   if (!nombre) { showToast('⚠️ Escribe tu nombre primero'); return; }
-  var inst   = (document.getElementById('login-inst').value  || '').trim();
-  var email  = (document.getElementById('login-email').value || '').trim();
-  var u = {nombre: nombre, inst: inst, email: email};
+  var inst      = (document.getElementById('login-inst').value       || '').trim();
+  var email     = (document.getElementById('login-email').value      || '').trim();
+  var cedula    = (document.getElementById('login-cedula').value     || '').trim();
+  var cedulaEsp = (document.getElementById('login-cedula-esp').value || '').trim();
+  var u = {nombre:nombre, inst:inst, email:email, cedula:cedula, cedulaEsp:cedulaEsp};
   localStorage.setItem(USER_KEY, JSON.stringify(u));
   lsMostrarPerfil(u);
   showToast('✅ Perfil guardado: ' + nombre);
@@ -5261,14 +5578,35 @@ function resetForNewCase(){
   S._vscManual = null;
   S._vspManual = null;
   S._sangAlerted = false;
-  S.pac = {nombre:'',edad:'',exp:'',sexo:'Masculino',peso:'',pesoI:'',pesoC:'',
-           dx:'',cx:'',tipoAn:'AGB -- Anestesia General Balanceada',asa:'II',
-           med:'',ciru:'',inst:''};
+  S.pac = {
+    nombre:'', edad:'', sexo:'Masculino', exp:'', asa:'II',
+    peso:'', pesoI:'', pesoC:'', talla:'',
+    dx:'', cx:'',
+    tipoAn:'AGB — Anestesia General Balanceada',
+    tipoAn2:'', tipoAnNota:'',
+    anLocal:'', anLocalDosis:'', guia:'',
+    med:'', ciru:'', inst:'',
+    alergias:'', ayuno:'', ayunoTipo:'',
+    antecedentes:'', medCronicos:'',
+    mallampati:'', aperturaBucal:'', dtm:'', antID:'No', premed:'',
+    categoria:'privado'
+  };
 
   // ── Limpiar TODOS los inputs y selects del modal paciente ──
-  ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx','m-anest','m-ciru','m-inst',
-   'm-tipoan-nota','m-anlocal-dosis'
+  ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx',
+   'm-anest','m-ciru','m-inst','m-tipoan-nota','m-anlocal-dosis',
+   'm-alergias','m-ayuno','m-premed','m-antecedentes','m-medcronicos'
   ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  try{document.getElementById('m-ayuno-tipo').value='';}catch(e){}
+  try{document.getElementById('m-mallampati').value='';}catch(e){}
+  try{document.getElementById('m-apertura').value='';}catch(e){}
+  try{document.getElementById('m-dtm').value='';}catch(e){}
+  try{document.getElementById('m-antid').value='No';}catch(e){}
+  try{document.getElementById('m-anest-ced').value='';}catch(e){}
+  try{document.getElementById('m-anest-ced-esp').value='';}catch(e){}
+  try{document.getElementById('m-ciru-ced').value='';}catch(e){}
+  try{document.getElementById('m-ciru-ced-esp').value='';}catch(e){}
+  try{document.querySelectorAll('input[name="cat-caso"]').forEach(function(r){r.checked=(r.value==='privado');});}catch(e){}
   try{ document.getElementById('m-sexo').value = 'Masculino'; }catch(e){}
   try{ document.getElementById('m-asa').value  = 'II'; }catch(e){}
   try{ document.getElementById('m-tipoan').value = 'AGB -- Anestesia General Balanceada'; }catch(e){}
@@ -5578,6 +5916,479 @@ function deleteFarmRow(){
     };
   }
 })();
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// LABORATORIOS MODULE
+// ═══════════════════════════════════════════════════════════════
+
+var _labData = {
+  fecha:'', hb:'', hto:'', plt:'', leu:'',
+  tp:'', tpt:'', inr:'',
+  glu:'', urea:'', crea:'', bun:'', col:'', tg:'',
+  notas:'', extra:[]
+};
+
+var _LAB_KEY_PREFIX = 'anestesys_lab_';
+var _labExtraSeq = 0;
+
+// Reference ranges [lo, hi] — lo=0 means one-sided (only hi matters)
+var _labRefs = {
+  hb:[4.39,18.5], hto:[35,53], plt:[150,400], leu:[4.5,11.0],
+  tp:[10,14], tpt:[25,35], inr:[0.8,1.2],
+  glu:[70,100], urea:[17,49], crea:[0.6,1.3], bun:[7,20],
+  col:[0,200], tg:[0,150]
+};
+
+var _labLabels = {
+  hb:'Hemoglobina', hto:'Hematocrito', plt:'Plaquetas', leu:'Leucocitos',
+  tp:'TP', tpt:'TPT', inr:'INR',
+  glu:'Glucosa', urea:'Urea', crea:'Creatinina', bun:'BUN',
+  col:'Colesterol', tg:'Triglicéridos'
+};
+
+var _labUnits = {
+  hb:'g/dL', hto:'%', plt:'×10³/µL', leu:'×10³/µL',
+  tp:'seg', tpt:'seg', inr:'',
+  glu:'mg/dL', urea:'mg/dL', crea:'mg/dL', bun:'mg/dL',
+  col:'mg/dL', tg:'mg/dL'
+};
+
+function _labKey() {
+  return _LAB_KEY_PREFIX + (S._casoId || 'current');
+}
+
+function labSave() {
+  try {
+    var notasEl = document.getElementById('lab-notas');
+    _labData.notas = notasEl ? notasEl.value : '';
+    localStorage.setItem(_labKey(), JSON.stringify(_labData));
+  } catch(e) {}
+}
+
+function labLoad() {
+  try {
+    var raw = localStorage.getItem(_labKey());
+    if (raw) {
+      _labData = JSON.parse(raw);
+      _labRestoreUI();
+    } else {
+      _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
+                  glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
+      _labClearInputs();
+    }
+  } catch(e) {
+    _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
+                glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
+    _labClearInputs();
+  }
+}
+
+function _labClearInputs() {
+  var keys = ['hb','hto','plt','leu','tp','tpt','inr','glu','urea','crea','bun','col','tg'];
+  keys.forEach(function(k) {
+    var el = document.getElementById('lab-' + k);
+    if (el) el.value = '';
+    _labSetFieldClass(k, '');
+  });
+  try { document.getElementById('lab-notas').value = ''; } catch(e) {}
+  try { document.getElementById('lab-fecha').value = ''; } catch(e) {}
+  try { document.getElementById('lab-fecha-lbl').textContent = 'Sin fecha registrada'; } catch(e) {}
+  try { document.getElementById('lab-extra-list').innerHTML = _labEmptyPlaceholder(); } catch(e) {}
+  _labRefreshAllBadges();
+}
+
+function _labRestoreUI() {
+  var keys = ['hb','hto','plt','leu','tp','tpt','inr','glu','urea','crea','bun','col','tg'];
+  keys.forEach(function(k) {
+    var el = document.getElementById('lab-' + k);
+    if (el) {
+      el.value = _labData[k] || '';
+      if (_labData[k] !== '') _labColorField(k, parseFloat(_labData[k]));
+    }
+  });
+  try {
+    var notasEl = document.getElementById('lab-notas');
+    if (notasEl) notasEl.value = _labData.notas || '';
+  } catch(e) {}
+  try {
+    if (_labData.fecha) {
+      document.getElementById('lab-fecha').value = _labData.fecha;
+      _labUpdateFechaLabel(_labData.fecha);
+    }
+  } catch(e) {}
+  _labRenderExtra();
+  _labRefreshAllBadges();
+}
+
+function _labEmptyPlaceholder() {
+  return '<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px 16px">'
+       + 'Toca <b style="color:var(--cyan)">+ Agregar</b> para incluir un parámetro adicional'
+       + '</div>';
+}
+
+// Called from oninput on each field
+function labInput(key) {
+  var el = document.getElementById('lab-' + key);
+  if (!el) return;
+  var v = el.value.trim();
+  _labData[key] = v;
+  if (v === '') {
+    _labSetFieldClass(key, '');
+  } else {
+    _labColorField(key, parseFloat(v));
+  }
+  _labRefreshAllBadges();
+  labSave();
+}
+
+function _labColorField(key, v) {
+  if (isNaN(v)) { _labSetFieldClass(key, ''); return; }
+  var r = _labRefs[key];
+  if (!r) { _labSetFieldClass(key, 'ok'); return; }
+  var lo = r[0], hi = r[1];
+  var cls;
+  if (lo === 0) {
+    // one-sided
+    cls = v <= hi ? 'ok' : (v <= hi * 1.3 ? 'warn' : 'danger');
+  } else {
+    if (v >= lo && v <= hi) cls = 'ok';
+    else if (v < lo * 0.80 || v > hi * 1.25) cls = 'danger';
+    else cls = 'warn';
+  }
+  _labSetFieldClass(key, cls);
+}
+
+function _labSetFieldClass(key, cls) {
+  var fi = document.getElementById('fi-' + key);
+  if (!fi) return;
+  fi.className = 'lab-field-inner' + (cls ? ' ' + cls : '');
+}
+
+function _labGetFieldClass(key) {
+  var fi = document.getElementById('fi-' + key);
+  if (!fi) return '';
+  if (fi.classList.contains('danger')) return 'danger';
+  if (fi.classList.contains('warn')) return 'warn';
+  if (fi.classList.contains('ok')) return 'ok';
+  return '';
+}
+
+function _labRefreshAllBadges() {
+  _labUpdateBadge('bh',   ['hb','hto','plt','leu'],                    'lab-bh-badge',   'lab-bh-summary');
+  _labUpdateBadge('coag', ['tp','tpt','inr'],                          'lab-coag-badge', 'lab-coag-summary');
+  _labUpdateBadge('qs',   ['glu','urea','crea','bun','col','tg'],      'lab-qs-badge',   'lab-qs-summary');
+}
+
+function _labUpdateBadge(group, keys, badgeId, summaryId) {
+  var badge   = document.getElementById(badgeId);
+  var summary = document.getElementById(summaryId);
+  if (!badge || !summary) return;
+
+  var filled = keys.filter(function(k) { return _labData[k] !== '' && _labData[k] != null; });
+
+  if (!filled.length) {
+    badge.className = 'lab-badge nd';
+    badge.textContent = 'Sin datos';
+    summary.style.display = 'none';
+    return;
+  }
+
+  var hasDanger = filled.some(function(k) { return _labGetFieldClass(k) === 'danger'; });
+  var hasWarn   = filled.some(function(k) { return _labGetFieldClass(k) === 'warn'; });
+
+  if (hasDanger) {
+    badge.className = 'lab-badge danger';
+    badge.textContent = 'Anormal';
+  } else if (hasWarn) {
+    badge.className = 'lab-badge warn';
+    badge.textContent = 'Revisar';
+  } else {
+    badge.className = 'lab-badge ok';
+    badge.textContent = 'Normal';
+  }
+
+  // Build summary
+  var html = '';
+  filled.forEach(function(k) {
+    var cls = _labGetFieldClass(k);
+    var colorCls = cls === 'danger' ? 'alto' : cls === 'warn' ? 'bajo' : 'normal';
+    html += '<div class="lab-sum-row">'
+          + '<span class="lab-sum-lbl">' + (_labLabels[k] || k) + '</span>'
+          + '<span class="lab-sum-val ' + colorCls + '">'
+          + _labData[k] + (_labUnits[k] ? ' ' + _labUnits[k] : '')
+          + '</span></div>';
+  });
+  summary.innerHTML = html;
+  summary.style.display = 'block';
+}
+
+// ── Date label ───────────────────────────────────────────────────────────────
+function labFechaChange() {
+  var el = document.getElementById('lab-fecha');
+  if (!el) return;
+  _labData.fecha = el.value;
+  _labUpdateFechaLabel(el.value);
+  labSave();
+}
+
+function _labUpdateFechaLabel(val) {
+  var lbl = document.getElementById('lab-fecha-lbl');
+  if (!lbl) return;
+  if (val) {
+    try {
+      var d = new Date(val + 'T12:00:00');
+      lbl.textContent = 'Muestra: ' + d.toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+    } catch(e) { lbl.textContent = val; }
+  } else {
+    lbl.textContent = 'Sin fecha registrada';
+  }
+}
+
+// ── Clear all ─────────────────────────────────────────────────────────────────
+function labClearAll() {
+  showConfirm('¿Limpiar todos los laboratorios de este caso?', function() {
+    _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
+                glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
+    _labClearInputs();
+    labSave();
+    showToast('🧹 Laboratorios limpiados');
+  });
+}
+
+// ── Extra parameters ──────────────────────────────────────────────────────────
+function labAddExtra() {
+  var container = document.getElementById('lab-extra-list');
+  if (!container) return;
+
+  // Remove empty placeholder
+  var ph = container.querySelector('[data-ph]');
+  if (ph) ph.remove();
+
+  _labExtraSeq++;
+  var uid = 'lx' + _labExtraSeq;
+
+  var div = document.createElement('div');
+  div.id = uid + '-form';
+  div.style.cssText = 'padding:12px;border-bottom:1px solid var(--border)';
+  div.innerHTML =
+    '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;'
+    + 'color:var(--cyan);font-weight:800;margin-bottom:8px">Nuevo parámetro</div>'
+    + '<input id="' + uid + '-n" placeholder="Nombre del parámetro (ej: Sodio)" '
+    + 'style="width:100%;background:var(--bg);border:1px solid var(--cyan);border-radius:8px;'
+    + 'color:var(--white);font-size:13px;padding:9px 11px;outline:none;margin-bottom:6px">'
+    + '<div style="display:flex;gap:6px;margin-bottom:8px">'
+    + '<input id="' + uid + '-v" placeholder="Valor" type="number" inputmode="decimal" '
+    + 'style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;'
+    + 'color:var(--white);font-size:14px;font-weight:700;padding:8px 10px;outline:none;text-align:right">'
+    + '<input id="' + uid + '-u" placeholder="Unidad" '
+    + 'style="width:80px;background:var(--bg);border:1px solid var(--border);border-radius:8px;'
+    + 'color:var(--muted);font-size:12px;padding:8px 9px;outline:none">'
+    + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="' + uid + '-save" style="flex:1;background:var(--green);border:none;border-radius:9px;'
+    + 'color:#000;font-size:13px;font-weight:800;padding:10px;cursor:pointer">✓ Agregar</button>'
+    + '<button id="' + uid + '-cancel" style="background:var(--s2);border:1px solid var(--border);'
+    + 'border-radius:9px;color:var(--muted);font-size:12px;padding:10px 16px;cursor:pointer">✕</button>'
+    + '</div>';
+
+  container.insertBefore(div, container.firstChild);
+
+  document.getElementById(uid + '-save').onclick = function() {
+    var name = (document.getElementById(uid + '-n') || {}).value || '';
+    var val  = (document.getElementById(uid + '-v') || {}).value || '';
+    var unit = (document.getElementById(uid + '-u') || {}).value || '';
+    if (!name.trim()) { showToast('⚠️ Escribe el nombre del parámetro'); return; }
+    if (!_labData.extra) _labData.extra = [];
+    _labData.extra.push({id: Date.now(), name: name.trim(), value: val, unit: unit.trim()});
+    div.remove();
+    _labRenderExtra();
+    labSave();
+    showToast('✅ ' + name.trim() + ' agregado');
+  };
+
+  document.getElementById(uid + '-cancel').onclick = function() {
+    div.remove();
+    if (!_labData.extra || !_labData.extra.length) {
+      container.innerHTML = _labEmptyPlaceholder();
+    }
+  };
+
+  try { document.getElementById(uid + '-n').focus(); } catch(e) {}
+}
+
+function labDeleteExtra(id) {
+  _labData.extra = (_labData.extra || []).filter(function(e) { return e.id !== id; });
+  _labRenderExtra();
+  labSave();
+}
+
+function labEditExtraVal(id, val) {
+  var item = (_labData.extra || []).find(function(e) { return e.id === id; });
+  if (item) { item.value = val; labSave(); }
+}
+
+function _labRenderExtra() {
+  var container = document.getElementById('lab-extra-list');
+  if (!container) return;
+
+  // Keep any active add-forms
+  var forms = Array.from(container.querySelectorAll('[id$="-form"]'));
+
+  container.innerHTML = '';
+  forms.forEach(function(f) { container.appendChild(f); });
+
+  if (!_labData.extra || !_labData.extra.length) {
+    if (!forms.length) container.innerHTML = _labEmptyPlaceholder();
+    return;
+  }
+
+  _labData.extra.forEach(function(item) {
+    var row = document.createElement('div');
+    row.setAttribute('data-eid', item.id);
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 12px;'
+                      + 'border-bottom:1px solid var(--border)';
+    row.innerHTML =
+      '<div style="flex:1;font-size:13px;font-weight:600;color:var(--white)">' + item.name + '</div>'
+      + '<input type="number" inputmode="decimal" value="' + (item.value || '') + '" '
+      + 'style="width:88px;background:var(--bg);border:1px solid var(--border);border-radius:8px;'
+      + 'color:var(--white);font-size:14px;font-weight:700;padding:7px 9px;outline:none;text-align:right" '
+      + 'oninput="labEditExtraVal(' + item.id + ',this.value)" placeholder="—">'
+      + '<span style="font-size:10px;color:var(--muted);width:42px;flex-shrink:0">'
+      + (item.unit || '') + '</span>'
+      + '<button onclick="labDeleteExtra(' + item.id + ')" '
+      + 'style="background:none;border:none;color:var(--muted);font-size:18px;'
+      + 'cursor:pointer;padding:4px 6px;line-height:1">×</button>';
+    container.appendChild(row);
+  });
+}
+
+// ── Expose lab data for genRes PDF ────────────────────────────────────────────
+function labGetDataForPDF() { return _labData; }
+
+// ── Auto-load when nav to lab tab ─────────────────────────────────────────────
+// (handled by hook in nav() override below)
+
+// ── Hooks into case lifecycle ─────────────────────────────────────────────────
+(function() {
+  var _origReset = window.resetForNewCase;
+  window.resetForNewCase = function() {
+    if (typeof _origReset === 'function') _origReset();
+    _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
+                glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
+    try { _labClearInputs(); } catch(e) {}
+  };
+
+  var _origNav = window.nav;
+  window.nav = function(id, btn) {
+    if (typeof _origNav === 'function') _origNav(id, btn);
+    if (id === 'lab') { try { labLoad(); } catch(e) {} }
+  };
+})();
+
+// Initial load after page ready
+setTimeout(function() { try { labLoad(); } catch(e) {} }, 800);
+
+
+// ═══════════════════════════════════════════════════════════════
+// DOCTOR DIRECTORY — localStorage autocomplete
+// ═══════════════════════════════════════════════════════════════
+var _DOC_KEY = 'anestesys_doctores';
+
+function docGetAll() {
+  try { return JSON.parse(localStorage.getItem(_DOC_KEY) || '[]'); } catch(e) { return []; }
+}
+function docSaveAll(arr) {
+  try { localStorage.setItem(_DOC_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function docSuggest(role, val) {
+  var dropId = 'doc-drop-' + role;
+  var drop   = document.getElementById(dropId);
+  if (!drop) return;
+  var inputId = (role === 'anest') ? 'm-anest' : 'm-ciru';
+  var inputEl = document.getElementById(inputId);
+  var query   = (val || '').trim().toLowerCase();
+  var all     = docGetAll();
+  var matches = query.length
+    ? all.filter(function(d){ return d.nombre.toLowerCase().indexOf(query) >= 0; })
+    : all.slice(0, 8);
+
+  var rows = '';
+  matches.forEach(function(d) {
+    var cedLine = [];
+    if (d.cedula)    cedLine.push('C\u00e9d: ' + d.cedula);
+    if (d.cedulaEsp) cedLine.push('Esp: ' + d.cedulaEsp);
+    var sid = '' + d.id;
+    rows += '<div class="ddi" onclick="docPick(\'' + role + '\',' + sid + ')">'
+          + '<div class="ddi-name">' + d.nombre + '</div>'
+          + (cedLine.length ? '<div class="ddi-ced">' + cedLine.join(' \u00b7 ') + '</div>' : '')
+          + '</div>';
+  });
+
+  var curName = inputEl ? inputEl.value.trim() : '';
+  var saved   = all.some(function(d){
+    return d.nombre.toLowerCase() === curName.toLowerCase();
+  });
+  if (curName && !saved) {
+    rows += '<div class="ddi-save" onclick="docSaveNew(\'' + role + '\')">'
+          + '\ud83d\udcbe Recordar a <b style="color:#fff;margin-left:4px">' + curName + '</b>'
+          + '</div>';
+  }
+
+  if (!rows) { drop.style.display = 'none'; return; }
+  drop.innerHTML = rows;
+  drop.style.display = 'block';
+}
+
+function docPick(role, id) {
+  var all = docGetAll();
+  var doc = all.find(function(d){ return d.id === id; });
+  if (!doc) return;
+  if (role === 'anest') {
+    try{ document.getElementById('m-anest').value          = doc.nombre;       }catch(e){}
+    try{ document.getElementById('m-anest-ced').value      = doc.cedula    || '';}catch(e){}
+    try{ document.getElementById('m-anest-ced-esp').value  = doc.cedulaEsp || '';}catch(e){}
+  } else {
+    try{ document.getElementById('m-ciru').value           = doc.nombre;       }catch(e){}
+    try{ document.getElementById('m-ciru-ced').value       = doc.cedula    || '';}catch(e){}
+    try{ document.getElementById('m-ciru-ced-esp').value   = doc.cedulaEsp || '';}catch(e){}
+  }
+  document.getElementById('doc-drop-' + role).style.display = 'none';
+  showToast('\u2705 ' + doc.nombre);
+}
+
+function docSaveNew(role) {
+  var nId  = (role === 'anest') ? 'm-anest'         : 'm-ciru';
+  var cId  = (role === 'anest') ? 'm-anest-ced'     : 'm-ciru-ced';
+  var ceId = (role === 'anest') ? 'm-anest-ced-esp' : 'm-ciru-ced-esp';
+  var nombre    = ((document.getElementById(nId)  || {}).value || '').trim();
+  var cedula    = ((document.getElementById(cId)  || {}).value || '').trim();
+  var cedulaEsp = ((document.getElementById(ceId) || {}).value || '').trim();
+  if (!nombre) { showToast('\u26a0\ufe0f Escribe el nombre primero'); return; }
+  var all = docGetAll();
+  if (all.some(function(d){ return d.nombre.toLowerCase() === nombre.toLowerCase(); })) {
+    showToast('\u2139\ufe0f ' + nombre + ' ya est\u00e1 en el directorio');
+    document.getElementById('doc-drop-' + role).style.display = 'none';
+    return;
+  }
+  all.push({ id: Date.now(), nombre: nombre, cedula: cedula, cedulaEsp: cedulaEsp });
+  docSaveAll(all);
+  document.getElementById('doc-drop-' + role).style.display = 'none';
+  showToast('\ud83d\udcbe ' + nombre + ' guardado en el directorio');
+}
+
+// Close on outside tap
+document.addEventListener('click', function(e) {
+  ['anest','ciru'].forEach(function(role) {
+    var drop  = document.getElementById('doc-drop-' + role);
+    var input = document.getElementById((role === 'anest') ? 'm-anest' : 'm-ciru');
+    if (drop && !drop.contains(e.target) && e.target !== input) {
+      drop.style.display = 'none';
+    }
+  });
+}, true);
 
 </script>
 
