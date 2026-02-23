@@ -255,6 +255,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   .pr-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; border-bottom: 1px solid #eee; }
   .pr-row span:first-child { color: #666; }
   .pr-row span:last-child { font-weight: 600; }
+  .pr-row-sub { font-size: 8px; color: #0077aa; padding: 1px 4px 3px 2px; border-bottom: 1px solid #f0f0f0; font-style: italic; }
   .pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .pr-box { border: 1px solid #ccc; border-radius: 4px; padding: 4px 6px; text-align: center; }
   .pr-box .pv { font-size: 14px; font-weight: 800; }
@@ -4006,6 +4007,7 @@ function genRes() {
     <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
           + (S.pac.medCed ? '<div class="pr-row-sub">Céd. Prof: ' + S.pac.medCed + (S.pac.medCedEsp ? ' / Esp: ' + S.pac.medCedEsp : '') + '</div>' : '')
     ${p.ciru ? '<div class="res-row"><span>Cirujano</span><span>' + p.ciru + '</span></div>' : ''}
+          + (S.pac.ciruCed ? '<div class="pr-row-sub">Céd. Prof: ' + S.pac.ciruCed + (S.pac.ciruCedEsp ? ' / Esp: ' + S.pac.ciruCedEsp : '') + '</div>' : '')
     ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
     ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
     ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID previo: '+p.antID:'') + '</span></div>' : ''}
