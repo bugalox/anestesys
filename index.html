@@ -1371,7 +1371,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 </div>
 
 <!-- ══ MODAL GUARDAR CASO ══ -->
-<div id="save-modal" onclick="if(event.target===this)closeSaveModal()" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);align-items:flex-end;justify-content:center">
+<div id="save-modal" onclick="if(event.target===this)closeSaveModal()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:rgba(4,6,13,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);align-items:flex-end;justify-content:center;box-sizing:border-box">
   <div style="width:100%;max-width:520px;background:var(--s1);border-radius:20px 20px 0 0;padding:24px 20px 32px;padding-bottom:calc(32px + env(safe-area-inset-bottom));border-top:1px solid var(--border)">
 
     <!-- Header -->
@@ -3052,35 +3052,48 @@ registrar = function() {
 var _saveCatSelected = null;
 
 function openSaveModal() {
-  if(!S.pac.nombre && !S.history.length && !S.farms.length) {
-    showToast('⚠️ No hay datos para guardar');
-    return;
+  try {
+    _saveCatSelected = (window.S && S.pac && S.pac.categoria) ? S.pac.categoria : 'privado';
+
+    // Preview patient name
+    var prev = document.getElementById('save-pac-preview');
+    if(prev) {
+      var parts = [];
+      if(window.S && S.pac) {
+        if(S.pac.nombre) parts.push(S.pac.nombre);
+        if(S.pac.dx)     parts.push(S.pac.dx);
+        if(S.pac.cx)     parts.push(S.pac.cx);
+      }
+      prev.textContent = parts.join(' · ') || '(sin paciente registrado)';
+    }
+
+    // Show case counts in each folder
+    try {
+      var nPriv = getCasos('privado').length;
+      var nHosp = getCasos('hospital').length;
+      var cp = document.getElementById('save-count-priv');
+      var ch = document.getElementById('save-count-hosp');
+      if(cp) cp.textContent = nPriv + (nPriv !== 1 ? ' casos' : ' caso');
+      if(ch) ch.textContent = nHosp + (nHosp !== 1 ? ' casos' : ' caso');
+    } catch(e) {}
+
+    // Pre-select current category
+    selectSaveCat(_saveCatSelected);
+
+    // Show the modal — override any inline style
+    var modal = document.getElementById('save-modal');
+    if(modal) {
+      modal.removeAttribute('hidden');
+      modal.style.cssText = modal.style.cssText.replace('display:none', '');
+      modal.style.display = 'flex';
+    } else {
+      console.error('[AnesteSys] save-modal element not found in DOM');
+      showToast('Error: modal no encontrado');
+    }
+  } catch(err) {
+    console.error('[AnesteSys] openSaveModal error:', err);
+    showToast('Error al abrir modal: ' + err.message);
   }
-  _saveCatSelected = S.pac.categoria || 'privado';
-
-  // Preview patient name
-  var prev = document.getElementById('save-pac-preview');
-  if(prev) {
-    var parts = [];
-    if(S.pac.nombre) parts.push(S.pac.nombre);
-    if(S.pac.dx)     parts.push(S.pac.dx);
-    if(S.pac.cx)     parts.push(S.pac.cx);
-    prev.textContent = parts.join(' · ') || 'Caso sin nombre';
-  }
-
-  // Show case counts in each folder
-  var nPriv = getCasos('privado').length;
-  var nHosp = getCasos('hospital').length;
-  var cp = document.getElementById('save-count-priv');
-  var ch = document.getElementById('save-count-hosp');
-  if(cp) cp.textContent = nPriv + ' caso' + (nPriv !== 1 ? 's' : '') + ' guardado' + (nPriv !== 1 ? 's' : '');
-  if(ch) ch.textContent = nHosp + ' caso' + (nHosp !== 1 ? 's' : '') + ' guardado' + (nHosp !== 1 ? 's' : '');
-
-  // Pre-select current category
-  selectSaveCat(_saveCatSelected);
-
-  var modal = document.getElementById('save-modal');
-  if(modal) { modal.style.display = 'flex'; }
 }
 
 function closeSaveModal() {
@@ -3091,39 +3104,40 @@ function closeSaveModal() {
 
 function selectSaveCat(cat) {
   _saveCatSelected = cat;
-
+  var isPriv = (cat === 'privado');
+  var STYLE_ACT_P = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.18);border:2px solid #00e5ff;border-radius:14px;cursor:pointer;text-align:center;box-shadow:0 0 0 3px rgba(0,229,255,.15)';
+  var STYLE_ACT_H = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.18);border:2px solid #00e676;border-radius:14px;cursor:pointer;text-align:center;box-shadow:0 0 0 3px rgba(0,230,118,.15)';
+  var STYLE_OFF   = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(255,255,255,.02);border:2px solid #1e2d44;border-radius:14px;cursor:pointer;text-align:center';
   var lblPriv = document.getElementById('save-lbl-priv');
   var lblHosp = document.getElementById('save-lbl-hosp');
   var msg     = document.getElementById('save-selected-msg');
   var btn     = document.getElementById('save-confirm-btn');
-
-  if(lblPriv && lblHosp) {
-    if(cat === 'privado') {
-      lblPriv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.18);border:2px solid var(--cyan);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 0 0 3px rgba(0,229,255,.15)';
-      lblHosp.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center';
-      if(msg) msg.textContent = '📁 Se guardará en tu carpeta Privado';
-      if(msg) msg.style.color = 'var(--cyan)';
-    } else {
-      lblHosp.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.18);border:2px solid var(--green);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 0 0 3px rgba(0,230,118,.15)';
-      lblPriv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center';
-      if(msg) msg.textContent = '📁 Se guardará en la carpeta Hospital';
-      if(msg) msg.style.color = 'var(--green)';
-    }
+  if(lblPriv) lblPriv.style.cssText = isPriv ? STYLE_ACT_P : STYLE_OFF;
+  if(lblHosp) lblHosp.style.cssText = isPriv ? STYLE_OFF   : STYLE_ACT_H;
+  if(msg) {
+    msg.textContent = isPriv ? '📁 Se guardará en tu carpeta Privado' : '📁 Se guardará en la carpeta Hospital';
+    msg.style.color = isPriv ? '#00e5ff' : '#00e676';
   }
-
   if(btn) {
     btn.disabled = false;
     btn.style.opacity = '1';
-    btn.textContent = '💾 Guardar en ' + (cat === 'privado' ? '🔒 Privado' : '🏥 Hospital');
-    btn.style.background = cat === 'privado'
-      ? 'linear-gradient(135deg,var(--cyan),#0066aa)'
-      : 'linear-gradient(135deg,var(--green),#007722)';
     btn.style.color = '#000';
+    btn.textContent = '\uD83D\uDCBE Guardar en ' + (isPriv ? '\uD83D\uDD12 Privado' : '\uD83C\uDFE5 Hospital');
+    btn.style.background = isPriv ? 'linear-gradient(135deg,#00e5ff,#0066aa)' : 'linear-gradient(135deg,#00e676,#007722)';
   }
 }
 
 function confirmSave() {
   if(!_saveCatSelected) return;
+
+  // Check if there's actually data worth saving
+  var hasData = (S.pac && S.pac.nombre) || (S.history && S.history.length) || (S.farms && S.farms.length);
+  if(!hasData) {
+    showToast('⚠️ Ingresa datos del paciente antes de guardar');
+    closeSaveModal();
+    setTimeout(function(){ openPacModal(); }, 400);
+    return;
+  }
 
   // Update category in state
   S.pac.categoria = _saveCatSelected;
