@@ -3264,8 +3264,8 @@ function confirmSave() {
 // MODO SOLO LECTURA — casos históricos
 // ═══════════════════════════════════════════════
 function _showReadOnlyBanner(show) {
-  var banner  = document.getElementById('readonly-banner');
-  var strip   = document.getElementById('readonly-strip');
+  var banner = document.getElementById('readonly-banner');
+  var strip  = document.getElementById('readonly-strip');
 
   if(show) {
     // Fill patient info
@@ -3276,43 +3276,44 @@ function _showReadOnlyBanner(show) {
       if(S.pac.edad)   parts.push(S.pac.edad + ' años');
       if(S.pac.dx)     parts.push(S.pac.dx);
       if(S.pac.cx)     parts.push('Cx: ' + S.pac.cx);
-      infoEl.innerHTML = parts.length ? parts.join(' &middot; ') : 'Paciente sin nombre';
+      infoEl.innerHTML = parts.length ? parts.join(' · ') : 'Paciente sin nombre';
     }
 
-    // Show strip
+    // Show amber strip at very top
     if(strip) strip.style.display = 'block';
 
-    // Position banner below actual topbar
+    // Position banner right below topbar and slide it in
     if(banner) {
-      var tb = document.querySelector('.topbar');
+      var tb  = document.querySelector('.topbar');
       var tbH = tb ? tb.getBoundingClientRect().height : 62;
-      banner.style.top = tbH + 'px';
+      banner.style.top     = tbH + 'px';
       banner.style.display = 'block';
-      banner.offsetHeight; // force reflow
+      banner.offsetHeight;                   // force reflow
       banner.classList.add('visible');
-    }
 
-    // Add padding to pages so content isn't hidden under banner
-    var pagesEl = document.querySelector('.pages');
-    if(pagesEl) {
-      pagesEl.style.transition = 'padding-top .3s';
-      setTimeout(function(){ pagesEl.style.paddingTop = '160px'; }, 50);
+      // After transition ends, measure actual banner height
+      // and push page content down so nothing is hidden underneath
+      setTimeout(function() {
+        var bH = banner.getBoundingClientRect().height;
+        // Apply top-padding to every .page div (they scroll independently)
+        document.querySelectorAll('.page').forEach(function(p) {
+          p.style.paddingTop = (bH + 8) + 'px';
+        });
+      }, 320); // wait for slide-down animation to finish
     }
 
   } else {
     // Slide banner back up
     if(banner) {
       banner.classList.remove('visible');
-      setTimeout(function(){
-        banner.style.display = 'none';
-      }, 320);
+      setTimeout(function() { banner.style.display = 'none'; }, 320);
     }
-    if(strip)  strip.style.display = 'none';
-    // Remove extra padding
-    var pagesEl2 = document.querySelector('.pages');
-    if(pagesEl2) {
-      pagesEl2.style.paddingTop = '';
-    }
+    if(strip) strip.style.display = 'none';
+
+    // Restore original page padding (defined in CSS as 12px)
+    document.querySelectorAll('.page').forEach(function(p) {
+      p.style.paddingTop = '';
+    });
   }
 }
 
