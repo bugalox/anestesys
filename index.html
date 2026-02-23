@@ -1031,6 +1031,30 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 </div><!-- /pages -->
 
+<!-- ══ BANNER MODO SOLO LECTURA ══ -->
+<div id="readonly-banner" style="display:none;position:fixed;bottom:68px;left:0;right:0;z-index:200;
+     background:linear-gradient(90deg,rgba(255,214,0,.12),rgba(255,109,0,.12));
+     border-top:1px solid rgba(255,214,0,.3);padding:10px 16px;
+     display:flex;align-items:center;justify-content:space-between;gap:8px">
+  <div style="font-size:11px;color:#ffd600;font-weight:700">
+    👁 Caso histórico — Solo lectura
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="editFinHoraModal()" 
+            style="padding:7px 12px;font-size:11px;font-weight:700;
+                   background:rgba(255,214,0,.2);border:1px solid #ffd600;
+                   border-radius:8px;color:#ffd600;cursor:pointer">
+      ✏️ Editar fin
+    </button>
+    <button onclick="convertToEditable()"
+            style="padding:7px 12px;font-size:11px;font-weight:700;
+                   background:rgba(0,230,118,.2);border:1px solid #00e676;
+                   border-radius:8px;color:#00e676;cursor:pointer">
+      ✏️ Editar caso
+    </button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bottomnav">
   <button class="navbtn active" onclick="nav('monitor',this)" id="nb-monitor">
@@ -2246,6 +2270,117 @@ function resetVSCManual() {
   showToast('↻ Recalculado automáticamente');
 }
 
+
+// ═══════════════════════════════════════════════
+// MODO SOLO LECTURA — casos históricos
+// ═══════════════════════════════════════════════
+function _showReadOnlyBanner(show) {
+  var b = document.getElementById('readonly-banner');
+  if(!b) return;
+  b.style.display = show ? 'flex' : 'none';
+}
+
+// Convierte el caso histórico en editable (usuario puede modificar y guardar)
+function convertToEditable() {
+  S._readOnly = false;
+  _showReadOnlyBanner(false);
+  showToast('✏️ Caso en modo edición — los cambios se guardarán');
+}
+
+// Modal para editar la hora de fin manualmente en casos históricos
+function editFinHoraModal() {
+  function _fmtT(d) {
+    if(!d) return '';
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  var anIni = _fmtT(S.phases.an);
+  var anFin = _fmtT(S.phases.finAn);
+  var cxIni = _fmtT(S.phases.cx);
+  var cxFin = _fmtT(S.phases.finCx);
+
+  var modal = document.createElement('div');
+  modal.id = 'fin-hora-modal';
+  modal.style.cssText = [
+    'position:fixed;inset:0;z-index:600;',
+    'background:rgba(4,6,13,.97);overflow-y:auto;',
+    'padding:24px 16px;padding-top:calc(32px + env(safe-area-inset-top))'
+  ].join('');
+
+  function inp(id, val, color) {
+    return '<div><input type="time" id="' + id + '" value="' + val +
+           '" style="width:100%;padding:10px;font-size:16px;font-weight:700;' +
+           'background:#04060d;border:1.5px solid ' + color + ';border-radius:8px;' +
+           'color:' + color + ';box-sizing:border-box"></div>';
+  }
+
+  var rows = [
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">',
+    '<div style="font-size:18px;font-weight:800;color:#ffd600">✏️ Editar Tiempos</div>',
+    '<button id="efh-close-btn" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>',
+    '</div>',
+    '<div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">',
+    '<div style="font-size:10px;color:#00e5ff;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px">🫁 Anestesia</div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">',
+    '<div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:4px">Inicio</label>' + inp('efh-an-ini', anIni, '#00e5ff') + '</div>',
+    '<div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:4px">Fin</label>'   + inp('efh-an-fin', anFin, '#ff4444') + '</div>',
+    '</div>',
+    '<div style="font-size:10px;color:#ff6d00;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px">🔪 Cirugía</div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">',
+    '<div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:4px">Inicio</label>' + inp('efh-cx-ini', cxIni, '#ff6d00') + '</div>',
+    '<div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:4px">Fin</label>'   + inp('efh-cx-fin', cxFin, '#ff4444') + '</div>',
+    '</div>',
+    '</div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">',
+    '<button id="efh-cancel-btn" style="padding:14px;font-size:14px;font-weight:700;background:#0f1628;border:1px solid #1e2d44;border-radius:12px;color:#3d5a78;cursor:pointer">Cancelar</button>',
+    '<button onclick="saveFinHora()" style="padding:14px;font-size:14px;font-weight:700;background:#ffd600;border:none;border-radius:12px;color:#04060d;cursor:pointer">✓ Guardar</button>',
+    '</div>'
+  ];
+
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'max-width:400px;margin:0 auto';
+  wrap.innerHTML = rows.join('');
+  modal.appendChild(wrap);
+  document.body.appendChild(modal);
+
+  // Wire close buttons after DOM insertion
+  function _close() { var m = document.getElementById('fin-hora-modal'); if(m) m.remove(); }
+  document.getElementById('efh-close-btn').addEventListener('click', _close);
+  document.getElementById('efh-cancel-btn').addEventListener('click', _close);
+}
+
+
+function saveFinHora() {
+  function _tv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
+  function _set(field, val) {
+    if(!val) return;
+    var d = new Date(); var parts = val.split(':');
+    d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
+    return d;
+  }
+  var anIni = _tv('efh-an-ini'), anFin = _tv('efh-an-fin');
+  var cxIni = _tv('efh-cx-ini'), cxFin = _tv('efh-cx-fin');
+  
+  if(anIni) { S.phases.an    = _set('efh-an-ini', anIni); document.getElementById('time-an').value = anIni; }
+  if(anFin) { 
+    S.phases.finAn = _set('efh-an-fin', anFin); 
+    document.getElementById('time-fin-an').value = anFin;
+    if(S.phases.an) { S._frozenTan = S.phases.finAn - S.phases.an; var dFA=document.getElementById('dur-fin-an'); if(dFA) dFA.textContent = fmt2(S._frozenTan); }
+  }
+  if(cxIni) { S.phases.cx    = _set('efh-cx-ini', cxIni); document.getElementById('time-cx').value = cxIni; }
+  if(cxFin) { 
+    S.phases.finCx = _set('efh-cx-fin', cxFin); 
+    document.getElementById('time-fin-cx').value = cxFin;
+    if(S.phases.cx) { S._frozenTcx = S.phases.finCx - S.phases.cx; var dFC=document.getElementById('dur-fin-cx'); if(dFC) dFC.textContent = fmt2(S._frozenTcx); }
+  }
+  // Guardar cambios (desactivar readOnly temporalmente)
+  var wasReadOnly = S._readOnly;
+  S._readOnly = false;
+  autoSave(true);
+  S._readOnly = wasReadOnly;
+  document.getElementById('fin-hora-modal').remove();
+  showToast('✅ Tiempos actualizados y guardados');
+}
+
 function calcVSCyPermisible() {
   // VSC según sexo y peso
   var peso  = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
@@ -3029,18 +3164,22 @@ function getCasoId() {
 }
 
 function serializeState() {
+  // CRÍTICO: usar JSON deep-copy para que los casos guardados sean
+  // independientes del estado actual — sin esto, modificar el caso
+  // actual modifica también los datos de los casos ya guardados.
+  function _dc(obj) { return JSON.parse(JSON.stringify(obj || null)); }
   return {
     id:      getCasoId(),
     fecha:   new Date().toLocaleString('es-MX'),
     savedAt: Date.now(),
-    pac:     S.pac,
-    history: S.history,
-    farms:   S.farms,
-    ventHist:    S.ventHist,
-    liqHora:     S.liqHora,
-    hourBuckets: S.hourBuckets,
-    alerts:      S.alerts,
-    alarmCfg:    S.alarmCfg,
+    pac:     _dc(S.pac),
+    history: _dc(S.history),
+    farms:   _dc(S.farms),
+    ventHist:    _dc(S.ventHist),
+    liqHora:     _dc(S.liqHora),
+    hourBuckets: _dc(S.hourBuckets),
+    alerts:      _dc(S.alerts),
+    alarmCfg:    _dc(S.alarmCfg),
     phases: {
       an:     S.phases.an     ? S.phases.an.toISOString()     : null,
       finAn:  S.phases.finAn  ? S.phases.finAn.toISOString()  : null,
@@ -3086,6 +3225,8 @@ function serializeState() {
 }
 
 function autoSave(manual) {
+  // Si estamos en modo sólo lectura (caso histórico), no sobreescribir
+  if (S._readOnly && !manual) return;
   var state  = serializeState();
   var casos  = getCasos();
   var idx    = casos.findIndex(function(c){ return c.id === state.id; });
@@ -3113,16 +3254,23 @@ function showToast(msg) {
 }
 
 function restoreState(caso) {
+  // Deep-copy todo para que el estado activo sea completamente
+  // independiente del objeto guardado en localStorage
+  function _dc(obj, def) { try { return JSON.parse(JSON.stringify(obj || def)); } catch(e) { return def; } }
   S._casoId     = caso.id;
-  S.pac         = caso.pac         || {};
-  S.history     = caso.history     || [];
-  S.farms       = caso.farms       || [];
-  S.ventHist    = caso.ventHist    || [];
-  S.liqHora     = caso.liqHora     || [];
-  S.hourBuckets = caso.hourBuckets || {};
-  S.alerts      = caso.alerts      || [];
-  S.alarmCfg    = caso.alarmCfg    || S.alarmCfg;
+  S.pac         = _dc(caso.pac,         {});
+  S.history     = _dc(caso.history,     []);
+  S.farms       = _dc(caso.farms,       []);
+  S.ventHist    = _dc(caso.ventHist,    []);
+  S.liqHora     = _dc(caso.liqHora,     []);
+  S.hourBuckets = _dc(caso.hourBuckets, {});
+  S.alerts      = _dc(caso.alerts,      []);
+  S.alarmCfg    = _dc(caso.alarmCfg,    null) || S.alarmCfg;
   S.hrAlarms    = [];
+  // Reset frozen timers — se recalculan abajo según finAn/finCx
+  S._frozenTan  = null;
+  S._frozenTcx  = null;
+  S._sangAlerted = false;
 
   var ph = caso.phases || {};
   // Ajustar fases: si la fecha guardada es en el futuro (caso de ayer restaurado hoy),
@@ -3147,23 +3295,51 @@ function restoreState(caso) {
     isqFin: _fixPhaseDate(ph.isqFin),
   };
 
+  // ── CRONÓMETROS: congelar al momento del guardado si no hay fin explícito ──
+  // Si el caso tiene inicio de anestesia pero no fin, al restaurarlo
+  // mañana el cronómetro mostraría 14h, 73h, etc. de forma incorrecta.
+  // Solución: si no hay finAn pero hay savedAt, congelar en (savedAt - an).
+  var _savedAt = caso.savedAt ? new Date(caso.savedAt) : null;
+  if(S.phases.an) {
+    if(S.phases.finAn) {
+      S._frozenTan = S.phases.finAn - S.phases.an;
+    } else if(_savedAt) {
+      // Caso histórico sin fin — congelar al momento del último guardado
+      S._frozenTan = _savedAt - S.phases.an;
+      if(S._frozenTan < 0) S._frozenTan = 0;
+    }
+  }
+  if(S.phases.cx) {
+    if(S.phases.finCx) {
+      S._frozenTcx = S.phases.finCx - S.phases.cx;
+    } else if(_savedAt) {
+      S._frozenTcx = _savedAt - S.phases.cx;
+      if(S._frozenTcx < 0) S._frozenTcx = 0;
+    }
+  }
+
   // Phase buttons
   function setBtn(id, bg, txt) { var b=document.getElementById(id); if(b){b.style.background=bg;b.textContent=txt;} }
   if(S.phases.an)    setBtn('btn-an',     'var(--green)', '✓ Anestesia');
   if(S.phases.cx)    setBtn('btn-cx',     'var(--green)', '✓ Cirugía');
   if(S.phases.finAn) {
     setBtn('btn-fin-an', 'var(--muted)', '✓ Fin anest.');
-    S._frozenTan = S.phases.an ? S.phases.finAn - S.phases.an : null;
     var dFA = document.getElementById('dur-fin-an');
     if(dFA && S._frozenTan != null) dFA.textContent = fmt2(S._frozenTan);
     var phRec = document.getElementById('ph-rec');
     if(phRec) phRec.className = 'phase-pill done';
+  } else if(S._frozenTan != null) {
+    // Caso sin fin explícito — mostrar duración congelada, habilitar edición
+    var dFA2 = document.getElementById('dur-an');
+    if(dFA2) dFA2.textContent = fmt2(S._frozenTan);
   }
   if(S.phases.finCx) {
     setBtn('btn-fin-cx', 'var(--muted)', '✓ Fin cx');
-    S._frozenTcx = S.phases.cx ? S.phases.finCx - S.phases.cx : null;
     var dFC = document.getElementById('dur-fin-cx');
     if(dFC && S._frozenTcx != null) dFC.textContent = fmt2(S._frozenTcx);
+  } else if(S._frozenTcx != null) {
+    var dFC2 = document.getElementById('dur-cx');
+    if(dFC2) dFC2.textContent = fmt2(S._frozenTcx);
   }
 
   // Restaurar isquemia UI
@@ -3218,10 +3394,64 @@ function loadCaso(id) {
   var casos = getCasos();
   var caso  = casos.find(function(c){ return c.id === id; });
   if (!caso) { showToast('Error: caso no encontrado'); return; }
-  if (S.history.length || S.farms.length) autoSave();
+
+  // Guardar caso actual antes de cambiar (si tiene datos)
+  if (hasCurrentData()) { try { autoSave(); } catch(e) {} }
+
+  // ── Limpiar UI completamente antes de restaurar ──
+  // Evita mezcla de datos entre casos
+  _resetUIOnly();
+
   restoreState(caso);
+  // Marcar como solo lectura — no sobreescribir con autoSave automático
+  S._readOnly = true;
+  _showReadOnlyBanner(true);
   hideLogin();
   showToast('📂 Cargado: ' + (caso.pac && caso.pac.nombre ? caso.pac.nombre : 'Sin nombre'));
+}
+
+// Limpia SOLO la UI (displays, inputs, botones) sin tocar S.*
+// Se usa antes de restoreState para evitar mezcla visual
+function _resetUIOnly() {
+  // Sliders a default
+  var slDef = {'sl-tas':135,'sl-tad':91,'sl-fc':100,'sl-spo2':93,'sl-fr':17,'sl-temp':37.0};
+  Object.keys(slDef).forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value=slDef[id];
+  });
+  // Borrar todos los inputs de tiempo, líquidos, fármacos
+  var clearIds = [
+    'time-an','time-cx','time-fin','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin',
+    'in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
+    'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro',
+    'fn','fd','fnota','fh'
+  ];
+  clearIds.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  // Reset displays de duración
+  ['dur-an','dur-cx','dur-fin-an','dur-fin-cx','dur-isq','dur-isq-total','st-tan','st-tcx'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='--:--'; });
+  // Reset pills
+  ['ph-an','ph-cx','ph-rec'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.className='phase-pill';
+  });
+  ['ph-an-t','ph-cx-t','ph-rec-t'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='--:--';
+  });
+  // Reset botones de fase
+  var phBtns = {
+    'btn-an':     ['var(--cyan)',   '▶ Inicio'],
+    'btn-cx':     ['var(--orange)', '▶ Inicio'],
+    'btn-fin-an': ['var(--red)',    '■ Fin anest.'],
+    'btn-fin-cx': ['var(--red)',    '■ Fin cx'],
+    'btn-isq-ini':['var(--yellow)', '▶ Inicio'],
+    'btn-isq-fin':['var(--orange)', '■ Fin isq.'],
+  };
+  Object.keys(phBtns).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.style.background=phBtns[id][0]; el.textContent=phBtns[id][1]; el.disabled=false; }
+  });
+  // Reset alarma
+  try{ document.getElementById('st-alarm').textContent='60:00'; }catch(e){}
+  try{ document.getElementById('alarm-big').textContent='60:00'; }catch(e){}
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3804,6 +4034,8 @@ function hasCurrentData(){
 function resetForNewCase(){
   // ── Reset COMPLETO del estado ──
   S._casoId    = null;
+  S._readOnly  = false;
+  try { _showReadOnlyBanner(false); } catch(e) {}
   S.vitals     = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
   S.history    = [];
   S.farms      = [];
@@ -3914,12 +4146,15 @@ function resetForNewCase(){
 }
 
 function _doNewPatient(){
-  // Seguridad: autosave antes de reset
-  try{ if(hasCurrentData()) autoSave(true); }catch(e){ try{ autoSave(); }catch(_){} }
+  // Seguridad: autosave del caso actual si no es solo lectura
+  if(!S._readOnly) {
+    try{ if(hasCurrentData()) autoSave(true); }catch(e){ try{ autoSave(); }catch(_){} }
+  }
 
   // Prefill médico e institución desde perfil
   var u = getUser();
   resetForNewCase();
+  S._readOnly = false; // nuevo caso = editable
   if(u && u.nombre){ S.pac.med = u.nombre; }
   if(u && u.inst){ S.pac.inst = u.inst; }
   try{ updateTopbar(); }catch(e){}
