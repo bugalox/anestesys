@@ -318,7 +318,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <span id="tb-sub" style="font-size:9px">Toca para editar</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
-    <button onclick="autoSave(true)" style="background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Guardar caso">💾</button>
+    <button onclick="openSaveModal()" style="background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Guardar caso">💾</button>
     <button onclick="toggleBigScreen()" style="background:rgba(0,229,255,.08);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Pantalla grande" id="btn-bigscreen">⛶</button>
     <button onclick="showLogin()" style="background:rgba(0,229,255,.1);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Historial de casos">📁</button>
     <div class="topbar-clock" id="clock">00:00:00</div>
@@ -1368,6 +1368,55 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   </div>
   <!-- Registrar button in bigscreen -->
   <button onclick="registrar();flashBigScreen()" style="margin:12px auto;width:calc(100% - 24px);padding:18px;font-size:16px;font-weight:800;background:linear-gradient(135deg,#00e676,#00c853);border:none;border-radius:14px;color:#000;cursor:pointer;letter-spacing:.5px">📌 Registrar Punto</button>
+</div>
+
+<!-- ══ MODAL GUARDAR CASO ══ -->
+<div id="save-modal" onclick="if(event.target===this)closeSaveModal()" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);align-items:flex-end;justify-content:center">
+  <div style="width:100%;max-width:520px;background:var(--s1);border-radius:20px 20px 0 0;padding:24px 20px 32px;padding-bottom:calc(32px + env(safe-area-inset-bottom));border-top:1px solid var(--border)">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:17px;font-weight:800;color:var(--white)">💾 Guardar caso</div>
+      <button onclick="closeSaveModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:14px;padding:6px 12px;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Patient name preview -->
+    <div id="save-pac-preview" style="font-size:12px;color:var(--muted);margin-bottom:18px"></div>
+
+    <!-- Category selector -->
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;font-weight:700">¿En qué carpeta deseas guardar?</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <!-- PRIVADO -->
+      <label id="save-lbl-priv" onclick="selectSaveCat('privado')" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.1);border:2px solid var(--cyan);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center">
+        <span style="font-size:32px">🔒</span>
+        <div style="font-size:14px;font-weight:800;color:var(--cyan)">Privado</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.4">Solo visible para ti.<br>Consultas privadas.</div>
+        <div id="save-count-priv" style="font-size:10px;color:var(--muted)"></div>
+      </label>
+
+      <!-- HOSPITAL -->
+      <label id="save-lbl-hosp" onclick="selectSaveCat('hospital')" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center">
+        <span style="font-size:32px">🏥</span>
+        <div style="font-size:14px;font-weight:800;color:var(--green)">Hospital</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.4">Caso institucional.<br>Registro hospitalario.</div>
+        <div id="save-count-hosp" style="font-size:10px;color:var(--muted)"></div>
+      </label>
+    </div>
+
+    <!-- Selected indicator -->
+    <div id="save-selected-msg" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px;min-height:18px"></div>
+
+    <!-- Confirm button -->
+    <button id="save-confirm-btn" onclick="confirmSave()" style="width:100%;padding:16px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--cyan),#0066aa);border:none;border-radius:12px;color:#000;cursor:pointer;letter-spacing:.3px;transition:opacity .2s" disabled>
+      💾 Guardar en esta carpeta
+    </button>
+
+    <!-- Cancel -->
+    <button onclick="closeSaveModal()" style="width:100%;padding:12px;font-size:13px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;margin-top:6px">
+      Cancelar
+    </button>
+  </div>
 </div>
 
 <!-- ══ BANNER MODO SOLO LECTURA ══ -->
@@ -2998,6 +3047,120 @@ registrar = function() {
 
 
 // ═══════════════════════════════════════════════
+// MODAL GUARDAR EN CARPETA
+// ═══════════════════════════════════════════════
+var _saveCatSelected = null;
+
+function openSaveModal() {
+  if(!S.pac.nombre && !S.history.length && !S.farms.length) {
+    showToast('⚠️ No hay datos para guardar');
+    return;
+  }
+  _saveCatSelected = S.pac.categoria || 'privado';
+
+  // Preview patient name
+  var prev = document.getElementById('save-pac-preview');
+  if(prev) {
+    var parts = [];
+    if(S.pac.nombre) parts.push(S.pac.nombre);
+    if(S.pac.dx)     parts.push(S.pac.dx);
+    if(S.pac.cx)     parts.push(S.pac.cx);
+    prev.textContent = parts.join(' · ') || 'Caso sin nombre';
+  }
+
+  // Show case counts in each folder
+  var nPriv = getCasos('privado').length;
+  var nHosp = getCasos('hospital').length;
+  var cp = document.getElementById('save-count-priv');
+  var ch = document.getElementById('save-count-hosp');
+  if(cp) cp.textContent = nPriv + ' caso' + (nPriv !== 1 ? 's' : '') + ' guardado' + (nPriv !== 1 ? 's' : '');
+  if(ch) ch.textContent = nHosp + ' caso' + (nHosp !== 1 ? 's' : '') + ' guardado' + (nHosp !== 1 ? 's' : '');
+
+  // Pre-select current category
+  selectSaveCat(_saveCatSelected);
+
+  var modal = document.getElementById('save-modal');
+  if(modal) { modal.style.display = 'flex'; }
+}
+
+function closeSaveModal() {
+  var modal = document.getElementById('save-modal');
+  if(modal) modal.style.display = 'none';
+  _saveCatSelected = null;
+}
+
+function selectSaveCat(cat) {
+  _saveCatSelected = cat;
+
+  var lblPriv = document.getElementById('save-lbl-priv');
+  var lblHosp = document.getElementById('save-lbl-hosp');
+  var msg     = document.getElementById('save-selected-msg');
+  var btn     = document.getElementById('save-confirm-btn');
+
+  if(lblPriv && lblHosp) {
+    if(cat === 'privado') {
+      lblPriv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.18);border:2px solid var(--cyan);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 0 0 3px rgba(0,229,255,.15)';
+      lblHosp.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center';
+      if(msg) msg.textContent = '📁 Se guardará en tu carpeta Privado';
+      if(msg) msg.style.color = 'var(--cyan)';
+    } else {
+      lblHosp.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.18);border:2px solid var(--green);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 0 0 3px rgba(0,230,118,.15)';
+      lblPriv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center';
+      if(msg) msg.textContent = '📁 Se guardará en la carpeta Hospital';
+      if(msg) msg.style.color = 'var(--green)';
+    }
+  }
+
+  if(btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.textContent = '💾 Guardar en ' + (cat === 'privado' ? '🔒 Privado' : '🏥 Hospital');
+    btn.style.background = cat === 'privado'
+      ? 'linear-gradient(135deg,var(--cyan),#0066aa)'
+      : 'linear-gradient(135deg,var(--green),#007722)';
+    btn.style.color = '#000';
+  }
+}
+
+function confirmSave() {
+  if(!_saveCatSelected) return;
+
+  // Update category in state
+  S.pac.categoria = _saveCatSelected;
+
+  // If the case was in a different category before, remove it from the old one
+  var oldCat = _saveCatSelected === 'privado' ? 'hospital' : 'privado';
+  var oldCasos = getCasos(oldCat);
+  var existsInOld = oldCasos.some(function(c){ return c.id === S._casoId; });
+  if(existsInOld) {
+    // Remove from old category
+    saveCasos(oldCasos.filter(function(c){ return c.id !== S._casoId; }), oldCat);
+  }
+
+  // Remove readOnly so autoSave works
+  var wasReadOnly = S._readOnly;
+  S._readOnly = false;
+  autoSave(false); // silent save
+  S._readOnly = wasReadOnly;
+
+  closeSaveModal();
+
+  // Update historial tabs to show new category
+  try { setHistTab(_saveCatSelected); } catch(e) {}
+
+  // Update topbar category badge
+  try { updateTopbar(); } catch(e) {}
+
+  // Show success with folder name
+  var catName = _saveCatSelected === 'privado' ? '🔒 Privado' : '🏥 Hospital';
+  showToast('✅ Guardado en ' + catName + ' — ' + (S.pac.nombre || 'Sin nombre'));
+  if(navigator.vibrate) navigator.vibrate([30,30,30]);
+}
+
+// Backdrop tap handled by onclick on modal div
+
+
+// ═══════════════════════════════════════════════
 // MODO SOLO LECTURA — casos históricos
 // ═══════════════════════════════════════════════
 function _showReadOnlyBanner(show) {
@@ -3010,7 +3173,9 @@ function _showReadOnlyBanner(show) {
 function convertToEditable() {
   S._readOnly = false;
   _showReadOnlyBanner(false);
-  showToast('✏️ Caso en modo edición — los cambios se guardarán');
+  showToast('✏️ Caso en modo edición');
+  // Immediately ask where to save it
+  setTimeout(function(){ openSaveModal(); }, 300);
 }
 
 // Modal para editar la hora de fin manualmente en casos históricos
