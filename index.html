@@ -232,8 +232,20 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 .aldrete-score{font-size:28px;font-weight:800;color:var(--green)}
 
 /* ── PRINT / PDF ── */
+@page {
+  margin: 12mm 10mm 12mm 10mm;
+  /* Remove browser-added URL header and page number footer */
+  size: auto;
+}
+@page :first { margin-top: 10mm; }
+
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body {
+    /* Suppress the browser's default header (URL) and footer (page number) */
+    margin: 0 !important;
+  }
+  head { display: none !important; }
   body { background: #fff !important; color: #000 !important; font-size: 10px !important; }
   .app { display: block !important; height: auto !important; }
   .topbar, .bottomnav, .pages, .btn, .swipe-hint { display: none !important; }
@@ -275,6 +287,24 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 /* ── FR field in vital slider ── */
 .vslider-row input[type=range] { touch-action: pan-x; }
+
+/* ── READONLY BANNER ANIMATIONS ── */
+@keyframes stripPulse {
+  0%,100% { background-position: 0% 50%; opacity:.8; }
+  50% { background-position: 100% 50%; opacity:1; }
+}
+@keyframes bannerSlideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:.5; transform:scale(.85); }
+}
+#readonly-banner.visible {
+  transform: translateY(0) !important;
+}
+
 </style>
   <link rel="manifest" href="data:application/json,{%22name%22:%22AnesteSys%20PRO%22,%22short_name%22:%22AnesteSys%22,%22display%22:%22standalone%22,%22background_color%22:%22%2304060d%22,%22theme_color%22:%22%2300e5ff%22,%22start_url%22:%22/%22}">
   <meta name="theme-color" content="#04060d">
@@ -1420,28 +1450,84 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 </div>
 
 <!-- ══ BANNER MODO SOLO LECTURA ══ -->
-<div id="readonly-banner" style="display:none;position:fixed;bottom:68px;left:0;right:0;z-index:200;
-     background:linear-gradient(90deg,rgba(255,214,0,.12),rgba(255,109,0,.12));
-     border-top:1px solid rgba(255,214,0,.3);padding:10px 16px;
-     display:flex;align-items:center;justify-content:space-between;gap:8px">
-  <div style="font-size:11px;color:#ffd600;font-weight:700">
-    👁 Caso histórico — Solo lectura
-  </div>
-  <div style="display:flex;gap:8px">
-    <button onclick="editFinHoraModal()" 
-            style="padding:7px 12px;font-size:11px;font-weight:700;
-                   background:rgba(255,214,0,.2);border:1px solid #ffd600;
-                   border-radius:8px;color:#ffd600;cursor:pointer">
-      ✏️ Editar fin
-    </button>
-    <button onclick="convertToEditable()"
-            style="padding:7px 12px;font-size:11px;font-weight:700;
-                   background:rgba(0,230,118,.2);border:1px solid #00e676;
-                   border-radius:8px;color:#00e676;cursor:pointer">
-      ✏️ Editar caso
-    </button>
+<!-- ══ READONLY MODE INDICATOR ══ -->
+<!-- Thin top strip: always visible when in readonly mode -->
+<div id="readonly-strip" style="display:none;position:fixed;top:0;left:0;right:0;z-index:300;
+     height:3px;background:linear-gradient(90deg,#ffd600,#ff6d00,#ffd600);
+     background-size:200% 100%;animation:stripPulse 2s ease-in-out infinite">
+</div>
+
+<!-- Full readonly banner: slides down from topbar -->
+<div id="readonly-banner" style="display:none;position:fixed;top:62px;left:0;right:0;z-index:250;
+     background:rgba(12,18,32,0.97);
+     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+     border-bottom:1px solid rgba(255,214,0,.25);
+     box-shadow:0 8px 32px rgba(0,0,0,.6);
+     transform:translateY(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
+
+  <!-- Amber accent line at top -->
+  <div style="height:2px;background:linear-gradient(90deg,transparent,#ffd600 30%,#ff6d00 70%,transparent)"></div>
+
+  <div style="padding:12px 16px 14px">
+
+    <!-- Row 1: Status label -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#ffd600;
+                  box-shadow:0 0 8px #ffd600;animation:pulse 1.5s ease-in-out infinite;flex-shrink:0"></div>
+      <span style="font-size:11px;font-weight:800;color:#ffd600;text-transform:uppercase;
+                   letter-spacing:1.5px">Modo solo lectura</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,214,0,.5);font-weight:600">
+        Caso histórico
+      </span>
+    </div>
+
+    <!-- Row 2: Patient info -->
+    <div id="ro-pac-info" style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;
+         padding:8px 10px;background:rgba(255,214,0,.06);border-radius:8px;
+         border-left:3px solid rgba(255,214,0,.4);line-height:1.5">
+      —
+    </div>
+
+    <!-- Row 3: Action buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+      <!-- Edit end time -->
+      <button onclick="editFinHoraModal()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:12px 8px;border-radius:10px;border:1px solid rgba(255,214,0,.35);
+               background:rgba(255,214,0,.1);color:#ffd600;font-size:12px;
+               font-weight:700;cursor:pointer;transition:background .15s;
+               -webkit-tap-highlight-color:transparent">
+        <span style="font-size:16px">⏱</span>
+        <span>Editar tiempos</span>
+      </button>
+
+      <!-- Edit full case -->
+      <button onclick="convertToEditable();closeBanner()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:12px 8px;border-radius:10px;border:none;
+               background:linear-gradient(135deg,#00e676,#00c853);
+               color:#000;font-size:12px;font-weight:800;cursor:pointer;
+               transition:opacity .15s;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:16px">✏️</span>
+        <span>Editar caso</span>
+      </button>
+
+    </div>
+
+    <!-- Row 4: Dismiss hint -->
+    <div style="text-align:center;margin-top:10px">
+      <button onclick="closeBanner()"
+        style="background:none;border:none;color:rgba(255,255,255,.25);
+               font-size:11px;cursor:pointer;padding:4px 12px">
+        ✕ Cerrar aviso
+      </button>
+    </div>
+
   </div>
 </div>
+
+
 
 <!-- BOTTOM NAV -->
 <nav class="bottomnav">
@@ -3178,19 +3264,70 @@ function confirmSave() {
 // MODO SOLO LECTURA — casos históricos
 // ═══════════════════════════════════════════════
 function _showReadOnlyBanner(show) {
-  var b = document.getElementById('readonly-banner');
-  if(!b) return;
-  b.style.display = show ? 'flex' : 'none';
+  var banner  = document.getElementById('readonly-banner');
+  var strip   = document.getElementById('readonly-strip');
+
+  if(show) {
+    // Fill patient info
+    var infoEl = document.getElementById('ro-pac-info');
+    if(infoEl && window.S && S.pac) {
+      var parts = [];
+      if(S.pac.nombre) parts.push('<b style="color:#fff">' + S.pac.nombre + '</b>');
+      if(S.pac.edad)   parts.push(S.pac.edad + ' años');
+      if(S.pac.dx)     parts.push(S.pac.dx);
+      if(S.pac.cx)     parts.push('Cx: ' + S.pac.cx);
+      infoEl.innerHTML = parts.length ? parts.join(' &middot; ') : 'Paciente sin nombre';
+    }
+
+    // Show strip
+    if(strip) strip.style.display = 'block';
+
+    // Position banner below actual topbar
+    if(banner) {
+      var tb = document.querySelector('.topbar');
+      var tbH = tb ? tb.getBoundingClientRect().height : 62;
+      banner.style.top = tbH + 'px';
+      banner.style.display = 'block';
+      banner.offsetHeight; // force reflow
+      banner.classList.add('visible');
+    }
+
+    // Add padding to pages so content isn't hidden under banner
+    var pagesEl = document.querySelector('.pages');
+    if(pagesEl) {
+      pagesEl.style.transition = 'padding-top .3s';
+      setTimeout(function(){ pagesEl.style.paddingTop = '160px'; }, 50);
+    }
+
+  } else {
+    // Slide banner back up
+    if(banner) {
+      banner.classList.remove('visible');
+      setTimeout(function(){
+        banner.style.display = 'none';
+      }, 320);
+    }
+    if(strip)  strip.style.display = 'none';
+    // Remove extra padding
+    var pagesEl2 = document.querySelector('.pages');
+    if(pagesEl2) {
+      pagesEl2.style.paddingTop = '';
+    }
+  }
+}
+
+function closeBanner() {
+  _showReadOnlyBanner(false);
 }
 
 // Convierte el caso histórico en editable (usuario puede modificar y guardar)
 function convertToEditable() {
   S._readOnly = false;
   _showReadOnlyBanner(false);
-  showToast('✏️ Caso en modo edición');
-  // Immediately ask where to save it
-  setTimeout(function(){ openSaveModal(); }, 300);
+  showToast('✏️ Editando — recuerda guardar cuando termines');
 }
+
+
 
 // Modal para editar la hora de fin manualmente en casos históricos
 function editFinHoraModal() {
