@@ -4029,9 +4029,9 @@ function genRes() {
     <div class="res-row"><span>Peso / Talla</span><span>${p.peso ? p.peso + ' kg' : '—'}${p.talla ? ' · ' + p.talla + ' cm' : ''}</span></div>
     <div class="res-row"><span>ASA</span><span style="color:var(--yellow);font-weight:800">${p.asa||'—'}</span></div>
     <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
-          + (S.pac.medCed ? '<div class="pr-row-sub">Céd. Prof: ' + S.pac.medCed + (S.pac.medCedEsp ? ' / Esp: ' + S.pac.medCedEsp : '') + '</div>' : '')
-    ${p.ciru ? '<div class="res-row"><span>Cirujano</span><span>' + p.ciru + '</span></div>' : ''}
-          + (S.pac.ciruCed ? '<div class="pr-row-sub">Céd. Prof: ' + S.pac.ciruCed + (S.pac.ciruCedEsp ? ' / Esp: ' + S.pac.ciruCedEsp : '') + '</div>' : '')
+    ${S.pac.medCed ? `<div class="pr-row-sub">Céd. Prof: ${S.pac.medCed}${S.pac.medCedEsp ? ' / Esp: '+S.pac.medCedEsp : ''}</div>` : ''}
+    ${p.ciru ? `<div class="res-row"><span>Cirujano</span><span>${p.ciru}</span></div>` : ''}
+    ${S.pac.ciruCed ? `<div class="pr-row-sub">Céd. Prof: ${S.pac.ciruCed}${S.pac.ciruCedEsp ? ' / Esp: '+S.pac.ciruCedEsp : ''}</div>` : ''}
     ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
     ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
     ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID previo: '+p.antID:'') + '</span></div>' : ''}
@@ -4137,8 +4137,12 @@ function genRes() {
       '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
         '<div style="background:#005f8a;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👨‍⚕️ EQUIPO MÉDICO</div>' +
         '<div style="padding:6px 8px">' +
-          '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + (p.med || '—') + '</b></div>' +
-          '<div style="margin-bottom:8px"><span style="color:#888">Cirujano:</span><br>' + (p.ciru || '—') + '</div>' +
+          '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + (p.med || '—') + '</b>'
+          + (S.pac.medCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + S.pac.medCed + (S.pac.medCedEsp ? ' / Esp: ' + S.pac.medCedEsp : '') + '</span>' : '')
+          + '</div>' +
+          '<div style="margin-bottom:8px"><span style="color:#888">Cirujano:</span><br>' + (p.ciru || '—')
+          + (S.pac.ciruCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + S.pac.ciruCed + (S.pac.ciruCedEsp ? ' / Esp: ' + S.pac.ciruCedEsp : '') + '</span>' : '')
+          + '</div>' +
           '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
             '<div style="border:1px solid #0077aa;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Anest.</div><div style="font-weight:800;font-size:11px;color:#0077aa">' + tAN + '</div></div>' +
             '<div style="border:1px solid #e67300;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Cx</div><div style="font-weight:800;font-size:11px;color:#e67300">' + tCX + '</div></div>' +
@@ -5633,6 +5637,7 @@ function resetForNewCase(){
   try{document.getElementById('m-antid').value='No';}catch(e){}
   try{document.getElementById('m-anest-ced').value='';}catch(e){}
   try{document.getElementById('m-anest-ced-esp').value='';}catch(e){}
+  try{document.getElementById('m-ciru').value='';}catch(e){}
   try{document.getElementById('m-ciru-ced').value='';}catch(e){}
   try{document.getElementById('m-ciru-ced-esp').value='';}catch(e){}
   try{document.querySelectorAll('input[name="cat-caso"]').forEach(function(r){r.checked=(r.value==='privado');});}catch(e){}
