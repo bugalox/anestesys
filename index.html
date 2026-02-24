@@ -1119,7 +1119,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 <div class="page" id="page-vent">
   <div class="section">
     <div class="section-header">
-      <h2><i class="ph ph-lungs sec-ico"></i>Parámetros</h2>
+      <h2><i class="ph ph-wind sec-ico"></i>Parámetros</h2>
       <button class="btn sm g" onclick="regVent()">📌 Registrar</button>
     </div>
     <div class="section-body">
@@ -1333,8 +1333,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 <div class="page" id="page-res">
   <div id="res-inst-header" style="font-size:10px;color:var(--muted);text-align:center;padding:4px 0;display:none"></div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <button class="btn g" onclick="genRes()">🔄 Generar</button>
+    <button class="btn g" onclick="genRes()" title="Actualiza el resumen con los datos actuales del caso"><i class="ph ph-arrow-clockwise btn-ico"></i>Actualizar Resumen</button>
     <button class="btn" onclick="genRes();document.getElementById('print-area').style.display='block';window.print();setTimeout(()=>document.getElementById('print-area').style.display='none',2000)">🖨️ Imprimir / PDF</button>
+    <button class="btn" onclick="shareResumen()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;display:flex;align-items:center;gap:6px"><i class="ph ph-whatsapp-logo btn-ico"></i>Compartir</button>
     <button class="btn o" onclick="copiarRes()">📋 Copiar</button>
   </div>
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
@@ -1787,7 +1788,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <i class="ph-bold ph-drop nav-ico"></i><span class="label">Líquidos</span>
   </button>
   <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
-    <i class="ph-bold ph-lungs nav-ico"></i><span class="label">Ventil.</span>
+    <i class="ph-bold ph-wind nav-ico"></i><span class="label">Ventil.</span>
   </button>
   <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
     <i class="ph-bold ph-syringe nav-ico"></i><span class="label">Fármacos</span>
@@ -1919,29 +1920,159 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div id="ls-perfil-guardado"
          style="display:none;background:#080d1a;border:1px solid #1e2d44;
                 border-radius:20px;padding:20px;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:800;color:#00e5ff;
-                    text-transform:uppercase;letter-spacing:2px"><i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Mi Perfil</div>
-        <button onclick="lsCambiarPerfil()"
-                style="background:none;border:1px solid #1e2d44;border-radius:8px;
-                       color:#3d5a78;font-size:12px;padding:5px 12px;cursor:pointer">
-          ✏️ Cambiar
+
+      <!-- ── Header row ── -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#00e5ff;
+                    text-transform:uppercase;letter-spacing:2px">
+          <i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Mi Perfil
+        </div>
+        <button onclick="lsAbrirEditPerfil()"
+                style="display:flex;align-items:center;gap:5px;
+                       background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);
+                       border-radius:8px;color:#00e5ff;font-size:12px;
+                       padding:6px 14px;cursor:pointer;font-weight:700">
+          <i class="ph ph-pencil-simple" style="font-size:13px"></i>Editar
         </button>
       </div>
-      <div id="ls-nombre-display"
-           style="font-size:20px;font-weight:800;color:#dde8ff;margin-bottom:4px"></div>
-      <div id="ls-inst-display"
-           style="font-size:13px;color:#3d5a78;margin-bottom:4px"></div>
-      <div id="ls-cedulas-display"
-           style="font-size:11px;color:#00e5ff;font-weight:700;margin-bottom:4px"></div>
-      <div id="ls-email-display"
-           style="font-size:12px;color:#3d5a78;margin-bottom:16px"></div>
+
+      <!-- ── Profile data display ── -->
+      <div style="background:#04060d;border:1px solid #1e2d44;border-radius:14px;
+                  padding:14px 16px;margin-bottom:14px">
+        <!-- Avatar + name -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:46px;height:46px;border-radius:50%;
+                      background:linear-gradient(135deg,#00e5ff22,#00e5ff11);
+                      border:2px solid #00e5ff44;display:flex;align-items:center;
+                      justify-content:center;flex-shrink:0">
+            <i class="ph-bold ph-user-circle" style="font-size:24px;color:#00e5ff66"></i>
+          </div>
+          <div>
+            <div id="ls-nombre-display"
+                 style="font-size:17px;font-weight:800;color:#dde8ff;line-height:1.2"></div>
+            <div id="ls-inst-display"
+                 style="font-size:12px;color:#3d5a78;margin-top:2px"></div>
+          </div>
+        </div>
+        <!-- Cedulas row -->
+        <div id="ls-cedulas-display"
+             style="display:none;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.15);
+                    border-radius:8px;padding:7px 10px;margin-bottom:8px;
+                    font-size:11px;color:#00e5ff;font-weight:700;letter-spacing:.3px"></div>
+        <!-- Email row -->
+        <div id="ls-email-display"
+             style="font-size:12px;color:#3d5a78"></div>
+      </div>
+
+      <!-- ── Nuevo Paciente CTA ── -->
       <button onclick="loginAndNew()"
               style="width:100%;padding:15px;font-size:15px;font-weight:800;
                      background:linear-gradient(135deg,#00e676,#00c853);
-                     color:#04060d;border:none;border-radius:14px;cursor:pointer">
+                     color:#04060d;border:none;border-radius:14px;cursor:pointer;
+                     letter-spacing:.3px">
         ➕ Nuevo Paciente
       </button>
+    </div>
+
+    <!-- ══ EDIT PROFILE MODAL (inline overlay) ══ -->
+    <div id="ls-edit-modal"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+                z-index:2000;overflow-y:auto;padding:20px;box-sizing:border-box">
+      <div style="max-width:440px;margin:0 auto;background:#080d1a;
+                  border:1px solid #1e2d44;border-radius:20px;padding:22px">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div style="font-size:13px;font-weight:800;color:#00e5ff;
+                      text-transform:uppercase;letter-spacing:2px">
+            <i class="ph-bold ph-user-circle" style="margin-right:6px"></i>Editar Perfil
+          </div>
+          <button onclick="lsCerrarEditPerfil()"
+                  style="background:none;border:1px solid #1e2d44;border-radius:8px;
+                         color:#3d5a78;font-size:18px;width:34px;height:34px;
+                         cursor:pointer;line-height:1">✕</button>
+        </div>
+
+        <!-- Nombre -->
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Nombre completo *
+          </label>
+          <input type="text" id="ep-nombre"
+                 placeholder="Dr. / Dra. Apellido Nombre"
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Institución -->
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Institución / Hospital
+          </label>
+          <input type="text" id="ep-inst"
+                 placeholder="Hospital General / Clínica..."
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Cédulas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                          letter-spacing:1px;display:block;margin-bottom:6px">
+              Cédula Profesional
+            </label>
+            <input type="text" id="ep-cedula"
+                   placeholder="00000000" inputmode="numeric"
+                   style="width:100%;padding:12px 14px;font-size:14px;background:#04060d;
+                          border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                          box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                          letter-spacing:1px;display:block;margin-bottom:6px">
+              Cédula Especialidad
+            </label>
+            <input type="text" id="ep-cedula-esp"
+                   placeholder="00000000" inputmode="numeric"
+                   style="width:100%;padding:12px 14px;font-size:14px;background:#04060d;
+                          border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                          box-sizing:border-box">
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div style="margin-bottom:20px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Correo (para enviar PDFs)
+          </label>
+          <input type="email" id="ep-email"
+                 placeholder="correo@hospital.com"
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Buttons -->
+        <button onclick="lsGuardarEditPerfil()"
+                style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                       background:linear-gradient(135deg,#00e5ff,#0077aa);
+                       color:#04060d;border:none;border-radius:14px;
+                       cursor:pointer;margin-bottom:10px">
+          <i class="ph ph-floppy-disk" style="margin-right:6px"></i>Guardar cambios
+        </button>
+        <button onclick="lsCerrarEditPerfil()"
+                style="width:100%;padding:12px;font-size:14px;
+                       background:none;border:1px solid #1e2d44;border-radius:14px;
+                       color:#3d5a78;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
     </div>
 
     <!-- ══ FORM PERFIL (visible post-login si no hay perfil) ══ -->
@@ -4894,6 +5025,7 @@ function loadCaso(id) {
   S._readOnly = true;
   _showReadOnlyBanner(true);
   hideLogin();
+  try { labLoad(); } catch(e) {}
   showToast('📂 Cargado: ' + (caso.pac && caso.pac.nombre ? caso.pac.nombre : 'Sin nombre'));
 }
 
@@ -5085,13 +5217,21 @@ function refreshHistorial() {
     card.appendChild(badgeDiv);
 
     var btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px';
+    btnRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
 
     var btnAbrir = document.createElement('button');
     btnAbrir.style.cssText = 'padding:11px;font-size:13px;font-weight:700;background:rgba(0,229,255,.1);border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;cursor:pointer';
     btnAbrir.textContent = '📂 Abrir y editar';
     (function(id) {
       btnAbrir.addEventListener('click', function(e) { e.stopPropagation(); loadCaso(id); });
+    })(c.id);
+
+    // Share button
+    var btnShare = document.createElement('button');
+    btnShare.style.cssText = 'padding:11px;font-size:13px;font-weight:700;background:rgba(37,211,102,.12);border:1.5px solid #25D366;border-radius:10px;color:#25D366;cursor:pointer';
+    btnShare.innerHTML = '<i class="ph ph-share-network" style="font-size:13px;margin-right:4px"></i>Compartir';
+    (function(id) {
+      btnShare.addEventListener('click', function(e) { e.stopPropagation(); compartirCaso(id); });
     })(c.id);
 
     var btnElim = document.createElement('button');
@@ -5101,6 +5241,7 @@ function refreshHistorial() {
       btnElim.addEventListener('click', function(e) { e.stopPropagation(); deleteCaso(id); });
     })(c.id);
 
+    btnRow.appendChild(btnShare);
     btnRow.appendChild(btnAbrir);
     btnRow.appendChild(btnElim);
     card.appendChild(btnRow);
@@ -6424,6 +6565,208 @@ document.addEventListener('click', function(e) {
     }
   });
 }, true);
+
+
+// ── PROFILE EDIT MODAL ──────────────────────────────────────────
+function lsAbrirEditPerfil() {
+  var u = getUser() || {};
+  // Pre-fill fields with current values
+  var fields = {
+    'ep-nombre':     u.nombre    || '',
+    'ep-inst':       u.inst      || '',
+    'ep-cedula':     u.cedula    || '',
+    'ep-cedula-esp': u.cedulaEsp || '',
+    'ep-email':      u.email     || ''
+  };
+  Object.keys(fields).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = fields[id];
+  });
+  var modal = document.getElementById('ls-edit-modal');
+  if (modal) {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    // Focus nombre field
+    setTimeout(function() {
+      var n = document.getElementById('ep-nombre');
+      if (n) n.focus();
+    }, 100);
+  }
+}
+
+function lsCerrarEditPerfil() {
+  var modal = document.getElementById('ls-edit-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function lsGuardarEditPerfil() {
+  var nombre = (document.getElementById('ep-nombre').value || '').trim();
+  if (!nombre) {
+    showToast('⚠️ El nombre es obligatorio');
+    document.getElementById('ep-nombre').focus();
+    return;
+  }
+  var u = {
+    nombre:    nombre,
+    inst:      (document.getElementById('ep-inst').value      || '').trim(),
+    cedula:    (document.getElementById('ep-cedula').value     || '').trim(),
+    cedulaEsp: (document.getElementById('ep-cedula-esp').value || '').trim(),
+    email:     (document.getElementById('ep-email').value      || '').trim()
+  };
+  // Preserve Firebase auth data if present
+  var old = getUser() || {};
+  if (old.uid)   u.uid   = old.uid;
+  if (old.token) u.token = old.token;
+  localStorage.setItem(USER_KEY, JSON.stringify(u));
+  // Also sync the old login-* inputs so lsGuardarPerfil stays in sync
+  try { document.getElementById('login-user').value        = u.nombre; } catch(e){}
+  try { document.getElementById('login-inst').value        = u.inst; } catch(e){}
+  try { document.getElementById('login-email').value       = u.email; } catch(e){}
+  try { document.getElementById('login-cedula').value      = u.cedula; } catch(e){}
+  try { document.getElementById('login-cedula-esp').value  = u.cedulaEsp; } catch(e){}
+  lsMostrarPerfil(u);
+  lsCerrarEditPerfil();
+  showToast('✅ Perfil actualizado');
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+// Close edit modal on backdrop click
+document.addEventListener('click', function(e) {
+  var modal = document.getElementById('ls-edit-modal');
+  if (modal && e.target === modal) lsCerrarEditPerfil();
+});
+
+
+// ── SHARE / WHATSAPP ────────────────────────────────────────────
+function shareResumen() {
+  // Build share text — compact clinical summary for WhatsApp
+  var p   = S.pac || {};
+  var pac = p.nombre    || 'Sin nombre';
+  var dx  = p.dx        || '—';
+  var cx  = p.cx        || '—';
+  var an  = p.med       || '—';
+  var fecha = new Date().toLocaleDateString('es-MX', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  // Vital signs egress
+  var lastV = (S.history && S.history.length) ? S.history[S.history.length-1] : null;
+  var vitStr = lastV
+    ? ('TA: ' + (lastV.tas||'—') + '/' + (lastV.tad||'—') + ' mmHg  '
+       + 'FC: ' + (lastV.fc||'—') + ' lpm  '
+       + 'SpO₂: ' + (lastV.spo2||'—') + '%')
+    : 'Sin registros';
+
+  // Aldrete
+  var aldStr = '';
+  try {
+    var ald = calcAld ? calcAld() : null;
+    if (ald !== null) aldStr = '\nAldrete: ' + ald + '/10';
+  } catch(e) {}
+
+  // Balance
+  var balStr = '';
+  try {
+    var liq = S.liq || {};
+    var tot_ing = 0, tot_eg = 0;
+    if (liq.horas) {
+      liq.horas.forEach(function(h) {
+        (h.ingresos||[]).forEach(function(i){ tot_ing += (parseFloat(i.ml)||0); });
+        tot_eg += (parseFloat(h.sang)||0) + (parseFloat(h.diuresis)||0)
+               + (parseFloat(h.otras)||0);
+      });
+    }
+    balStr = '\nBalance: +' + tot_ing + ' ml ingresados / ' + tot_eg + ' ml egresos';
+  } catch(e) {}
+
+  // Phase times
+  var timeStr = '';
+  try {
+    if (S.phases) {
+      var ph = S.phases;
+      if (ph.an) timeStr += '\nInicio Anest: ' + ph.an.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+      if (ph.cx) timeStr += '  |  Inicio Cx: ' + ph.cx.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    }
+  } catch(e) {}
+
+  var msg =
+    '🩺 *REGISTRO ANESTÉSICO — AnesteSys*\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '👤 *Paciente:* ' + pac + '\n'
+  + '📋 *Dx:* ' + dx + '\n'
+  + '🔪 *Cx:* ' + cx + '\n'
+  + '👨‍⚕️ *Anest:* ' + an + '\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '📊 *Vitales egreso:* ' + vitStr
+  + aldStr + balStr + timeStr + '\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '📅 ' + fecha + '\n'
+  + '🔗 AnesteSys Pro';
+
+  // Try native share sheet (opens WhatsApp, Gmail, etc.)
+  if (navigator.share) {
+    navigator.share({
+      title: 'Registro Anestésico — ' + pac,
+      text:  msg
+    }).catch(function() {});
+  } else {
+    // Fallback: open WhatsApp directly with pre-filled text
+    var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(wa, '_blank');
+  }
+}
+
+function compartirCaso(casoId) {
+  var casos = getCasos();
+  var caso  = casos.find(function(c){ return c.id === casoId; });
+  if (!caso) { showToast('⚠️ Caso no encontrado'); return; }
+
+  var p     = caso.pac || {};
+  var pac   = p.nombre || 'Sin nombre';
+  var dx    = p.dx     || '—';
+  var cx    = p.cx     || '—';
+  var an    = p.med    || '—';
+  var fecha = caso.fecha
+    ? new Date(caso.fecha).toLocaleDateString('es-MX',
+        {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+    : '—';
+
+  // Vitals summary from saved case
+  var hist  = caso.history || [];
+  var lastV = hist.length ? hist[hist.length-1] : null;
+  var vitStr = lastV
+    ? 'TA: '+(lastV.tas||'—')+'/'+(lastV.tad||'—')+' mmHg  FC: '+(lastV.fc||'—')+' lpm  SpO₂: '+(lastV.spo2||'—')+'%'
+    : 'Sin vitales';
+
+  // Farms count
+  var nFarms = (caso.farms || []).length;
+
+  var msg =
+    '🩺 *REGISTRO ANESTÉSICO — AnesteSys*\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '👤 *Paciente:* ' + pac + '\n'
+  + '📋 *Dx:* ' + dx + '\n'
+  + '🔪 *Cx:* ' + cx + '\n'
+  + '👨‍⚕️ *Anest:* ' + an + '\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '📊 *Vitales egreso:* ' + vitStr + '\n'
+  + '💊 *Fármacos:* ' + nFarms + ' registros\n'
+  + '━━━━━━━━━━━━━━━━━━━━━━\n'
+  + '📅 ' + fecha + '\n'
+  + '🔗 AnesteSys Pro';
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'Registro — ' + pac,
+      text:  msg
+    }).catch(function() {});
+  } else {
+    var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(wa, '_blank');
+  }
+}
 
 </script>
 
