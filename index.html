@@ -2073,16 +2073,21 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
           Cancelar
         </button>
       </div>
+      </div><!-- /perfil-form-body -->
     </div>
 
     <!-- ══ FORM PERFIL (visible post-login si no hay perfil) ══ -->
     <div id="ls-perfil-form"
          style="display:none;background:#080d1a;border:1px solid #1e2d44;
                 border-radius:20px;padding:20px;margin-bottom:16px">
-      <div style="font-size:12px;font-weight:800;color:#00e5ff;
-                  text-transform:uppercase;letter-spacing:2px;margin-bottom:16px">
-        <i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Crear Mi Perfil
+      <div onclick="togglePerfilForm()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0;margin-bottom:0;user-select:none">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">
+          <i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Mi Perfil
+        </div>
+        <i id="perfil-form-chevron" class="ph ph-caret-down" style="font-size:16px;color:#3d5a78;transition:transform .25s"></i>
       </div>
+      <!-- collapsible body -->
+      <div id="perfil-form-body" style="overflow:hidden;max-height:0;transition:max-height .3s ease;margin-top:0">
       <div style="margin-bottom:12px">
         <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
                       letter-spacing:1px;display:block;margin-bottom:6px">
@@ -5410,6 +5415,8 @@ function lsMostrarPerfil(u) {
   if (!u || !u.nombre) {
     if (formEl)  formEl.style.display  = 'block';
     if (savedEl) savedEl.style.display = 'none';
+    // Auto-expand form when no profile yet
+    setTimeout(function() { _setPerfilFormOpen(true); }, 50);
   } else {
     if (nomEl)   nomEl.textContent  = u.nombre;
     if (instEl) instEl.textContent = u.inst || '';
@@ -5453,6 +5460,8 @@ function lsCambiarPerfil() {
   var savedEl = document.getElementById('ls-perfil-guardado');
   if (formEl)  formEl.style.display  = 'block';
   if (savedEl) savedEl.style.display = 'none';
+  // Expand the collapsible body
+  setTimeout(function() { _setPerfilFormOpen(true); }, 50);
 }
 
 // ─── INIT APP ───
@@ -6765,6 +6774,31 @@ function compartirCaso(casoId) {
   } else {
     var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
     window.open(wa, '_blank');
+  }
+}
+
+
+// ── COLLAPSIBLE PERFIL FORM ─────────────────────────────────────
+var _perfilFormOpen = false;
+
+function togglePerfilForm() {
+  _perfilFormOpen = !_perfilFormOpen;
+  _setPerfilFormOpen(_perfilFormOpen);
+}
+
+function _setPerfilFormOpen(open) {
+  _perfilFormOpen = open;
+  var body    = document.getElementById('perfil-form-body');
+  var chevron = document.getElementById('perfil-form-chevron');
+  if (!body) return;
+  if (open) {
+    body.style.maxHeight    = body.scrollHeight + 'px';
+    body.style.marginTop    = '16px';
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+  } else {
+    body.style.maxHeight    = '0';
+    body.style.marginTop    = '0';
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
   }
 }
 
