@@ -380,6 +380,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AnesteSys">
+<!-- jsPDF + html2canvas for PDF blob share -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <!-- ══ EDIT FARM MODAL ══ -->
@@ -1335,7 +1338,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <button class="btn g" onclick="genRes()" title="Actualiza el resumen con los datos actuales del caso"><i class="ph ph-arrow-clockwise btn-ico"></i>Actualizar Resumen</button>
     <button class="btn" onclick="genRes();document.getElementById('print-area').style.display='block';window.print();setTimeout(()=>document.getElementById('print-area').style.display='none',2000)">🖨️ Imprimir / PDF</button>
-    <button class="btn" onclick="shareResumen()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;display:flex;align-items:center;gap:6px"><i class="ph ph-whatsapp-logo btn-ico"></i>Compartir</button>
+    <button class="btn" onclick="shareResumen()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;display:flex;align-items:center;gap:6px"><i class="ph ph-file-pdf btn-ico"></i>Compartir PDF</button>
     <button class="btn o" onclick="copiarRes()">📋 Copiar</button>
   </div>
   <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
@@ -4171,6 +4174,7 @@ function genRes() {
     ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
     ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
     ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID previo: '+p.antID:'') + '</span></div>' : ''}
+    ${p.aperturaBucal ? `<div class="res-row"><span>Apertura bucal</span><span>${p.aperturaBucal}${p.dtm ? ' · DTM: '+p.dtm : ''}</span></div>` : ''}
     ${p.ayuno ? '<div class="res-row"><span>Ayuno</span><span>' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</span></div>' : ''}
     ${p.antecedentes ? '<div class="res-row"><span>Antecedentes</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.antecedentes + '</span></div>' : ''}
     ${p.medCronicos ? '<div class="res-row"><span>Medicamentos crónicos</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.medCronicos + '</span></div>' : ''}
@@ -6648,82 +6652,116 @@ document.addEventListener('click', function(e) {
 
 
 // ── SHARE / WHATSAPP ────────────────────────────────────────────
-function shareResumen() {
-  // Build share text — compact clinical summary for WhatsApp
-  var p   = S.pac || {};
-  var pac = p.nombre    || 'Sin nombre';
-  var dx  = p.dx        || '—';
-  var cx  = p.cx        || '—';
-  var an  = p.med       || '—';
-  var fecha = new Date().toLocaleDateString('es-MX', {
-    day:'2-digit', month:'2-digit', year:'numeric',
-    hour:'2-digit', minute:'2-digit'
-  });
+// ── SHARE / WHATSAPP — PDF VERSION ────────────────────────────
+async function shareResumen() {
+  // 1. Ensure print-area is populated
+  try { genRes(); } catch(e) {}
 
-  // Vital signs egress
-  var lastV = (S.history && S.history.length) ? S.history[S.history.length-1] : null;
-  var vitStr = lastV
-    ? ('TA: ' + (lastV.tas||'—') + '/' + (lastV.tad||'—') + ' mmHg  '
-       + 'FC: ' + (lastV.fc||'—') + ' lpm  '
-       + 'SpO₂: ' + (lastV.spo2||'—') + '%')
-    : 'Sin registros';
+  var printEl = document.getElementById('print-area');
+  if (!printEl) { showToast('⚠️ Sin datos para compartir'); return; }
 
-  // Aldrete
-  var aldStr = '';
+  // Show spinner toast
+  showToast('⏳ Generando PDF...');
+
+  // 2. Make print-area visible for capture (off-screen)
+  printEl.style.position  = 'fixed';
+  printEl.style.left      = '-9999px';
+  printEl.style.top       = '0';
+  printEl.style.display   = 'block';
+  printEl.style.width     = '794px';  // A4 width px at 96dpi
+  printEl.style.background= '#fff';
+  printEl.style.color     = '#000';
+  printEl.style.zIndex    = '-1';
+
   try {
-    var ald = calcAld ? calcAld() : null;
-    if (ald !== null) aldStr = '\nAldrete: ' + ald + '/10';
-  } catch(e) {}
+    // 3. Capture with html2canvas
+    var canvas = await html2canvas(printEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794
+    });
 
-  // Balance
-  var balStr = '';
-  try {
-    var liq = S.liq || {};
-    var tot_ing = 0, tot_eg = 0;
-    if (liq.horas) {
-      liq.horas.forEach(function(h) {
-        (h.ingresos||[]).forEach(function(i){ tot_ing += (parseFloat(i.ml)||0); });
-        tot_eg += (parseFloat(h.sang)||0) + (parseFloat(h.diuresis)||0)
-               + (parseFloat(h.otras)||0);
+    // 4. Build PDF with jsPDF
+    var { jsPDF } = window.jspdf;
+    var pdf = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
+
+    var pageW   = pdf.internal.pageSize.getWidth();
+    var pageH   = pdf.internal.pageSize.getHeight();
+    var imgW    = canvas.width;
+    var imgH    = canvas.height;
+    var ratio   = pageW / imgW;
+    var scaledH = imgH * ratio;
+
+    // Add image page by page
+    var imgData    = canvas.toDataURL('image/jpeg', 0.92);
+    var yPos       = 0;
+    var firstPage  = true;
+
+    while (yPos < scaledH) {
+      if (!firstPage) pdf.addPage();
+      // Crop the canvas slice for this page
+      var srcY    = Math.round(yPos / ratio);
+      var srcH    = Math.min(Math.round(pageH / ratio), imgH - srcY);
+      var slice   = document.createElement('canvas');
+      slice.width = imgW;
+      slice.height= srcH;
+      var ctx = slice.getContext('2d');
+      ctx.drawImage(canvas, 0, srcY, imgW, srcH, 0, 0, imgW, srcH);
+      var sliceData = slice.toDataURL('image/jpeg', 0.92);
+      pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, srcH * ratio);
+      yPos += pageH;
+      firstPage = false;
+    }
+
+    // 5. Patient name for filename
+    var pacNombre = (S.pac && S.pac.nombre) ? S.pac.nombre.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g,'').trim() : 'Paciente';
+    var fecha     = new Date().toLocaleDateString('es-MX').replace(/\//g,'-');
+    var filename  = 'AnesteSys_' + pacNombre + '_' + fecha + '.pdf';
+
+    // 6. Try native share with PDF file
+    var blob = pdf.output('blob');
+    var file = new File([blob], filename, { type: 'application/pdf' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'Registro Anestésico — ' + pacNombre,
+        files: [file]
       });
+      showToast('✅ PDF compartido');
+    } else if (navigator.share) {
+      // Share without file (older browsers) — share download URL instead
+      var url = URL.createObjectURL(blob);
+      // Trigger download as fallback
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      showToast('✅ PDF descargado');
+    } else {
+      // Desktop fallback: direct download
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      showToast('✅ PDF descargado');
     }
-    balStr = '\nBalance: +' + tot_ing + ' ml ingresados / ' + tot_eg + ' ml egresos';
-  } catch(e) {}
 
-  // Phase times
-  var timeStr = '';
-  try {
-    if (S.phases) {
-      var ph = S.phases;
-      if (ph.an) timeStr += '\nInicio Anest: ' + ph.an.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-      if (ph.cx) timeStr += '  |  Inicio Cx: ' + ph.cx.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    }
-  } catch(e) {}
-
-  var msg =
-    '🩺 *REGISTRO ANESTÉSICO — AnesteSys*\n'
-  + '━━━━━━━━━━━━━━━━━━━━━━\n'
-  + '👤 *Paciente:* ' + pac + '\n'
-  + '📋 *Dx:* ' + dx + '\n'
-  + '🔪 *Cx:* ' + cx + '\n'
-  + '👨‍⚕️ *Anest:* ' + an + '\n'
-  + '━━━━━━━━━━━━━━━━━━━━━━\n'
-  + '📊 *Vitales egreso:* ' + vitStr
-  + aldStr + balStr + timeStr + '\n'
-  + '━━━━━━━━━━━━━━━━━━━━━━\n'
-  + '📅 ' + fecha + '\n'
-  + '🔗 AnesteSys Pro';
-
-  // Try native share sheet (opens WhatsApp, Gmail, etc.)
-  if (navigator.share) {
-    navigator.share({
-      title: 'Registro Anestésico — ' + pac,
-      text:  msg
-    }).catch(function() {});
-  } else {
-    // Fallback: open WhatsApp directly with pre-filled text
-    var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
-    window.open(wa, '_blank');
+  } catch(err) {
+    console.error('PDF share error:', err);
+    showToast('⚠️ Error al generar PDF. Usa Imprimir → Guardar como PDF');
+  } finally {
+    // 7. Always hide print-area and restore
+    printEl.style.display   = 'none';
+    printEl.style.position  = '';
+    printEl.style.left      = '';
+    printEl.style.top       = '';
+    printEl.style.width     = '';
+    printEl.style.zIndex    = '';
   }
 }
 
