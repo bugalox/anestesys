@@ -4159,6 +4159,16 @@ function genRes() {
     if(_finRef) _totalMs = _finRef - S.phases.an.getTime();
   }
   const durTotal = _totalMs != null ? fmt2(_totalMs) : '--:--';
+  // ── Torniquete / Isquemia ──
+  const tIsqIni  = S.phases.isqIni
+    ? (function(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); })(S.phases.isqIni)
+    : null;
+  const tIsqFin  = S.phases.isqFin
+    ? (function(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); })(S.phases.isqFin)
+    : null;
+  const durIsq   = (S.phases.isqIni && S.phases.isqFin)
+    ? fmt2(S.phases.isqFin - S.phases.isqIni)
+    : (S.phases.isqIni ? 'En curso' : null);
 
   // ── Screen version ──
   document.getElementById('res-pac').innerHTML = `
@@ -4188,7 +4198,10 @@ function genRes() {
     ${p.premed ? '<div class="res-row"><span>Premedicación</span><span>' + p.premed + '</span></div>' : ''}
     <div class="res-row"><span>Inicio Anestesia</span><span>${tAN}</span></div>
     <div class="res-row"><span>Inicio Cirugía</span><span>${tCX}</span></div>
-    <div class="res-row"><span>Fin</span><span>${tFN}</span></div>`;
+    <div class="res-row"><span>Fin</span><span>${tFN}</span></div>
+    ${tIsqIni ? `<div class="res-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px"><span style="color:var(--orange)">🩺 Torniquete inicio</span><span>${tIsqIni}</span></div>` : ''}
+    ${tIsqFin ? `<div class="res-row"><span style="color:var(--orange)">Torniquete liberado</span><span>${tIsqFin}</span></div>` : ''}
+    ${durIsq ? `<div class="res-row"><span style="color:var(--orange)">Tiempo isquemia</span><span style="color:var(--orange);font-weight:800">${durIsq}</span></div>` : ''}` ;
 
   document.getElementById('res-vitales').innerHTML = `
     <div class="res-title">SIGNOS VITALES EGRESO (${S.history.length} registros)</div>
@@ -4300,6 +4313,16 @@ function genRes() {
             '<div style="background:#fff5ec;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Cx</div><div style="font-weight:800;font-size:11px;color:#e67300">' + durCX + '</div></div>' +
             '<div style="background:#f8ecec;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Tiempo Total</div><div style="font-weight:800;font-size:11px;color:#cc0033">' + durTotal + '</div></div>' +
           '</div>' +
+          (tIsqIni ? (
+            '<div style="margin-top:6px;border-top:1px solid #f0c040;padding-top:5px">' +
+            '<div style="font-size:7px;font-weight:700;color:#e67300;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🩺 Torniquete / Isquemia</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
+              '<div style="border:1px solid #e67300;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio</div><div style="font-weight:800;font-size:11px;color:#e67300">' + tIsqIni + '</div></div>' +
+              (tIsqFin ? '<div style="border:1px solid #e67300;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Liberado</div><div style="font-weight:800;font-size:11px;color:#e67300">' + tIsqFin + '</div></div>' : '<div style="border:1px solid #ccc;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Liberado</div><div style="font-size:10px;color:#aaa">En curso</div></div>') +
+              (durIsq ? '<div style="background:#fff5ec;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Duración</div><div style="font-weight:800;font-size:11px;color:#e67300">' + durIsq + '</div></div>' : '') +
+            '</div>' +
+          '</div>'
+          ) : '') +
           '<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">' +
             '<div style="background:#f0f8ff;border:1px solid #cde;border-radius:4px;padding:4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Anest.</div><div style="font-weight:800;color:#0077aa">' + durAN + '</div></div>' +
             '<div style="background:#fff8f0;border:1px solid #edc;border-radius:4px;padding:4px;text-align:center"><div style="font-size:7px;color:#888">Dur. Cx</div><div style="font-weight:800;color:#e67300">' + durCX + '</div></div>' +
