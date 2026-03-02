@@ -244,27 +244,72 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  html, body {
-    /* Suppress the browser's default header (URL) and footer (page number) */
-    margin: 0 !important;
-  }
+  html, body { margin: 0 !important; }
   head { display: none !important; }
   body { background: #fff !important; color: #000 !important; font-size: 10px !important; }
   .app { display: block !important; height: auto !important; }
   .topbar, .bottomnav, .pages, .btn, .swipe-hint { display: none !important; }
   #print-area { display: block !important; }
-  .pr-section { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #ccc; page-break-inside: avoid; }
-  .pr-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #0088aa; margin-bottom: 4px; }
-  .pr-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px; border-bottom: 1px solid #eee; }
+
+  /* ── PAGE-BREAK: ningún bloque se corta entre páginas ── */
+  /* Secciones de la vista Resumen (modo app) */
+  .pr-section { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #ccc;
+                page-break-inside: avoid; break-inside: avoid; }
+  .pr-grid   { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+                page-break-inside: avoid; break-inside: avoid; }
+  .pr-box    { border: 1px solid #ccc; border-radius: 4px; padding: 4px 6px; text-align: center;
+                page-break-inside: avoid; break-inside: avoid; }
+
+  /* Secciones del PDF generado (pg1 / pg2 / pg3) */
+  /* Cada bloque con borde o background que sea un "card" no debe partirse */
+  #print-area > div > div[style*="border"],
+  #print-area > div > div[style*="background:#"],
+  #print-area > div > div[style*="background: #"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Tablas: filas nunca se cortan; la tabla completa sí puede
+     pasarse a otra página si no cabe, pero sin cortar filas */
+  tr    { page-break-inside: avoid; break-inside: avoid; }
+  thead { break-after: avoid; page-break-after: avoid; }
+  /* Header de sección no se queda solo al final de página */
+  #print-area div[style*="letter-spacing:2px"] + div,
+  #print-area div[style*="letter-spacing:2px"] + table { break-before: avoid; page-break-before: avoid; }
+
+  /* El cuadro verde/naranja del Balance Total */
+  #print-area div[style*="border-radius:8px"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Cajas con borde redondeado en pg1 (vitales, tiempos, etc.) */
+  #print-area div[style*="border-radius:6px"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Encabezados de sección (ST() calls — fondo oscuro) no se separan de su contenido */
+  #print-area div[style*="background:#0"] + div,
+  #print-area div[style*="background: #0"] + div {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Tipografía de secciones */
+  .pr-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+               color: #0088aa; margin-bottom: 4px; }
+  .pr-row   { display: flex; justify-content: space-between; padding: 2px 0; font-size: 9px;
+               border-bottom: 1px solid #eee; }
   .pr-row span:first-child { color: #666; }
-  .pr-row span:last-child { font-weight: 600; }
-  .pr-row-sub { font-size: 8px; color: #0077aa; padding: 1px 4px 3px 2px; border-bottom: 1px solid #f0f0f0; font-style: italic; }
-  .pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-  .pr-box { border: 1px solid #ccc; border-radius: 4px; padding: 4px 6px; text-align: center; }
+  .pr-row span:last-child  { font-weight: 600; }
+  .pr-row-sub { font-size: 8px; color: #0077aa; padding: 1px 4px 3px 2px;
+                 border-bottom: 1px solid #f0f0f0; font-style: italic; }
   .pr-box .pv { font-size: 14px; font-weight: 800; }
   .pr-box .pl { font-size: 8px; color: #666; }
   table { width: 100%; border-collapse: collapse; font-size: 8px; }
-  th { background: #eee !important; padding: 3px 5px; text-align: center; border: 1px solid #ccc; font-size: 7px; text-transform: uppercase; }
+  th { background: #eee !important; padding: 3px 5px; text-align: center;
+        border: 1px solid #ccc; font-size: 7px; text-transform: uppercase; }
   td { padding: 3px 5px; border: 1px solid #ddd; text-align: center; }
   h1 { font-size: 14px; margin-bottom: 2px; }
 }
@@ -4439,8 +4484,8 @@ function genRes() {
       '<div style="font-size:9px;color:#666;margin-top:2px">' + (p.inst || 'Anestesiología · Registro Perioperatorio') + '</div></div>' +
       '<div style="text-align:right;font-size:9px;color:#666"><div>' + fecha + '</div></div>' +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
-      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;page-break-inside:avoid;break-inside:avoid">' +
+      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">' +
         '<div style="background:#0077aa;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👤 PACIENTE</div>' +
         '<div style="padding:6px 8px">' +
           '<div style="font-size:14px;font-weight:900;margin-bottom:3px">' + (p.nombre || '—') + '</div>' +
@@ -4457,7 +4502,7 @@ function genRes() {
           (p.ayuno ? '<div style="font-size:7px;color:#444">Ayuno: ' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</div>' : '') +
         '</div>' +
       '</div>' +
-      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
+      '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">' +
         '<div style="background:#005f8a;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👨‍⚕️ EQUIPO MÉDICO</div>' +
         '<div style="padding:6px 8px">' +
           '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + (p.med || '—') + '</b>'
@@ -4566,7 +4611,7 @@ function genRes() {
       '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
     '</div>' +
     ST('💧 BALANCE DE LÍQUIDOS') +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;page-break-inside:avoid;break-inside:avoid">' +
       '<div>' +
         '<div style="font-size:8px;font-weight:700;color:#006633;text-transform:uppercase;margin-bottom:4px">📥 INGRESOS</div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
@@ -4590,10 +4635,10 @@ function genRes() {
         '</table>' +
       '</div>' +
     '</div>' +
-    '<div style="text-align:center;border:2px solid ' + (bal >= 0 ? '#006633' : '#cc6600') + ';border-radius:8px;padding:8px;margin-bottom:8px;background:' + (bal >= 0 ? '#f0fff4' : '#fff8ee') + '">' +
+    '<div style="text-align:center;border:2px solid ' + (bal >= 0 ? '#006633' : '#cc6600') + ';border-radius:8px;padding:8px;margin-bottom:8px;background:' + (bal >= 0 ? '#f0fff4' : '#fff8ee') + ';page-break-inside:avoid;break-inside:avoid" >' +
       '<div style="font-size:24px;font-weight:900;color:' + (bal >= 0 ? '#006633' : '#cc6600') + '">' + (bal >= 0 ? '+' : '') + bal + ' ml</div>' +
       '<div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:1px">Balance Hídrico Total</div>' +
-      '<div style="font-size:8px;color:#888;margin-top:2px">VSP: ' + vsp + ' ml · Sangrado: ' + sang_ml + ' ml (' + sangPct + '% permisible)</div>' +
+      '<div style="font-size:8px;color:#888;margin-top:2px;page-break-inside:avoid">VSP: ' + vsp + ' ml · Sangrado: ' + sang_ml + ' ml (' + sangPct + '% permisible)</div>' +
     '</div>' +
     (hrs.length ?
       ST('🕐 RESUMEN POR HORA', '#334455') +
@@ -4684,7 +4729,7 @@ function genRes() {
       '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + (p.nombre || 'Paciente') + '</span></div>' +
       '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;page-break-inside:avoid;break-inside:avoid">' +
       '<div>' +
         ST('🫁 VENTILADOR', '#006644') +
         (S.ventHist.length ?
