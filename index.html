@@ -1147,7 +1147,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="swipe-hint">← desliza →</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
-        <!-- FIX #6: Columna edicion sin th --><thead><tr><th>#</th><th>Hora</th><th>NaCl</th><th>Hartman</th><th>Sangrado</th><th>Diuresis</th><th>Bal. Hr</th><th>Acumulado</th><th></th></tr></thead>
+        <!-- FIX LIQ-6: Columnas actualizadas --><thead><tr><th>#</th><th>Hora</th><th style="color:#00e676">Ingresos</th><th style="color:#ff5252">Egresos</th><th>Bal. Hr</th><th>Acumulado</th><th></th></tr></thead>
         <tbody id="liq-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
@@ -2272,22 +2272,61 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 ════════════════════════════════════════════════════════ -->
 <div id="edit-liq-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
   <div style="max-width:480px;margin:0 auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div id="edit-liq-title" style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Hora</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div id="edit-liq-title" style="font-size:17px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Hora</div>
       <button onclick="closeEditLiq()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
     </div>
-    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
-      <div style="font-size:10px;font-weight:800;color:#00e676;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📥 Ingresos</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">NaCl 0.9% (ml)</label><input type="number" inputmode="decimal" id="el-nacl" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hartman (ml)</label><input type="number" inputmode="decimal" id="el-hart" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+
+    <!-- INGRESOS -->
+    <div style="background:#0a0f1c;border:1px solid #1e4d30;border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#00e676;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📥 Ingresos IV</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">NaCl 0.9% (ml)</label><input type="number" inputmode="decimal" id="el-nacl" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Sol. Hartman (ml)</label><input type="number" inputmode="decimal" id="el-hart" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box;text-align:center"></div>
       </div>
-      <div style="font-size:10px;font-weight:800;color:#ff1744;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📤 Egresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Coloides (ml)</label><input type="number" inputmode="decimal" id="el-col" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Paq. Globular (ml)</label><input type="number" inputmode="decimal" id="el-pg" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff9100;border-radius:8px;color:#ff9100;box-sizing:border-box;text-align:center"></div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">🩸 Sangrado (ml)</label><input type="number" inputmode="decimal" id="el-sang" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box"></div>
-        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diuresis (ml)</label><input type="number" inputmode="decimal" id="el-diu" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Medicamentos (ml)</label><input type="number" inputmode="decimal" id="el-med" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #d500f9;border-radius:8px;color:#d500f9;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Otro ingreso (ml)</label><input type="number" inputmode="decimal" id="el-otrIn" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box;text-align:center"></div>
+      </div>
+      <!-- total ingresos dinámico -->
+      <div style="margin-top:10px;padding:6px 10px;background:rgba(0,230,118,.08);border-radius:8px;display:flex;justify-content:space-between;font-size:12px;font-weight:800">
+        <span style="color:#3d5a78">TOTAL INGRESOS</span>
+        <span id="el-total-in" style="color:#00e676">0 ml</span>
       </div>
     </div>
+
+    <!-- EGRESOS -->
+    <div style="background:#0a0f1c;border:1px solid #4d1a1a;border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#ff1744;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📤 Egresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">🩸 Sangrado (ml)</label><input type="number" inputmode="decimal" id="el-sang" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diuresis (ml)</label><input type="number" inputmode="decimal" id="el-diu" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box;text-align:center"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">P. Insensibles (ml)</label><input type="number" inputmode="decimal" id="el-ins" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff9100;border-radius:8px;color:#ff9100;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Req. Basal (ml)</label><input type="number" inputmode="decimal" id="el-bas" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff9100;border-radius:8px;color:#ff9100;box-sizing:border-box;text-align:center"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Trauma Qx (ml)</label><input type="number" inputmode="decimal" id="el-trau" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box;text-align:center"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Otro egreso (ml)</label><input type="number" inputmode="decimal" id="el-otrEg" value="0" oninput="try{_calcElBalance()}catch(e){}" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box;text-align:center"></div>
+      </div>
+      <!-- total egresos dinámico -->
+      <div style="margin-top:10px;padding:6px 10px;background:rgba(255,23,68,.08);border-radius:8px;display:flex;justify-content:space-between;font-size:12px;font-weight:800">
+        <span style="color:#3d5a78">TOTAL EGRESOS</span>
+        <span id="el-total-eg" style="color:#ff1744">0 ml</span>
+      </div>
+    </div>
+
+    <!-- BALANCE HR EN VIVO -->
+    <div id="el-bal-preview" style="margin-bottom:14px;padding:10px 14px;border-radius:12px;border:2px solid #1e2d44;text-align:center">
+      <div style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">Balance esta hora</div>
+      <div id="el-bal-val" style="font-size:22px;font-weight:900;color:#00e676">+0 ml</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <button onclick="deleteLiqRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar fila</button>
       <button onclick="saveLiqEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e5ff;border:none;border-radius:12px;color:#04060d;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
@@ -4098,13 +4137,15 @@ function renderLiqHoraTable() {
     b.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros hora por hora</td></tr>'; // BUG-N FIX: colspan 8→9 (incluye columna edicion)
     return;
   }
+  // FIX LIQ-6: totalIn/totalEg con retrocompat
   b.innerHTML = S.liqHora.map(function(r, i) {
+    var tIn = r.totalIn != null ? r.totalIn : ((r.nacl||0)+(r.hart||0));
+    var tEg = r.totalEg != null ? r.totalEg : ((r.sang||0)+(r.diu||0));
     return '<tr onclick="openEditLiq('+i+')" style="cursor:pointer">' +
       '<td style="font-weight:800;color:var(--cyan);font-size:11px">'+_liqHoraLabel(i)+'</td>' +
       '<td class="hl" style="font-weight:800">'+r.hora+'</td>' +
-      '<td>'+r.nacl+'</td><td>'+r.hart+'</td>' +
-      '<td class="'+(r.sang>300?'wc':'')+'">'+r.sang+'</td>' +
-      '<td>'+r.diu+'</td>' +
+      '<td style="color:#00e676;font-weight:700">+'+tIn+'</td>' +
+      '<td style="color:#ff5252;font-weight:700">-'+tEg+'</td>' +
       '<td class="'+(r.balHr<0?'wc':'')+'">'+( r.balHr>=0?'+':'')+r.balHr+'</td>' +
       '<td class="'+(r.acum<-500?'dc':r.acum<0?'wc':'hl')+'">'+( r.acum>=0?'+':'')+r.acum+'</td>' +
       '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td>' +
@@ -4117,19 +4158,28 @@ function addLiqHora() { addLiqHoraManual(); }
 var _liqHoraLock = false;
 function addLiqHoraManual() {
   // FIX #2: Guard contra double-tap / ghost click en iOS
-  // 1500ms cubre el delay de 300ms de iOS + el ciclo de render del DOM
   if (_liqHoraLock) return;
   _liqHoraLock = true;
   setTimeout(function(){ _liqHoraLock = false; }, 1500);
 
   var get = function(id){ var e=document.getElementById(id); return e?parseInt(e.value)||0:0; };
   var hora = getT();
+  // FIX LIQ-1: capturar TODOS los campos (antes solo nacl+hart vs sang+diu)
   var nacl = get('in-nacl'), hart = get('in-hart');
+  var col  = get('in-col'),  pg   = get('in-pg');
+  var med  = get('in-med'),  otrIn= get('in-otro');
   var sang = get('eg-sang'), diu  = get('eg-diu');
-  var balHr = (nacl + hart) - (sang + diu);
+  var ins  = get('eg-ins'),  bas  = get('eg-bas');
+  var trau = get('eg-trau'), otrEg= get('eg-otro');
+  var totalIn  = nacl + hart + col + pg + med + otrIn;
+  var totalEg  = sang + diu + ins + bas + trau + otrEg;
+  var balHr = totalIn - totalEg;
   var prev  = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
   var acum  = prev + balHr;
-  S.liqHora.push({hora:hora, nacl:nacl, hart:hart, sang:sang, diu:diu, balHr:balHr, acum:acum});
+  S.liqHora.push({hora:hora,
+    nacl:nacl, hart:hart, col:col, pg:pg, med:med, otrIn:otrIn,
+    sang:sang, diu:diu, ins:ins, bas:bas, trau:trau, otrEg:otrEg,
+    totalIn:totalIn, totalEg:totalEg, balHr:balHr, acum:acum});
   try { addToHourBucket('liq', {in:(nacl+hart), eg:(sang+diu), sang:sang, diu:diu}); } catch(e) {}
   renderLiqHoraTable();
   renderLiqHoraBtns();
@@ -4655,12 +4705,11 @@ function genRes() {
         '<thead><tr style="background:#005f8a;color:#fff">' +
           '<th style="padding:4px 5px">#</th>' +
           '<th style="padding:4px 5px">Hora</th>' +
-          '<th style="padding:4px 5px;text-align:center">NaCl 0.9%</th>' +
-          '<th style="padding:4px 5px;text-align:center">Hartman</th>' +
-          '<th style="padding:4px 5px;text-align:center">Sangrado</th>' +
-          '<th style="padding:4px 5px;text-align:center">Diuresis</th>' +
+          '<th style="padding:4px 5px;text-align:center;background:#004d20">Ingresos</th>' +
+          '<th style="padding:4px 5px;text-align:center;background:#4d0000">Egresos</th>' +
           '<th style="padding:4px 5px;text-align:center">Bal. Hr</th>' +
           '<th style="padding:4px 5px;text-align:center">Acumulado</th>' +
+          '<th style="padding:4px 5px;text-align:left">Fármacos</th>' +
         '</tr></thead><tbody>' +
         (function() {
           var _ordinals = ['1ª Hora','2ª Hora','3ª Hora','4ª Hora','5ª Hora','6ª Hora',
@@ -4670,20 +4719,25 @@ function genRes() {
             var balCl = r.balHr < 0 ? 'color:#cc6600;font-weight:800' : 'color:#006633;font-weight:800';
             var acumCl = r.acum < -500 ? 'color:#cc0000;font-weight:900' : r.acum < 0 ? 'color:#cc6600;font-weight:800' : 'color:#006633;font-weight:800';
             var label = _ordinals[i] || ((i+1)+'ª Hora');
+            // FIX LIQ-7: usar totalIn/totalEg (retrocompat con registros viejos)
+            var tIn = r.totalIn != null ? r.totalIn : ((r.nacl||0)+(r.hart||0));
+            var tEg = r.totalEg != null ? r.totalEg : ((r.sang||0)+(r.diu||0));
+            // Fármacos de la hora
+            var hrFarms = (S.hourBuckets && S.hourBuckets[r.hora]) ?
+              (S.hourBuckets[r.hora].farms||[]).map(function(f){return f.n+' '+f.d;}).join(', ') : '';
             return '<tr style="background:'+bg+'">' +
               '<td style="padding:3px 5px;font-weight:800;color:#005f8a;font-size:7px">'+label+'</td>' +
               '<td style="padding:3px 5px;font-weight:700;color:#0077aa">'+r.hora+'</td>' +
-              '<td style="padding:3px 5px;text-align:center">'+r.nacl+'</td>' +
-              '<td style="padding:3px 5px;text-align:center">'+r.hart+'</td>' +
-              '<td style="padding:3px 5px;text-align:center;color:'+( r.sang>300?'#cc0000':'#333')+'">'+r.sang+'</td>' +
-              '<td style="padding:3px 5px;text-align:center">'+r.diu+'</td>' +
+              '<td style="padding:3px 5px;text-align:center;color:#006633;font-weight:700">+'+tIn+'</td>' +
+              '<td style="padding:3px 5px;text-align:center;color:#cc0000;font-weight:700">-'+tEg+'</td>' +
               '<td style="padding:3px 5px;text-align:center;'+balCl+'">'+( r.balHr>=0?'+':'')+r.balHr+'</td>' +
               '<td style="padding:3px 5px;text-align:center;'+acumCl+'">'+( r.acum>=0?'+':'')+r.acum+'</td>' +
+              '<td style="padding:3px 5px;font-size:7px;color:#555">'+hrFarms+'</td>' +
             '</tr>';
           }).join('');
         })() +
         '<tr style="background:#e8f4fb;border-top:2px solid #005f8a">' +
-          '<td colspan="6" style="padding:4px 5px;font-weight:800;color:#005f8a;font-size:8px">BALANCE ACUMULADO FINAL</td>' +
+          '<td colspan="4" style="padding:4px 5px;font-weight:800;color:#005f8a;font-size:8px">BALANCE ACUMULADO FINAL</td>' +
           '<td></td>' +
           '<td style="padding:4px 5px;text-align:center;font-size:11px;font-weight:900;color:' +
             (S.liqHora[S.liqHora.length-1].acum >= 0 ? '#006633' : '#cc6600') + '">' +
@@ -6347,17 +6401,39 @@ function loginAndNew(){
 
 // ── MODAL EDITAR LÍQUIDOS ──
 var _editLiqIdx = -1;
+function _calcElBalance() {
+  // FIX LIQ-5: Recalcula totales y balance en vivo dentro del modal
+  var g=function(id){ var e=document.getElementById(id); return parseInt((e&&e.value)||0)||0; };
+  var ti = g('el-nacl')+g('el-hart')+g('el-col')+g('el-pg')+g('el-med')+g('el-otrIn');
+  var te = g('el-sang')+g('el-diu')+g('el-ins')+g('el-bas')+g('el-trau')+g('el-otrEg');
+  var bal = ti - te;
+  var tIn  = document.getElementById('el-total-in');
+  var tEg  = document.getElementById('el-total-eg');
+  var bVal = document.getElementById('el-bal-val');
+  var bPrv = document.getElementById('el-bal-preview');
+  if(tIn)  tIn.textContent  = ti + ' ml';
+  if(tEg)  tEg.textContent  = te + ' ml';
+  if(bVal) { bVal.textContent = (bal>=0?'+':'')+bal+' ml';
+             bVal.style.color = bal>0?'#00e676':bal<0?'#ff1744':'#aaa'; }
+  if(bPrv) bPrv.style.borderColor = bal>0?'#00e676':bal<0?'#ff1744':'#1e2d44';
+}
+
 function openEditLiq(idx){
   _editLiqIdx = idx;
   var r = (S.liqHora||[])[idx];
   if(!r) return;
-  document.getElementById('el-nacl').value = r.nacl || 0;
-  document.getElementById('el-hart').value = r.hart || 0;
-  document.getElementById('el-sang').value = r.sang || 0;
-  document.getElementById('el-diu').value  = r.diu  || 0;
-  // Show which hour is being edited
+  // FIX LIQ-3: poblar TODOS los campos (antes solo 4 de 12)
+  var sv=function(id,v){ var e=document.getElementById(id); if(e) e.value=(v||0); };
+  sv('el-nacl', r.nacl);  sv('el-hart', r.hart);
+  sv('el-col',  r.col);   sv('el-pg',   r.pg);
+  sv('el-med',  r.med);   sv('el-otrIn',r.otrIn);
+  sv('el-sang', r.sang);  sv('el-diu',  r.diu);
+  sv('el-ins',  r.ins);   sv('el-bas',  r.bas);
+  sv('el-trau', r.trau);  sv('el-otrEg',r.otrEg);
   var titleEl = document.getElementById('edit-liq-title');
   if(titleEl) titleEl.textContent = '✏️ Editando ' + _liqHoraLabel(idx) + ' — ' + r.hora;
+  // Actualizar balance preview inmediatamente
+  _calcElBalance();
   document.getElementById('edit-liq-modal').style.display='block';
   document.body.style.overflow='hidden';
 }
@@ -6369,15 +6445,22 @@ function closeEditLiq(){
 function _renderLiqTable(){ renderLiqHoraTable(); renderLiqHoraBtns(); }
 function saveLiqEdit(){
   if(_editLiqIdx<0) return;
-  var nacl=parseInt(document.getElementById('el-nacl').value)||0;
-  var hart=parseInt(document.getElementById('el-hart').value)||0;
-  var sang=parseInt(document.getElementById('el-sang').value)||0;
-  var diu =parseInt(document.getElementById('el-diu').value)||0;
   var r=S.liqHora[_editLiqIdx];
   if(!r) return;
-  var balHr=(nacl+hart)-(sang+diu);
-  S.liqHora[_editLiqIdx] = {hora:r.hora,nacl:nacl,hart:hart,sang:sang,diu:diu,balHr:balHr,acum:0};
-  // Recalcular acumulado
+  var g=function(id){ var e=document.getElementById(id); return parseInt((e&&e.value)||0)||0; };
+  // FIX LIQ-2: leer y guardar TODOS los campos del modal
+  var nacl=g('el-nacl'), hart=g('el-hart'), col=g('el-col'), pg=g('el-pg');
+  var med=g('el-med'), otrIn=g('el-otrIn');
+  var sang=g('el-sang'), diu=g('el-diu'), ins=g('el-ins');
+  var bas=g('el-bas'), trau=g('el-trau'), otrEg=g('el-otrEg');
+  var totalIn=nacl+hart+col+pg+med+otrIn;
+  var totalEg=sang+diu+ins+bas+trau+otrEg;
+  var balHr=totalIn-totalEg;
+  S.liqHora[_editLiqIdx]={hora:r.hora,
+    nacl:nacl,hart:hart,col:col,pg:pg,med:med,otrIn:otrIn,
+    sang:sang,diu:diu,ins:ins,bas:bas,trau:trau,otrEg:otrEg,
+    totalIn:totalIn,totalEg:totalEg,balHr:balHr,acum:0};
+  // Recalcular acumulado desde cero
   var acum=0;
   S.liqHora.forEach(function(x,i){ acum += (x.balHr||0); S.liqHora[i].acum = acum; });
   closeEditLiq();
