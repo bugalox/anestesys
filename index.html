@@ -154,23 +154,34 @@ select option{background:var(--s1)}
 
 /* ── BOTTOM TABS ── */
 .bottomnav{
-  background:rgba(10,15,28,0.95);
-  backdrop-filter:saturate(180%) blur(20px);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-top:1px solid var(--border);
-  display:grid;grid-template-columns:repeat(7,1fr);
-  padding:6px 4px;padding-bottom:calc(6px + var(--safe-bottom));
+  background:rgba(10,15,28,0.96);
+  backdrop-filter:saturate(200%) blur(24px);
+  -webkit-backdrop-filter:saturate(200%) blur(24px);
+  border-top:1px solid rgba(255,255,255,.06);
+  display:grid;grid-template-columns:repeat(5,1fr);
+  padding:8px 6px;padding-bottom:calc(8px + var(--safe-bottom));
   flex-shrink:0;position:relative;z-index:50;
+  box-shadow:0 -1px 0 rgba(0,0,0,.4);
 }
 .navbtn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;padding:4px 2px;border:none;background:transparent;
-  color:var(--muted);cursor:pointer;border-radius:10px;
-  transition:color .2s,background .2s;min-height:50px;
+  gap:3px;padding:5px 2px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;border-radius:14px;
+  transition:color .18s,background .18s,transform .12s;min-height:52px;
+  position:relative;
 }
-.navbtn.active{color:var(--cyan)}
-.navbtn.active i.fa-solid{color:var(--cyan)}
-.navbtn:active{background:rgba(0,229,255,.08)}
+.navbtn.active{color:#dde8ff}
+.navbtn:active{transform:scale(.9)}
+/* Pill indicator debajo del ícono activo */
+.navbtn.active::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:18px;height:3px;border-radius:2px;background:var(--cyan);
+  animation:pill-in .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pill-in{from{width:6px;opacity:.4}to{width:18px;opacity:1}}
+/* Ícono activo ligeramente más grande */
+.navbtn.active .nav-ico{font-size:23px;color:var(--cyan)}
+.navbtn:active{background:rgba(255,255,255,.05)}
 .navbtn .icon{font-size:22px;line-height:1}
 .navbtn .label{font-size:9px;font-weight:600;letter-spacing:0.5px}
 .navbtn .badge{
@@ -350,6 +361,13 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   0%,100% { opacity:1; transform:scale(1); }
   50% { opacity:.5; transform:scale(.85); }
 }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
 #readonly-banner.visible {
   transform: translateY(0) !important;
 }
@@ -417,14 +435,26 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 .navbtn i[class*="ph-"] { color: var(--muted); transition: color .15s; }
 .navbtn.active i[class*="ph-"] { color: var(--cyan); }
 
+
+/* ── TABLET & LARGE PHONE (≥600px) ── */
+@media screen and (min-width: 600px) {
+  .bottomnav { max-width: 640px; margin: 0 auto; border-radius: 20px 20px 0 0; }
+  #more-sheet { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 20px; }
+  .page { max-width: 640px; margin: 0 auto; }
+  /* Stat cards wider */
+  .stat-row { grid-template-columns: repeat(4, 1fr); }
+}
+/* ── DESKTOP FALLBACK (≥900px) ── */
+@media screen and (min-width: 900px) {
+  body { background: #020408; }
+  .bottomnav { max-width: 500px; border-radius: 20px 20px 0 0; bottom: 16px; }
+  .page { max-width: 560px; margin: 0 auto; padding-top: 16px; }
+}
 </style>
   <link rel="manifest" href="data:application/json,{%22name%22:%22AnesteSys%20PRO%22,%22short_name%22:%22AnesteSys%22,%22display%22:%22standalone%22,%22background_color%22:%22%2304060d%22,%22theme_color%22:%22%2300e5ff%22,%22start_url%22:%22/%22}">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-<meta name="theme-color" content="#04060d">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="AnesteSys">
 <!-- jsPDF + html2canvas for PDF blob share -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1842,23 +1872,256 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <button class="navbtn" onclick="nav('liq',this)" id="nb-liq">
     <i class="ph-bold ph-drop nav-ico"></i><span class="label">Líquidos</span>
   </button>
-  <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
-    <i class="ph-bold ph-wind nav-ico"></i><span class="label">Ventil.</span>
-  </button>
   <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
     <i class="ph-bold ph-syringe nav-ico"></i><span class="label">Fármacos</span>
   </button>
   <button class="navbtn" onclick="nav('alert',this)" id="nb-alert" style="position:relative">
     <i class="ph-bold ph-warning nav-ico"></i><span class="label">Alertas</span>
-    <span class="badge r" id="alert-badge" style="position:absolute;top:4px;right:6px;font-size:9px;padding:1px 5px;display:none">0</span>
+    <span class="badge r" id="alert-badge" style="position:absolute;top:2px;right:8px;font-size:9px;padding:1px 5px;display:none">0</span>
   </button>
-  <button class="navbtn" onclick="nav('lab',this)" id="nb-lab">
-    <i class="ph-bold ph-test-tube nav-ico"></i><span class="label">Labs</span>
-  </button>
-  <button class="navbtn" onclick="nav('res',this)" id="nb-res">
-    <i class="ph-bold ph-file-text nav-ico"></i><span class="label">Resumen</span>
+  <!-- Botón MÁS -->
+  <button class="navbtn" onclick="navMore()" id="nb-more" style="position:relative">
+    <span id="nb-more-ico" style="display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;height:23px">
+      <span style="display:block;width:14px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
+      <span style="display:block;width:10px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
+      <span style="display:block;width:14px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
+    </span>
+    <span class="label">Más</span>
+    <!-- Badge combinado de agenda+lab+vent -->
+    <span id="more-badge" style="display:none;position:absolute;top:2px;right:8px;font-size:9px;padding:1px 5px;border-radius:8px;background:#ff6d00;color:#fff;font-weight:800">●</span>
   </button>
 </nav>
+
+<!-- ══ SHEET "MÁS" ══ -->
+<div id="more-sheet-bg" onclick="navMoreClose()" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(4,6,13,.6);backdrop-filter:blur(4px)"></div>
+<div id="more-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:201;background:#0a0f1c;border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:0 12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.6)">
+  <!-- Handle -->
+  <div style="display:flex;justify-content:center;padding:10px 0 4px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15)"></div>
+  </div>
+  <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#3d5a78;padding:4px 4px 10px">Secciones</div>
+  <!-- Grid 2x2 de opciones secundarias -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+
+    <!-- Ventilación -->
+    <button onclick="navFromSheet('vent',this)" id="nb-vent" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
+      <i class="ph-bold ph-wind" style="font-size:24px;color:#00e5ff;flex-shrink:0"></i>
+      <div style="text-align:left">
+        <div style="font-size:13px;font-weight:700;color:#dde8ff">Ventil.</div>
+        <div style="font-size:10px;color:#3d5a78">Parámetros</div>
+      </div>
+    </button>
+
+    <!-- Labs -->
+    <button onclick="navFromSheet('lab',this)" id="nb-lab" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
+      <i class="ph-bold ph-test-tube" style="font-size:24px;color:#d500f9;flex-shrink:0"></i>
+      <div style="text-align:left">
+        <div style="font-size:13px;font-weight:700;color:#dde8ff">Labs</div>
+        <div style="font-size:10px;color:#3d5a78">Resultados</div>
+      </div>
+    </button>
+
+    <!-- Resumen -->
+    <button onclick="navFromSheet('res',this)" id="nb-res" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
+      <i class="ph-bold ph-file-text" style="font-size:24px;color:#00e676;flex-shrink:0"></i>
+      <div style="text-align:left">
+        <div style="font-size:13px;font-weight:700;color:#dde8ff">Resumen</div>
+        <div style="font-size:10px;color:#3d5a78">PDF / Reporte</div>
+      </div>
+    </button>
+
+    <!-- Agenda -->
+    <button onclick="navFromSheet('agenda',this)" id="nb-agenda" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78;position:relative">
+      <i class="ph-bold ph-calendar-check" style="font-size:24px;color:#ff6d00;flex-shrink:0"></i>
+      <div style="text-align:left">
+        <div style="font-size:13px;font-weight:700;color:#dde8ff">Agenda</div>
+        <div style="font-size:10px;color:#3d5a78">Citas médicas</div>
+      </div>
+      <span id="agenda-badge" style="display:none;position:absolute;top:8px;right:10px;font-size:9px;padding:1px 6px;border-radius:8px;background:#ff6d00;color:#fff;font-weight:800">0</span>
+    </button>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE AGENDA v2
+════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-agenda">
+
+  <!-- ── HEADER: Tabs vista + Periodo + Nav ── -->
+  <div style="background:linear-gradient(135deg,rgba(255,109,0,.07),rgba(0,229,255,.04));border:1px solid rgba(255,109,0,.2);border-radius:14px;padding:12px 14px;margin-bottom:10px">
+
+    <!-- Fila 1: tabs de vista -->
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button id="ag-vbtn-mes" onclick="agSetView('mes')" style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer;transition:all .15s">
+        <i class="ph ph-calendar-blank" style="margin-right:4px"></i>Mes
+      </button>
+      <button id="ag-vbtn-semana" onclick="agSetView('semana')" style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer;transition:all .15s">
+        <i class="ph ph-calendar-dots" style="margin-right:4px"></i>Semana
+      </button>
+      <button id="ag-vbtn-lista" onclick="agSetView('lista')" style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer;transition:all .15s">
+        <i class="ph ph-list-bullets" style="margin-right:4px"></i>Lista
+      </button>
+    </div>
+
+    <!-- Fila 2: nav + periodo -->
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <button onclick="agNavPrev()" style="background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);border-radius:10px;color:#ff6d00;width:36px;height:36px;font-size:20px;font-weight:900;cursor:pointer;line-height:1;flex-shrink:0">‹</button>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#ff6d00;font-weight:700;margin-bottom:1px"><i class="ph ph-calendar-check" style="margin-right:4px"></i>Agenda</div>
+        <div id="ag-periodo-label" style="font-size:16px;font-weight:900;color:#dde8ff">—</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <button onclick="agHoy()" style="background:rgba(255,109,0,.15);border:1.5px solid #ff6d00;border-radius:10px;color:#ff6d00;padding:0 12px;height:36px;font-size:10px;font-weight:800;cursor:pointer">HOY</button>
+        <button onclick="agNavNext()" style="background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);border-radius:10px;color:#ff6d00;width:36px;height:36px;font-size:20px;font-weight:900;cursor:pointer;line-height:1">›</button>
+      </div>
+    </div>
+
+    <!-- Cabecera días semana (solo vista mes/semana) -->
+    <div id="ag-dow-header" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;margin-bottom:4px">
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">DOM</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">LUN</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">MAR</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">MIÉ</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">JUE</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">VIE</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78;padding:2px 0">SÁB</div>
+    </div>
+
+    <!-- Grid principal con zona de swipe -->
+    <div id="ag-swipe-zone">
+      <div id="ag-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+    </div>
+  </div>
+
+  <!-- ── SECCIÓN DÍA SELECCIONADO ── -->
+  <div id="ag-day-section" style="display:none;background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+    <div id="ag-day-title" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#ff6d00;margin-bottom:10px">Citas del día</div>
+    <div id="ag-day-list"></div>
+  </div>
+
+  <!-- ── PRÓXIMAS CITAS ── -->
+  <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#00e5ff">
+        <i class="ph ph-clock-countdown" style="margin-right:5px"></i>Próximas Citas
+      </div>
+      <button onclick="agOpenNew(null)" style="background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:10px;color:#fff;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">+ Nueva</button>
+    </div>
+    <div id="ag-proximas-list">
+      <div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas registradas</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL NUEVA / EDITAR CITA ══ -->
+<div id="ag-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(4,6,13,.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto;padding-bottom:40px">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="ag-modal-title" style="font-size:18px;font-weight:800;color:#ff6d00">📅 Nueva Cita</div>
+      <button onclick="agCloseModal()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+
+    <!-- Tipo -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Tipo de cita</div>
+      <div id="ag-tipo-btns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <button onclick="agSetTipo(this,'cirugia')"     data-tipo="cirugia"     style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">🔪 Cirugía</button>
+        <button onclick="agSetTipo(this,'consulta')"    data-tipo="consulta"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">🩺 Consulta</button>
+        <button onclick="agSetTipo(this,'seguimiento')" data-tipo="seguimiento" style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">📋 Seguim.</button>
+        <button onclick="agSetTipo(this,'urgencia')"    data-tipo="urgencia"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">🚨 Urgencia</button>
+        <button onclick="agSetTipo(this,'revision')"    data-tipo="revision"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">🔬 Revisión</button>
+        <button onclick="agSetTipo(this,'otro')"        data-tipo="otro"        style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">📌 Otro</button>
+      </div>
+    </div>
+
+    <!-- Paciente -->
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">👤 Paciente</div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Nombre completo *</label>
+        <input type="text" id="ag-pac-nombre" placeholder="Ej. Juan García López" style="width:100%;padding:11px;font-size:16px;font-weight:600;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Edad</label>
+          <input type="number" id="ag-pac-edad" inputmode="numeric" placeholder="—" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;text-align:center">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Expediente</label>
+          <input type="text" id="ag-pac-exp" placeholder="—" style="width:100%;padding:11px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diagnóstico / Procedimiento</label>
+        <input type="text" id="ag-pac-dx" placeholder="Ej. Colecistectomía laparoscópica" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+      </div>
+    </div>
+
+    <!-- Fecha y hora -->
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#ff6d00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">📅 Fecha y Hora</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Fecha *</label>
+          <input type="date" id="ag-fecha" style="width:100%;padding:11px;font-size:14px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff9100;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hora</label>
+          <input type="time" id="ag-hora" style="width:100%;padding:11px;font-size:14px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff9100;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Sala / Quirófano</label>
+          <input type="text" id="ag-sala" placeholder="Ej. Qx 3" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Duración (min)</label>
+          <input type="number" id="ag-duracion" inputmode="numeric" placeholder="60" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;text-align:center">
+        </div>
+      </div>
+    </div>
+
+    <!-- Recordatorio -->
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#ffd600;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">🔔 Recordatorio</div>
+      <div id="ag-remind-btns" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+        <button onclick="agSetRemind(this,0)"    data-min="0"    style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">Sin rec.</button>
+        <button onclick="agSetRemind(this,15)"   data-min="15"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">15 min</button>
+        <button onclick="agSetRemind(this,30)"   data-min="30"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">30 min</button>
+        <button onclick="agSetRemind(this,60)"   data-min="60"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">1 hora</button>
+        <button onclick="agSetRemind(this,120)"  data-min="120"  style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">2 horas</button>
+        <button onclick="agSetRemind(this,360)"  data-min="360"  style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">6 horas</button>
+        <button onclick="agSetRemind(this,1440)" data-min="1440" style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">1 día</button>
+        <button onclick="agSetRemind(this,2880)" data-min="2880" style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">2 días</button>
+      </div>
+    </div>
+
+    <!-- Estado (solo al editar) -->
+    <div id="ag-estado-sec" style="display:none;background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#dde8ff;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">📌 Cambiar Estado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="agSetEstado('completada')" style="padding:10px;border-radius:10px;border:1.5px solid #00e676;background:rgba(0,230,118,.1);color:#00e676;font-size:12px;font-weight:700;cursor:pointer">✅ Completada</button>
+        <button onclick="agSetEstado('cancelada')"  style="padding:10px;border-radius:10px;border:1.5px solid #3d5a78;background:rgba(61,90,120,.15);color:#3d5a78;font-size:12px;font-weight:700;cursor:pointer">✗ Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Notas -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:8px">Notas</label>
+      <textarea id="ag-notas" rows="3" placeholder="Ej. Ayuno 8h, alergia penicilina, ASA III..." style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;resize:none;font-family:inherit"></textarea>
+    </div>
+
+    <!-- Acciones -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button id="ag-del-btn" onclick="agDelCita()" style="display:none;padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button id="ag-save-btn" onclick="agSaveCita()" style="grid-column:1/-1;padding:14px;font-size:15px;font-weight:800;background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:12px;color:#fff;cursor:pointer"><i class="ph ph-floppy-disk" style="margin-right:6px"></i>Guardar Cita</button>
+    </div>
+
+  </div>
+</div>
+
 
 <!-- PRINT AREA (hidden on screen, shows on print) -->
 <div id="print-area" style="display:none"></div>
@@ -2657,8 +2920,21 @@ window.addEventListener('load', () => {
 function nav(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
+  // Clear any active-sheet highlight from secondary nav buttons
+  var secIds = ['nb-vent','nb-lab','nb-res','nb-agenda'];
+  for (var _i=0; _i<secIds.length; _i++) {
+    var _sb = document.getElementById(secIds[_i]);
+    if (_sb) { _sb.classList.remove('active-sheet'); _sb.style.background=''; _sb.style.borderColor=''; }
+  }
+  // Clear nb-more highlight if switching to a primary tab
+  var _primaries = ['monitor','liq','farm','alert'];
+  if (_primaries.indexOf(id) >= 0) {
+    var _mb = document.getElementById('nb-more');
+    if (_mb) _mb.style.color = '';
+  }
+  var page = document.getElementById('page-'+id);
+  if (page) page.classList.add('active');
+  if (btn && btn.classList) btn.classList.add('active');
   window.scrollTo(0,0);
   if(id==='res')     { try{genRes();}catch(e){} }
   if(id==='monitor') { try{drawChart();}catch(e){} }
@@ -7350,8 +7626,758 @@ function _setPerfilFormOpen(open) {
   }
 }
 
+
+
+// ══ BOTTOMNAV: sheet "Más" ══════════════════════════════════
+var _moreOpen = false;
+var _sheetSecondary = ['vent','lab','res','agenda'];
+
+function navMore() {
+  if (_moreOpen) { navMoreClose(); return; }
+  _moreOpen = true;
+  var bg = document.getElementById('more-sheet-bg');
+  var sh = document.getElementById('more-sheet');
+  if (!bg || !sh) return;
+  bg.style.display = 'block';
+  sh.style.display = 'block';
+  // Slide-up animation
+  sh.style.transform = 'translateY(100%)';
+  sh.style.transition = 'transform .28s cubic-bezier(.32,0,.67,0)';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      sh.style.transform = 'translateY(0)';
+      sh.style.transition = 'transform .32s cubic-bezier(.22,1,.36,1)';
+    });
+  });
+  // Highlight nb-more
+  var mb = document.getElementById('nb-more');
+  if (mb) mb.style.color = 'var(--cyan)';
+}
+
+function navMoreClose() {
+  if (!_moreOpen) return;
+  _moreOpen = false;
+  var bg = document.getElementById('more-sheet-bg');
+  var sh = document.getElementById('more-sheet');
+  if (sh) {
+    sh.style.transform = 'translateY(100%)';
+    sh.style.transition = 'transform .24s cubic-bezier(.32,0,.67,0)';
+    setTimeout(function(){ sh.style.display = 'none'; sh.style.transform = ''; }, 240);
+  }
+  if (bg) { bg.style.display = 'none'; }
+  // Si ningún secundario está activo, resetear color de nb-more
+  var anyActive = false;
+  for (var i=0; i<_sheetSecondary.length; i++) {
+    if (document.getElementById('nb-'+_sheetSecondary[i]) &&
+        document.getElementById('nb-'+_sheetSecondary[i]).classList.contains('active-sheet')) {
+      anyActive = true; break;
+    }
+  }
+  var mb = document.getElementById('nb-more');
+  if (mb && !anyActive) mb.style.color = '';
+}
+
+function navFromSheet(id, btn) {
+  // Cerrar el sheet
+  navMoreClose();
+  // Quitar active de todos los navbtn primarios
+  document.querySelectorAll('.navbtn').forEach(function(b){ b.classList.remove('active'); });
+  // Quitar active-sheet de todos los secundarios
+  _sheetSecondary.forEach(function(sid){
+    var b = document.getElementById('nb-'+sid);
+    if (b) { b.classList.remove('active-sheet'); b.style.background=''; b.style.borderColor=''; }
+  });
+  // Marcar el seleccionado en el sheet
+  if (btn) {
+    btn.classList.add('active-sheet');
+    btn.style.background = 'rgba(255,109,0,.1)';
+    btn.style.borderColor = '#ff6d00';
+  }
+  // Marcar nb-more como "activo" (tiene una sección secundaria abierta)
+  var mb = document.getElementById('nb-more');
+  if (mb) { mb.style.color = 'var(--cyan)'; }
+  // Navegar a la página
+  nav(id, document.getElementById('nb-'+id) || {classList:{add:function(){},remove:function(){}}});
+  // Si es agenda, llamar agInit
+  if (id === 'agenda') { try { agInit(); } catch(e) {} }
+}
+
+// Swipe down para cerrar el sheet
+(function(){
+  var startY = 0;
+  document.addEventListener('touchstart', function(e){
+    startY = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if (!_moreOpen) return;
+    var dy = e.changedTouches[0].clientY - startY;
+    if (dy > 60) navMoreClose();
+  }, {passive:true});
+})();
+
+
+
+// ── Online/Offline indicator ──────────────────────────────
+(function(){
+  function _netStatus() {
+    var online = navigator.onLine;
+    var existing = document.getElementById('net-badge');
+    if (!existing && !online) {
+      var badge = document.createElement('div');
+      badge.id = 'net-badge';
+      badge.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);'+
+        'background:#ff1744;color:#fff;font-size:10px;font-weight:800;padding:4px 12px;border-radius:20px;'+
+        'z-index:9000;letter-spacing:.5px;pointer-events:none';
+      badge.textContent = '📶 Sin conexión';
+      document.body.appendChild(badge);
+    } else if (existing && online) {
+      existing.style.background = '#00e676';
+      existing.style.color = '#000';
+      existing.textContent = '✅ Conexión restaurada';
+      setTimeout(function(){ if(existing.parentNode) existing.parentNode.removeChild(existing); }, 2500);
+    }
+  }
+  window.addEventListener('online',  _netStatus);
+  window.addEventListener('offline', _netStatus);
+})();
+
 </script>
 
+
+
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// AGENDA MÉDICA v2 — Vista Mes / Semana / Lista + Swipe
+// ═══════════════════════════════════════════════════════════════
+var AG_KEY  = 'anestesys_agenda';
+var _agView = 'mes';         // 'mes' | 'semana' | 'lista'
+var _agAnchor = new Date();  // fecha ancla (hoy o semana actual)
+var _agSelDay = null;
+var _agEditId = null;
+var _agTipoSel   = 'cirugia';
+var _agRemindSel = 30;
+var _agTimers    = {};
+var _agSwipeX    = 0;
+var _agSwipeY    = 0;
+var _agSwipeLock = false;
+
+var AG_MESES  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+var AG_MESES3 = ['Ene','Feb','Mar','Abr','May','Jun',
+                 'Jul','Ago','Sep','Oct','Nov','Dic'];
+var AG_DIAS   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var AG_DIASL  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+var AG_CFG = {
+  cirugia:     { bg:'rgba(255,23,68,.14)',  brd:'#ff1744', icon:'🔪', lbl:'Cirugía'    },
+  consulta:    { bg:'rgba(0,229,255,.12)',  brd:'#00e5ff', icon:'🩺', lbl:'Consulta'   },
+  seguimiento: { bg:'rgba(0,230,118,.11)', brd:'#00e676', icon:'📋', lbl:'Seguim.'    },
+  urgencia:    { bg:'rgba(255,109,0,.16)', brd:'#ff6d00', icon:'🚨', lbl:'Urgencia'   },
+  revision:    { bg:'rgba(213,0,249,.12)', brd:'#d500f9', icon:'🔬', lbl:'Revisión'   },
+  otro:        { bg:'rgba(61,90,120,.18)', brd:'#3d5a78', icon:'📌', lbl:'Otro'       }
+};
+
+// ── Helpers básicos ──────────────────────────────────────────
+function agGet()  { try { return JSON.parse(localStorage.getItem(AG_KEY)||'[]'); } catch(e) { return []; } }
+function agPut(a) { try { localStorage.setItem(AG_KEY, JSON.stringify(a)); } catch(e) {} }
+function agUID()  { return 'ag_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
+function agCfg(t) { return AG_CFG[t] || AG_CFG.otro; }
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function agTodayStr() {
+  var d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function agDateStr(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function agParseDate(s) {
+  var p = s.split('-');
+  return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+}
+function agFmtFull(ds) {
+  var d = agParseDate(ds);
+  return AG_DIASL[d.getDay()]+' '+d.getDate()+' de '+AG_MESES[d.getMonth()].toLowerCase()+' '+d.getFullYear();
+}
+
+// ── Construir mapa fecha→citas ──────────────────────────────
+function agBuildMap(citas) {
+  var m = {};
+  for (var i=0; i<citas.length; i++) {
+    var ds = citas[i].fecha;
+    if (!m[ds]) m[ds] = [];
+    m[ds].push(citas[i]);
+  }
+  return m;
+}
+
+// ─────────────────────────────────────────────────────────────
+// VISTA MES
+// ─────────────────────────────────────────────────────────────
+function agRenderMes() {
+  var y    = _agAnchor.getFullYear();
+  var mo   = _agAnchor.getMonth();
+  var hoy  = agTodayStr();
+  var cmap = agBuildMap(agGet());
+
+  var lbl = document.getElementById('ag-periodo-label');
+  if (lbl) lbl.textContent = AG_MESES[mo]+' '+y;
+
+  var grid = document.getElementById('ag-cal-grid');
+  if (!grid) return;
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(7,1fr)';
+  grid.style.gap = '3px';
+
+  var firstDow = new Date(y, mo, 1).getDay();
+  var nDays    = new Date(y, mo+1, 0).getDate();
+  var html     = '';
+
+  for (var pad=0; pad<firstDow; pad++) html += '<div></div>';
+
+  for (var d=1; d<=nDays; d++) {
+    var ds    = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isHoy = ds === hoy;
+    var isSel = ds === _agSelDay;
+    var list  = cmap[ds] || [];
+    var isPast= ds < hoy;
+
+    var bg, brd, col;
+    if (isSel)      { bg='#ff6d00'; brd='#ff6d00'; col='#fff'; }
+    else if (isHoy) { bg='rgba(255,109,0,.2)'; brd='#ff6d00'; col='#ff9100'; }
+    else            { bg='transparent'; brd='transparent'; col=isPast?'#3d5a78':'#dde8ff'; }
+
+    var dots = '';
+    for (var k=0; k<Math.min(list.length,3); k++) {
+      dots += '<div style="width:5px;height:5px;border-radius:50%;background:'+agCfg(list[k].tipo).brd+';flex-shrink:0"></div>';
+    }
+    if (list.length>3) dots += '<div style="font-size:7px;color:#3d5a78;line-height:1">+</div>';
+
+    html += '<div onclick="agSelDay(\''+ds+'\')" style="'+
+      'min-height:42px;border-radius:8px;background:'+bg+';border:1.5px solid '+brd+';'+
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;'+
+      'cursor:pointer;gap:2px;transition:all .15s;padding:2px 1px">'+
+      '<span style="font-size:13px;font-weight:'+(isHoy||isSel?'900':'500')+';color:'+col+'">'+d+'</span>'+
+      (dots ? '<div style="display:flex;gap:2px;justify-content:center;flex-wrap:wrap;padding:0 2px">'+dots+'</div>' : '')+
+      '</div>';
+  }
+  grid.innerHTML = html;
+  agUpdateDaySection();
+}
+
+// ─────────────────────────────────────────────────────────────
+// VISTA SEMANA
+// ─────────────────────────────────────────────────────────────
+function agGetWeekStart(d) {
+  var dow  = d.getDay();
+  var copy = new Date(d.getFullYear(), d.getMonth(), d.getDate()-dow);
+  return copy;
+}
+
+function agRenderSemana() {
+  var ws   = agGetWeekStart(_agAnchor);
+  var hoy  = agTodayStr();
+  var cmap = agBuildMap(agGet());
+
+  // Label: "3–9 Mar 2026"
+  var we = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate()+6);
+  var lbl = document.getElementById('ag-periodo-label');
+  if (lbl) {
+    var sameMon = ws.getMonth()===we.getMonth();
+    lbl.textContent = ws.getDate()+(sameMon?'':'&nbsp;'+AG_MESES3[ws.getMonth()])+
+                      '–'+we.getDate()+'&nbsp;'+AG_MESES3[we.getMonth()]+'&nbsp;'+we.getFullYear();
+    lbl.innerHTML = lbl.textContent; // allow entities
+  }
+
+  var grid = document.getElementById('ag-cal-grid');
+  if (!grid) return;
+  grid.style.display = 'block';
+  grid.style.gridTemplateColumns = '';
+
+  var html = '<div style="display:flex;gap:4px;width:100%">';
+  for (var i=0; i<7; i++) {
+    var day  = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate()+i);
+    var ds   = agDateStr(day);
+    var isHoy= ds===hoy;
+    var isSel= ds===_agSelDay;
+    var list = (cmap[ds]||[]).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
+    var isPast=ds<hoy;
+
+    var headBg = isSel ? '#ff6d00' : isHoy ? 'rgba(255,109,0,.18)' : 'transparent';
+    var headCol= isSel ? '#fff'    : isHoy ? '#ff9100' : isPast ? '#3d5a78' : '#dde8ff';
+    var headBrd= isSel||isHoy ? '#ff6d00' : '#1e2d44';
+
+    html += '<div onclick="agSelDay(\''+ds+'\')" style="flex:1;min-width:0;cursor:pointer">'+
+      '<div style="text-align:center;padding:4px 2px;border-radius:8px;background:'+headBg+
+      ';border:1.5px solid '+headBrd+';margin-bottom:4px">'+
+      '<div style="font-size:8px;font-weight:700;color:'+headCol+';text-transform:uppercase">'+AG_DIAS[day.getDay()]+'</div>'+
+      '<div style="font-size:15px;font-weight:'+(isHoy||isSel?'900':'600')+';color:'+headCol+'">'+day.getDate()+'</div>'+
+      '</div>';
+
+    // Chips de citas ese día
+    for (var k=0; k<list.length; k++) {
+      var ct  = list[k];
+      var cfg = agCfg(ct.tipo);
+      var op  = ct.estado==='cancelada'?'opacity:.45;':'';
+      html += '<div onclick="event.stopPropagation();agEditCita(\''+ct.id+'\')" style="'+op+
+        'background:'+cfg.bg+';border-left:3px solid '+cfg.brd+';border-radius:0 6px 6px 0;'+
+        'padding:3px 5px;margin-bottom:3px;cursor:pointer;overflow:hidden">'+
+        '<div style="font-size:9px;font-weight:800;color:'+cfg.brd+'">'+ct.hora+'</div>'+
+        '<div style="font-size:9px;color:#dde8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
+          escHtml(ct.pacNombre||'—')+'</div>'+
+        '</div>';
+    }
+    if (!list.length) {
+      html += '<div style="text-align:center;padding:6px 2px">'+
+        '<div style="width:20px;height:1px;background:#1e2d44;margin:0 auto"></div></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  grid.innerHTML = html;
+  agUpdateDaySection();
+}
+
+// ─────────────────────────────────────────────────────────────
+// VISTA LISTA
+// ─────────────────────────────────────────────────────────────
+function agRenderLista() {
+  var lbl = document.getElementById('ag-periodo-label');
+  if (lbl) lbl.textContent = 'Todas las citas';
+
+  var grid = document.getElementById('ag-cal-grid');
+  if (!grid) return;
+  // Lista necesita display:block, no grid
+  grid.style.display = 'block';
+
+  var hoy   = agTodayStr();
+  var citas = agGet();
+  citas.sort(function(a,b) {
+    return ((a.fecha||'')+(a.hora||'')).localeCompare((b.fecha||'')+(b.hora||''));
+  });
+
+  if (!citas.length) {
+    grid.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:32px;font-size:14px">Sin citas registradas</div>';
+    return;
+  }
+
+  // Agrupar por mes-año
+  var groups = {}, order = [];
+  for (var i=0; i<citas.length; i++) {
+    var ct = citas[i];
+    var key = ct.fecha ? ct.fecha.slice(0,7) : '0000-00';
+    if (!groups[key]) { groups[key]=[]; order.push(key); }
+    groups[key].push(ct);
+  }
+
+  var html = '';
+  for (var j=0; j<order.length; j++) {
+    var key  = order[j];
+    var parts= key.split('-');
+    var isPast = key < hoy.slice(0,7);
+    var label  = AG_MESES[parseInt(parts[1])-1]+' '+parts[0];
+    html += '<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;'+
+            'color:'+(isPast?'#3d5a78':'#ff6d00')+';margin:12px 0 6px;padding:0 2px">'+label+'</div>';
+    var group = groups[key];
+    for (var k=0; k<group.length; k++) {
+      html += agCard(group[k], false);
+    }
+  }
+  grid.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER PRINCIPAL (dispatcher)
+// ─────────────────────────────────────────────────────────────
+function agRender() {
+  // Actualizar tabs de vista
+  var views = ['mes','semana','lista'];
+  for (var i=0; i<views.length; i++) {
+    var btn = document.getElementById('ag-vbtn-'+views[i]);
+    if (!btn) continue;
+    var active = views[i]===_agView;
+    btn.style.background  = active ? '#ff6d00' : 'transparent';
+    btn.style.color       = active ? '#fff' : '#3d5a78';
+    btn.style.borderColor = active ? '#ff6d00' : '#1e2d44';
+  }
+
+  // Ocultar/mostrar la sección del día (solo mes y semana)
+  var daySec = document.getElementById('ag-day-section');
+  if (daySec) daySec.style.display = (_agView==='lista') ? 'none' : 'block';
+
+  // Mostrar/ocultar cabecera de días semana
+  var dowH = document.getElementById('ag-dow-header');
+  if (dowH) dowH.style.display = (_agView==='lista') ? 'none' : 'grid';
+
+  if (_agView==='mes')         agRenderMes();
+  else if (_agView==='semana') agRenderSemana();
+  else                         agRenderLista();
+
+  agRenderProximas();
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAVEGACIÓN
+// ─────────────────────────────────────────────────────────────
+function agNavPrev() {
+  if (_agView==='mes') {
+    _agAnchor = new Date(_agAnchor.getFullYear(), _agAnchor.getMonth()-1, 1);
+  } else if (_agView==='semana') {
+    _agAnchor = new Date(_agAnchor.getFullYear(), _agAnchor.getMonth(), _agAnchor.getDate()-7);
+  } else {
+    // lista: scroll to top / no-op
+    var grid = document.getElementById('ag-cal-grid');
+    if (grid) grid.scrollTop = 0;
+  }
+  agRender();
+}
+
+function agNavNext() {
+  if (_agView==='mes') {
+    _agAnchor = new Date(_agAnchor.getFullYear(), _agAnchor.getMonth()+1, 1);
+  } else if (_agView==='semana') {
+    _agAnchor = new Date(_agAnchor.getFullYear(), _agAnchor.getMonth(), _agAnchor.getDate()+7);
+  }
+  agRender();
+}
+
+function agNavMes(d) { // compat con onclick anterior
+  if (d<0) agNavPrev(); else agNavNext();
+}
+
+function agHoy() {
+  _agAnchor = new Date();
+  _agSelDay = agTodayStr();
+  agRender();
+}
+
+function agSetView(v) {
+  _agView = v;
+  agRender();
+}
+
+// ─────────────────────────────────────────────────────────────
+// SWIPE (iOS nativo-feel)
+// ─────────────────────────────────────────────────────────────
+function agInitSwipe() {
+  var el = document.getElementById('ag-swipe-zone');
+  if (!el || el._swipeInit) return;
+  el._swipeInit = true;
+
+  el.addEventListener('touchstart', function(e) {
+    _agSwipeX = e.touches[0].clientX;
+    _agSwipeY = e.touches[0].clientY;
+    _agSwipeLock = false;
+  }, {passive:true});
+
+  el.addEventListener('touchend', function(e) {
+    if (_agSwipeLock) return;
+    var dx = e.changedTouches[0].clientX - _agSwipeX;
+    var dy = e.changedTouches[0].clientY - _agSwipeY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)*0.8) return;
+    _agSwipeLock = true;
+    if (dx < 0) agNavNext();
+    else         agNavPrev();
+  }, {passive:true});
+}
+
+// ─────────────────────────────────────────────────────────────
+// SECCIÓN DÍA
+// ─────────────────────────────────────────────────────────────
+function agSelDay(ds) {
+  _agSelDay = ds;
+  // En vista semana, si el día está fuera de la semana visible, ajustar ancla
+  if (_agView==='semana') {
+    var ws = agGetWeekStart(_agAnchor);
+    var we = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate()+6);
+    var dt = agParseDate(ds);
+    if (dt < ws || dt > we) _agAnchor = dt;
+  }
+  agRender();
+  // Scroll a la sección del día
+  var sec = document.getElementById('ag-day-section');
+  if (sec && _agView!=='lista') setTimeout(function(){ sec.scrollIntoView({behavior:'smooth',block:'start'}); }, 80);
+}
+
+function agUpdateDaySection() {
+  var sec   = document.getElementById('ag-day-section');
+  var list  = document.getElementById('ag-day-list');
+  var title = document.getElementById('ag-day-title');
+  if (!sec || !list) return;
+
+  if (!_agSelDay || _agView==='lista') { sec.style.display='none'; return; }
+  sec.style.display='block';
+
+  if (title) title.innerHTML = '<i class="ph ph-calendar-blank" style="margin-right:6px"></i>'+agFmtFull(_agSelDay);
+
+  var citas = agGet().filter(function(ct){ return ct.fecha===_agSelDay; });
+  citas.sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
+
+  var html='';
+  for (var i=0; i<citas.length; i++) html += agCard(citas[i], true);
+  html += '<button onclick="agOpenNew(\''+_agSelDay+'\')" style="width:100%;margin-top:8px;padding:10px;'+
+    'border:1.5px dashed rgba(255,109,0,.4);border-radius:10px;background:transparent;'+
+    'color:#ff6d00;font-size:13px;font-weight:700;cursor:pointer">+ Agregar cita aquí</button>';
+  list.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CARD DE UNA CITA
+// ─────────────────────────────────────────────────────────────
+function agCard(ct, compact) {
+  var cfg   = agCfg(ct.tipo);
+  var ahora = new Date();
+  var cdt   = new Date(ct.fecha+'T'+(ct.hora||'00:00'));
+  var mins  = Math.round((cdt-ahora)/60000);
+  var hoy   = agTodayStr();
+
+  var tag = '';
+  if (ct.estado==='completada') {
+    tag = '<span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(0,230,118,.15);color:#00e676;font-weight:800">✓ Completada</span>';
+  } else if (ct.estado==='cancelada') {
+    tag = '<span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(61,90,120,.2);color:#3d5a78;font-weight:800">✗ Cancelada</span>';
+  } else if (mins>0 && mins<=60) {
+    tag = '<span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(255,214,0,.15);color:#ffd600;font-weight:800">⚡ En '+mins+' min</span>';
+  } else if (ct.fecha < hoy) {
+    tag = '<span style="font-size:9px;padding:2px 8px;border-radius:6px;background:rgba(255,23,68,.12);color:#ff5252;font-weight:800">Pasada</span>';
+  }
+
+  var dateStr = ct.fecha ? ct.fecha.split('-').reverse().join('/') : '';
+  var op = ct.estado==='cancelada' ? 'opacity:.5;' : '';
+
+  return '<div onclick="agEditCita(\''+ct.id+'\')" style="'+op+
+    'background:'+cfg.bg+';border:1.5px solid '+cfg.brd+';border-radius:12px;'+
+    'padding:12px 14px;cursor:pointer;margin-bottom:6px">'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
+          '<span style="font-size:15px">'+cfg.icon+'</span>'+
+          '<span style="font-size:13px;font-weight:800;color:#dde8ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(ct.pacNombre||'Sin nombre')+'</span>'+
+        '</div>'+
+        (ct.pacDx ? '<div style="font-size:11px;color:'+cfg.brd+';font-weight:600;margin-bottom:3px">'+escHtml(ct.pacDx)+'</div>' : '')+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+
+          '<span style="font-size:11px;font-weight:700;color:'+cfg.brd+'">🕐 '+(ct.hora||'—')+'</span>'+
+          (!compact ? '<span style="font-size:10px;color:#3d5a78">📅 '+dateStr+'</span>' : '')+
+          (ct.sala ? '<span style="font-size:10px;color:#3d5a78">🏥 '+escHtml(ct.sala)+'</span>' : '')+
+          (ct.duracion ? '<span style="font-size:10px;color:#3d5a78">⏱ '+ct.duracion+' min</span>' : '')+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'+
+        tag+
+        '<span style="font-size:9px;padding:2px 8px;border-radius:6px;color:'+cfg.brd+';font-weight:700;border:1px solid '+cfg.brd+'">'+cfg.lbl+'</span>'+
+      '</div>'+
+    '</div>'+
+    (ct.notas ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:#3d5a78">📝 '+escHtml(ct.notas)+'</div>' : '')+
+  '</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRÓXIMAS CITAS
+// ─────────────────────────────────────────────────────────────
+function agRenderProximas() {
+  var el = document.getElementById('ag-proximas-list');
+  if (!el) return;
+  var hoy   = agTodayStr();
+  var citas = agGet().filter(function(ct){ return ct.fecha>=hoy && ct.estado!=='cancelada'; });
+  citas.sort(function(a,b){ return ((a.fecha||'')+(a.hora||'')).localeCompare((b.fecha||'')+(b.hora||'')); });
+
+  var pend = citas.filter(function(ct){ return ct.estado!=='completada'; });
+  var badge = document.getElementById('agenda-badge');
+  if (badge) { badge.textContent=pend.length; badge.style.display=pend.length?'block':'none'; }
+
+  if (!citas.length) {
+    el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas próximas</div>';
+    return;
+  }
+
+  var groups={}, order=[];
+  for (var i=0; i<citas.length; i++) {
+    var ds=citas[i].fecha;
+    if (!groups[ds]){ groups[ds]=[]; order.push(ds); }
+    groups[ds].push(citas[i]);
+  }
+
+  var html='';
+  for (var j=0; j<order.length; j++) {
+    var ds  = order[j];
+    var dt  = agParseDate(ds);
+    var isH = ds===hoy;
+    html += '<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;'+
+            'color:'+(isH?'#ff6d00':'#3d5a78')+';margin:8px 0 4px">'+
+            (isH?'📍 HOY — ':'')+AG_DIAS[dt.getDay()]+' '+dt.getDate()+' '+AG_MESES3[dt.getMonth()]+'</div>';
+    for (var k=0; k<groups[ds].length; k++) html += agCard(groups[ds][k], false);
+  }
+  el.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────
+// MODAL NUEVA / EDITAR CITA
+// ─────────────────────────────────────────────────────────────
+function agOpenNew(fechaDefault) {
+  _agEditId = null;
+  var ids=['ag-pac-nombre','ag-pac-edad','ag-pac-exp','ag-pac-dx','ag-sala','ag-duracion','ag-notas'];
+  for (var i=0; i<ids.length; i++) { var e=document.getElementById(ids[i]); if(e) e.value=''; }
+  var ds  = fechaDefault || agTodayStr();
+  var fe  = document.getElementById('ag-fecha'); if(fe) fe.value=ds;
+  var he  = document.getElementById('ag-hora');
+  if(he) { var h=new Date(); he.value=String(h.getHours()).padStart(2,'0')+':00'; }
+  var t  =document.getElementById('ag-modal-title'); if(t)  t.textContent='📅 Nueva Cita';
+  var db =document.getElementById('ag-del-btn');     if(db) db.style.display='none';
+  var sb =document.getElementById('ag-save-btn');    if(sb) sb.style.gridColumn='1/-1';
+  var es =document.getElementById('ag-estado-sec');  if(es) es.style.display='none';
+  agSetTipo(null,'cirugia');
+  agSetRemind(null,30);
+  var m=document.getElementById('ag-modal');
+  if(m){ m.style.display='block'; document.body.style.overflow='hidden'; }
+}
+
+function agEditCita(id) {
+  var ct = null;
+  var lista = agGet();
+  for (var i=0; i<lista.length; i++) { if(lista[i].id===id){ ct=lista[i]; break; } }
+  if(!ct) return;
+  _agEditId = id;
+  var sv=function(eid,v){ var e=document.getElementById(eid); if(e) e.value=(v||''); };
+  sv('ag-pac-nombre',ct.pacNombre); sv('ag-pac-edad',ct.pacEdad);
+  sv('ag-pac-exp',ct.pacExp);       sv('ag-pac-dx',ct.pacDx);
+  sv('ag-fecha',ct.fecha);          sv('ag-hora',ct.hora);
+  sv('ag-sala',ct.sala);            sv('ag-duracion',ct.duracion);
+  sv('ag-notas',ct.notas);
+  var t =document.getElementById('ag-modal-title'); if(t)  t.textContent='✏️ Editar Cita';
+  var db=document.getElementById('ag-del-btn');     if(db) db.style.display='block';
+  var sb=document.getElementById('ag-save-btn');    if(sb) sb.style.gridColumn='auto';
+  var es=document.getElementById('ag-estado-sec');  if(es) es.style.display='block';
+  agSetTipo(null, ct.tipo||'cirugia');
+  agSetRemind(null, ct.recordatorio!=null?ct.recordatorio:30);
+  var m=document.getElementById('ag-modal');
+  if(m){ m.style.display='block'; document.body.style.overflow='hidden'; }
+}
+
+function agCloseModal() {
+  var m=document.getElementById('ag-modal'); if(m) m.style.display='none';
+  document.body.style.overflow='';
+}
+
+function agSaveCita() {
+  var gv=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  var nombre=gv('ag-pac-nombre'), fecha=gv('ag-fecha');
+  if(!nombre){ showToast('⚠️ Escribe el nombre del paciente'); return; }
+  if(!fecha) { showToast('⚠️ Selecciona una fecha');           return; }
+  var ct = {
+    id: _agEditId||agUID(), tipo:_agTipoSel,
+    pacNombre:nombre, pacEdad:gv('ag-pac-edad'), pacExp:gv('ag-pac-exp'), pacDx:gv('ag-pac-dx'),
+    fecha:fecha, hora:gv('ag-hora'), sala:gv('ag-sala'), duracion:gv('ag-duracion'),
+    recordatorio:_agRemindSel, notas:gv('ag-notas'),
+    estado:'pendiente', creado:new Date().toISOString()
+  };
+  var lista=agGet();
+  if(_agEditId) {
+    var orig=null;
+    for(var i=0;i<lista.length;i++){ if(lista[i].id===_agEditId){ orig=lista[i]; break; } }
+    if(orig) ct.estado=orig.estado;
+    lista=lista.map(function(x){ return x.id===_agEditId?ct:x; });
+    showToast('✅ Cita actualizada');
+  } else {
+    lista.push(ct);
+    showToast('✅ Cita guardada');
+  }
+  agPut(lista);
+  agCloseModal();
+  agRender();
+  agSchedReminder(ct);
+}
+
+function agDelCita() {
+  if(!_agEditId) return;
+  var _id=_agEditId;
+  showConfirm('¿Eliminar esta cita?','','🗑 Eliminar','#ff1744',function(){
+    agPut(agGet().filter(function(x){ return x.id!==_id; }));
+    agCloseModal(); agRender();
+    showToast('🗑 Cita eliminada');
+  });
+}
+
+function agSetEstado(estado) {
+  if(!_agEditId) return;
+  var _id=_agEditId;
+  agPut(agGet().map(function(x){
+    return x.id===_id ? (function(o){ o.estado=estado; return o; })(Object.assign({},x)) : x;
+  }));
+  agCloseModal(); agRender();
+  showToast(estado==='completada'?'✅ Marcada como completada':'✗ Marcada como cancelada');
+}
+
+function agSetTipo(btn,tipo) {
+  _agTipoSel=tipo;
+  var btns=document.querySelectorAll('#ag-tipo-btns button');
+  for(var i=0;i<btns.length;i++){
+    var bt=btns[i].getAttribute('data-tipo'), cfg=agCfg(bt);
+    if(bt===tipo){ btns[i].style.borderColor=cfg.brd; btns[i].style.background=cfg.bg; btns[i].style.color=cfg.brd; }
+    else         { btns[i].style.borderColor='#1e2d44'; btns[i].style.background='transparent'; btns[i].style.color='#3d5a78'; }
+  }
+}
+
+function agSetRemind(btn,mins) {
+  _agRemindSel=mins;
+  var btns=document.querySelectorAll('#ag-remind-btns button');
+  for(var i=0;i<btns.length;i++){
+    var bm=parseInt(btns[i].getAttribute('data-min'));
+    if(bm===mins){ btns[i].style.borderColor='#ffd600'; btns[i].style.background='rgba(255,214,0,.15)'; btns[i].style.color='#ffd600'; }
+    else         { btns[i].style.borderColor='#1e2d44'; btns[i].style.background='transparent'; btns[i].style.color='#3d5a78'; }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// RECORDATORIOS
+// ─────────────────────────────────────────────────────────────
+function agSchedReminder(ct) {
+  if(!ct.recordatorio||!ct.fecha||!ct.hora) return;
+  if(_agTimers[ct.id]) clearTimeout(_agTimers[ct.id]);
+  var cdt   = new Date(ct.fecha+'T'+ct.hora+':00');
+  var alert = new Date(cdt.getTime()-ct.recordatorio*60000);
+  var ms    = alert.getTime()-Date.now();
+  if(ms<=0||ms>86400000) return;
+  _agTimers[ct.id]=setTimeout(function(){
+    var cfg=agCfg(ct.tipo);
+    var msg=cfg.icon+' '+escHtml(ct.pacNombre||'Paciente')+' — '+(ct.pacDx||ct.tipo)+' a las '+ct.hora;
+    try{ addAlert('info','🔔 Recordatorio: '+msg); }catch(e){}
+    showToast('🔔 '+msg);
+    if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+  },ms);
+}
+
+function agInitReminders() {
+  var lista=agGet();
+  for(var i=0;i<lista.length;i++){ if(lista[i].estado==='pendiente') agSchedReminder(lista[i]); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+function agInit() {
+  _agAnchor = new Date();
+  _agSelDay = agTodayStr();
+  agInitSwipe();
+  agRender();
+}
+
+// ── Hook nav() ──
+(function(){
+  var _orig=window.nav;
+  if(typeof _orig==='function'){
+    window.nav=function(id,btn){
+      _orig(id,btn);
+      if(id==='agenda'){ try{ agInit(); }catch(e){} }
+    };
+  }
+})();
+
+agInitReminders();
+
+</script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -7480,6 +8506,7 @@ function _setPerfilFormOpen(open) {
       setAccessMsg('⚠️ No se pudo validar acceso. Verifica tu conexión.', '#ffd600');
     }
   });
+
 </script>
 
 </body>
