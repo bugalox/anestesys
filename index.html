@@ -158,8 +158,8 @@ select option{background:var(--s1)}
   backdrop-filter:saturate(200%) blur(24px);
   -webkit-backdrop-filter:saturate(200%) blur(24px);
   border-top:1px solid rgba(255,255,255,.06);
-  display:grid;grid-template-columns:repeat(5,1fr);
-  padding:8px 6px;padding-bottom:calc(8px + var(--safe-bottom));
+  display:grid;grid-template-columns:repeat(7,1fr);
+  padding:8px 4px;padding-bottom:calc(8px + var(--safe-bottom));
   flex-shrink:0;position:relative;z-index:50;
   box-shadow:0 -1px 0 rgba(0,0,0,.4);
 }
@@ -1872,6 +1872,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <button class="navbtn" onclick="nav('liq',this)" id="nb-liq">
     <i class="ph-bold ph-drop nav-ico"></i><span class="label">Líquidos</span>
   </button>
+  <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
+    <i class="ph-bold ph-wind nav-ico"></i><span class="label">Ventil.</span>
+  </button>
   <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
     <i class="ph-bold ph-syringe nav-ico"></i><span class="label">Fármacos</span>
   </button>
@@ -1879,69 +1882,14 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <i class="ph-bold ph-warning nav-ico"></i><span class="label">Alertas</span>
     <span class="badge r" id="alert-badge" style="position:absolute;top:2px;right:8px;font-size:9px;padding:1px 5px;display:none">0</span>
   </button>
-  <!-- Botón MÁS -->
-  <button class="navbtn" onclick="navMore()" id="nb-more" style="position:relative">
-    <span id="nb-more-ico" style="display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;height:23px">
-      <span style="display:block;width:14px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
-      <span style="display:block;width:10px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
-      <span style="display:block;width:14px;height:2px;border-radius:2px;background:currentColor;transition:background .18s"></span>
-    </span>
-    <span class="label">Más</span>
-    <!-- Badge combinado de agenda+lab+vent -->
-    <span id="more-badge" style="display:none;position:absolute;top:2px;right:8px;font-size:9px;padding:1px 5px;border-radius:8px;background:#ff6d00;color:#fff;font-weight:800">●</span>
+  <button class="navbtn" onclick="nav('lab',this)" id="nb-lab">
+    <i class="ph-bold ph-test-tube nav-ico"></i><span class="label">Labs</span>
+  </button>
+  <button class="navbtn" onclick="nav('res',this)" id="nb-res">
+    <i class="ph-bold ph-file-text nav-ico"></i><span class="label">Resumen</span>
   </button>
 </nav>
 
-<!-- ══ SHEET "MÁS" ══ -->
-<div id="more-sheet-bg" onclick="navMoreClose()" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(4,6,13,.6);backdrop-filter:blur(4px)"></div>
-<div id="more-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:201;background:#0a0f1c;border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:0 12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.6)">
-  <!-- Handle -->
-  <div style="display:flex;justify-content:center;padding:10px 0 4px">
-    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15)"></div>
-  </div>
-  <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#3d5a78;padding:4px 4px 10px">Secciones</div>
-  <!-- Grid 2x2 de opciones secundarias -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-
-    <!-- Ventilación -->
-    <button onclick="navFromSheet('vent',this)" id="nb-vent" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
-      <i class="ph-bold ph-wind" style="font-size:24px;color:#00e5ff;flex-shrink:0"></i>
-      <div style="text-align:left">
-        <div style="font-size:13px;font-weight:700;color:#dde8ff">Ventil.</div>
-        <div style="font-size:10px;color:#3d5a78">Parámetros</div>
-      </div>
-    </button>
-
-    <!-- Labs -->
-    <button onclick="navFromSheet('lab',this)" id="nb-lab" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
-      <i class="ph-bold ph-test-tube" style="font-size:24px;color:#d500f9;flex-shrink:0"></i>
-      <div style="text-align:left">
-        <div style="font-size:13px;font-weight:700;color:#dde8ff">Labs</div>
-        <div style="font-size:10px;color:#3d5a78">Resultados</div>
-      </div>
-    </button>
-
-    <!-- Resumen -->
-    <button onclick="navFromSheet('res',this)" id="nb-res" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78">
-      <i class="ph-bold ph-file-text" style="font-size:24px;color:#00e676;flex-shrink:0"></i>
-      <div style="text-align:left">
-        <div style="font-size:13px;font-weight:700;color:#dde8ff">Resumen</div>
-        <div style="font-size:10px;color:#3d5a78">PDF / Reporte</div>
-      </div>
-    </button>
-
-    <!-- Agenda -->
-    <button onclick="navFromSheet('agenda',this)" id="nb-agenda" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0f1628;border:1px solid #1e2d44;border-radius:14px;cursor:pointer;transition:all .15s;color:#3d5a78;position:relative">
-      <i class="ph-bold ph-calendar-check" style="font-size:24px;color:#ff6d00;flex-shrink:0"></i>
-      <div style="text-align:left">
-        <div style="font-size:13px;font-weight:700;color:#dde8ff">Agenda</div>
-        <div style="font-size:10px;color:#3d5a78">Citas médicas</div>
-      </div>
-      <span id="agenda-badge" style="display:none;position:absolute;top:8px;right:10px;font-size:9px;padding:1px 6px;border-radius:8px;background:#ff6d00;color:#fff;font-weight:800">0</span>
-    </button>
-
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════════════════════════
      PAGE AGENDA v2
@@ -2047,7 +1995,22 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
           <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Edad</label>
-          <input type="number" id="ag-pac-edad" inputmode="numeric" placeholder="—" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;text-align:center">
+          <div style="display:flex;gap:6px">
+            <input type="number" id="ag-pac-edad" inputmode="numeric" placeholder="—"
+              style="flex:1;min-width:0;padding:11px;font-size:16px;background:#04060d;
+                     border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;
+                     box-sizing:border-box;text-align:center">
+            <select id="ag-pac-edad-unit"
+              style="padding:0 8px;font-size:12px;font-weight:700;background:#04060d;
+                     border:1.5px solid #1e2d44;border-radius:8px;color:#3d5a78;
+                     cursor:pointer;-webkit-appearance:none;text-align:center;width:68px;
+                     flex-shrink:0">
+              <option value="anios" selected>años</option>
+              <option value="meses">meses</option>
+              <option value="semanas">sem.</option>
+              <option value="dias">días</option>
+            </select>
+          </div>
         </div>
         <div>
           <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Expediente</label>
@@ -2287,8 +2250,21 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
               style="width:100%;padding:15px;font-size:15px;font-weight:800;
                      background:linear-gradient(135deg,#00e676,#00c853);
                      color:#04060d;border:none;border-radius:14px;cursor:pointer;
-                     letter-spacing:.3px">
+                     letter-spacing:.3px;margin-bottom:10px">
         ➕ Nuevo Paciente
+      </button>
+
+      <!-- ── Agenda CTA ── -->
+      <button onclick="hideLogin();nav('agenda',document.getElementById('nb-agenda'))"
+              style="width:100%;padding:14px;font-size:14px;font-weight:800;
+                     background:linear-gradient(135deg,rgba(255,109,0,.18),rgba(255,145,0,.12));
+                     border:1.5px solid #ff6d00;border-radius:14px;cursor:pointer;
+                     color:#ff9100;letter-spacing:.3px;
+                     display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="ph-bold ph-calendar-check" style="font-size:18px"></i>
+        Mi Agenda
+        <span id="ls-agenda-badge" style="display:none;background:#ff6d00;color:#fff;
+              font-size:9px;font-weight:900;padding:1px 7px;border-radius:10px">0</span>
       </button>
     </div>
 
@@ -2920,17 +2896,11 @@ window.addEventListener('load', () => {
 function nav(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
-  // Clear any active-sheet highlight from secondary nav buttons
-  var secIds = ['nb-vent','nb-lab','nb-res','nb-agenda'];
-  for (var _i=0; _i<secIds.length; _i++) {
-    var _sb = document.getElementById(secIds[_i]);
+  // Clear active-sheet from any residual state
+  var _secIds = ['nb-vent','nb-lab','nb-res'];
+  for (var _i=0; _i<_secIds.length; _i++) {
+    var _sb = document.getElementById(_secIds[_i]);
     if (_sb) { _sb.classList.remove('active-sheet'); _sb.style.background=''; _sb.style.borderColor=''; }
-  }
-  // Clear nb-more highlight if switching to a primary tab
-  var _primaries = ['monitor','liq','farm','alert'];
-  if (_primaries.indexOf(id) >= 0) {
-    var _mb = document.getElementById('nb-more');
-    if (_mb) _mb.style.color = '';
   }
   var page = document.getElementById('page-'+id);
   if (page) page.classList.add('active');
@@ -7629,118 +7599,6 @@ function _setPerfilFormOpen(open) {
 
 
 // ══ BOTTOMNAV: sheet "Más" ══════════════════════════════════
-var _moreOpen = false;
-var _sheetSecondary = ['vent','lab','res','agenda'];
-
-function navMore() {
-  if (_moreOpen) { navMoreClose(); return; }
-  _moreOpen = true;
-  var bg = document.getElementById('more-sheet-bg');
-  var sh = document.getElementById('more-sheet');
-  if (!bg || !sh) return;
-  bg.style.display = 'block';
-  sh.style.display = 'block';
-  // Slide-up animation
-  sh.style.transform = 'translateY(100%)';
-  sh.style.transition = 'transform .28s cubic-bezier(.32,0,.67,0)';
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      sh.style.transform = 'translateY(0)';
-      sh.style.transition = 'transform .32s cubic-bezier(.22,1,.36,1)';
-    });
-  });
-  // Highlight nb-more
-  var mb = document.getElementById('nb-more');
-  if (mb) mb.style.color = 'var(--cyan)';
-}
-
-function navMoreClose() {
-  if (!_moreOpen) return;
-  _moreOpen = false;
-  var bg = document.getElementById('more-sheet-bg');
-  var sh = document.getElementById('more-sheet');
-  if (sh) {
-    sh.style.transform = 'translateY(100%)';
-    sh.style.transition = 'transform .24s cubic-bezier(.32,0,.67,0)';
-    setTimeout(function(){ sh.style.display = 'none'; sh.style.transform = ''; }, 240);
-  }
-  if (bg) { bg.style.display = 'none'; }
-  // Si ningún secundario está activo, resetear color de nb-more
-  var anyActive = false;
-  for (var i=0; i<_sheetSecondary.length; i++) {
-    if (document.getElementById('nb-'+_sheetSecondary[i]) &&
-        document.getElementById('nb-'+_sheetSecondary[i]).classList.contains('active-sheet')) {
-      anyActive = true; break;
-    }
-  }
-  var mb = document.getElementById('nb-more');
-  if (mb && !anyActive) mb.style.color = '';
-}
-
-function navFromSheet(id, btn) {
-  // Cerrar el sheet
-  navMoreClose();
-  // Quitar active de todos los navbtn primarios
-  document.querySelectorAll('.navbtn').forEach(function(b){ b.classList.remove('active'); });
-  // Quitar active-sheet de todos los secundarios
-  _sheetSecondary.forEach(function(sid){
-    var b = document.getElementById('nb-'+sid);
-    if (b) { b.classList.remove('active-sheet'); b.style.background=''; b.style.borderColor=''; }
-  });
-  // Marcar el seleccionado en el sheet
-  if (btn) {
-    btn.classList.add('active-sheet');
-    btn.style.background = 'rgba(255,109,0,.1)';
-    btn.style.borderColor = '#ff6d00';
-  }
-  // Marcar nb-more como "activo" (tiene una sección secundaria abierta)
-  var mb = document.getElementById('nb-more');
-  if (mb) { mb.style.color = 'var(--cyan)'; }
-  // Navegar a la página
-  nav(id, document.getElementById('nb-'+id) || {classList:{add:function(){},remove:function(){}}});
-  // Si es agenda, llamar agInit
-  if (id === 'agenda') { try { agInit(); } catch(e) {} }
-}
-
-// Swipe down para cerrar el sheet
-(function(){
-  var startY = 0;
-  document.addEventListener('touchstart', function(e){
-    startY = e.touches[0].clientY;
-  }, {passive:true});
-  document.addEventListener('touchend', function(e){
-    if (!_moreOpen) return;
-    var dy = e.changedTouches[0].clientY - startY;
-    if (dy > 60) navMoreClose();
-  }, {passive:true});
-})();
-
-
-
-// ── Online/Offline indicator ──────────────────────────────
-(function(){
-  function _netStatus() {
-    var online = navigator.onLine;
-    var existing = document.getElementById('net-badge');
-    if (!existing && !online) {
-      var badge = document.createElement('div');
-      badge.id = 'net-badge';
-      badge.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);'+
-        'background:#ff1744;color:#fff;font-size:10px;font-weight:800;padding:4px 12px;border-radius:20px;'+
-        'z-index:9000;letter-spacing:.5px;pointer-events:none';
-      badge.textContent = '📶 Sin conexión';
-      document.body.appendChild(badge);
-    } else if (existing && online) {
-      existing.style.background = '#00e676';
-      existing.style.color = '#000';
-      existing.textContent = '✅ Conexión restaurada';
-      setTimeout(function(){ if(existing.parentNode) existing.parentNode.removeChild(existing); }, 2500);
-    }
-  }
-  window.addEventListener('online',  _netStatus);
-  window.addEventListener('offline', _netStatus);
-})();
-
 </script>
 
 
@@ -8157,7 +8015,7 @@ function agCard(ct, compact) {
           '<span style="font-size:15px">'+cfg.icon+'</span>'+
           '<span style="font-size:13px;font-weight:800;color:#dde8ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(ct.pacNombre||'Sin nombre')+'</span>'+
         '</div>'+
-        (ct.pacDx ? '<div style="font-size:11px;color:'+cfg.brd+';font-weight:600;margin-bottom:3px">'+escHtml(ct.pacDx)+'</div>' : '')+
+        (ct.pacDx ? '<div style="font-size:11px;color:'+cfg.brd+';font-weight:600;margin-bottom:3px">'+escHtml(ct.pacDx)+(ct.pacEdad?'<span style="font-size:10px;color:#3d5a78;font-weight:500"> · '+ct.pacEdad+' '+({'anios':'a','meses':'m','semanas':'sem','dias':'d'}[ct.pacEdadUnit]||'a')+'</span>':'')+'</div>' : '')+
         '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+
           '<span style="font-size:11px;font-weight:700;color:'+cfg.brd+'">🕐 '+(ct.hora||'—')+'</span>'+
           (!compact ? '<span style="font-size:10px;color:#3d5a78">📅 '+dateStr+'</span>' : '')+
@@ -8187,6 +8045,8 @@ function agRenderProximas() {
   var pend = citas.filter(function(ct){ return ct.estado!=='completada'; });
   var badge = document.getElementById('agenda-badge');
   if (badge) { badge.textContent=pend.length; badge.style.display=pend.length?'block':'none'; }
+  var lsBadge = document.getElementById('ls-agenda-badge');
+  if (lsBadge) { lsBadge.textContent=pend.length; lsBadge.style.display=pend.length?'inline-block':'none'; }
 
   if (!citas.length) {
     el.innerHTML = '<div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas próximas</div>';
@@ -8242,6 +8102,7 @@ function agEditCita(id) {
   _agEditId = id;
   var sv=function(eid,v){ var e=document.getElementById(eid); if(e) e.value=(v||''); };
   sv('ag-pac-nombre',ct.pacNombre); sv('ag-pac-edad',ct.pacEdad);
+  (function(){ var e=document.getElementById('ag-pac-edad-unit'); if(e) e.value=ct.pacEdadUnit||'anios'; })();
   sv('ag-pac-exp',ct.pacExp);       sv('ag-pac-dx',ct.pacDx);
   sv('ag-fecha',ct.fecha);          sv('ag-hora',ct.hora);
   sv('ag-sala',ct.sala);            sv('ag-duracion',ct.duracion);
@@ -8266,9 +8127,10 @@ function agSaveCita() {
   var nombre=gv('ag-pac-nombre'), fecha=gv('ag-fecha');
   if(!nombre){ showToast('⚠️ Escribe el nombre del paciente'); return; }
   if(!fecha) { showToast('⚠️ Selecciona una fecha');           return; }
+  var edadUnit = (function(){ var e=document.getElementById('ag-pac-edad-unit'); return e?e.value:'anios'; })();
   var ct = {
     id: _agEditId||agUID(), tipo:_agTipoSel,
-    pacNombre:nombre, pacEdad:gv('ag-pac-edad'), pacExp:gv('ag-pac-exp'), pacDx:gv('ag-pac-dx'),
+    pacNombre:nombre, pacEdad:gv('ag-pac-edad'), pacEdadUnit:edadUnit, pacExp:gv('ag-pac-exp'), pacDx:gv('ag-pac-dx'),
     fecha:fecha, hora:gv('ag-hora'), sala:gv('ag-sala'), duracion:gv('ag-duracion'),
     recordatorio:_agRemindSel, notas:gv('ag-notas'),
     estado:'pendiente', creado:new Date().toISOString()
@@ -8509,5 +8371,6 @@ agInitReminders();
 
 </script>
 
+<span id="agenda-badge" style="display:none">0</span>
 </body>
 </html>
