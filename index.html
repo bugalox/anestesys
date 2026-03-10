@@ -1938,7 +1938,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     </div>
 
     <!-- Grid principal con zona de swipe -->
-    <div id="ag-swipe-zone">
+    <div id="ag-swipe-zone" style="touch-action:pan-y">
       <div id="ag-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
     </div>
   </div>
@@ -1957,7 +1957,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       </div>
       <button onclick="agOpenNew(null)" style="background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:10px;color:#fff;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">+ Nueva</button>
     </div>
-    <div id="ag-proximas-list">
+    <div id="ag-proximas-list" style="overflow:visible">
       <div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas registradas</div>
     </div>
   </div>
@@ -8038,6 +8038,7 @@ function agUpdateDaySection() {
     'border:1.5px dashed rgba(255,109,0,.4);border-radius:10px;background:transparent;'+
     'color:#ff6d00;font-size:13px;font-weight:700;cursor:pointer">+ Agregar cita aquí</button>';
   list.innerHTML = html;
+  setTimeout(function(){ try{ sec.scrollIntoView({behavior:"smooth",block:"nearest"}); }catch(e){} },60);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -8261,10 +8262,16 @@ function agSchedReminder(ct) {
   var ms    = alert.getTime()-Date.now();
   if(ms<=0||ms>86400000) return;
   _agTimers[ct.id]=setTimeout(function(){
-    var cfg=agCfg(ct.tipo);
-    var msg=cfg.icon+' '+escHtml(ct.pacNombre||'Paciente')+' — '+(ct.pacDx||ct.tipo)+' a las '+ct.hora;
-    try{ addAlert('info','🔔 Recordatorio: '+msg); }catch(e){}
-    showToast('🔔 '+msg);
+    var cfg  = agCfg(ct.tipo);
+    var pacN = ct.pacNombre||'Paciente';
+    var msgS = pacN+' - '+(ct.pacDx||ct.tipo);
+    var msgB = 'Cita a las '+ct.hora+(ct.sala?' | '+ct.sala:'');
+    if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+      try{ new Notification('AnesteSys - Recordatorio',{body:msgS+'\n'+msgB,tag:'ag-'+ct.id,requireInteraction:false}); }catch(e){}
+    }
+    var icon = cfg ? (cfg.icon||'') : '';
+    try{ addAlert('info','Recordatorio: '+icon+' '+msgS); }catch(e){}
+    showToast('Recordatorio: '+msgS+' a las '+ct.hora);
     if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
   },ms);
 }
@@ -8296,6 +8303,16 @@ function agInit() {
 })();
 
 agInitReminders();
+
+(function(){
+  if(typeof Notification!=='undefined'&&Notification.permission==='default'){
+    setTimeout(function(){
+      Notification.requestPermission().then(function(p){
+        if(p==='granted') try{showToast('Notificaciones activadas');}catch(e){}
+      }).catch(function(){});
+    },2500);
+  }
+})();
 
 </script>
 
