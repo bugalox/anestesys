@@ -8262,16 +8262,17 @@ function agSchedReminder(ct) {
   var ms    = alert.getTime()-Date.now();
   if(ms<=0||ms>86400000) return;
   _agTimers[ct.id]=setTimeout(function(){
-    var cfg  = agCfg(ct.tipo);
-    var pacN = ct.pacNombre||'Paciente';
-    var msgS = pacN+' - '+(ct.pacDx||ct.tipo);
-    var msgB = 'Cita a las '+ct.hora+(ct.sala?' | '+ct.sala:'');
+    var cfg  = agCfg(ct.tipo||'otro');
+    var pacN = (ct.pacNombre && ct.pacNombre!=='undefined') ? ct.pacNombre : 'Paciente';
+    var tipL = (cfg && cfg.lbl) ? cfg.lbl : (ct.tipo||'Cita');
+    var msgS = pacN+' - '+(ct.pacDx||tipL);
+    var msgB = 'Cita a las '+(ct.hora||'--')+(ct.sala?' | '+ct.sala:'');
+    var icon = (cfg && cfg.icon) ? cfg.icon : '';
     if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
-      try{ new Notification('AnesteSys - Recordatorio',{body:msgS+'\n'+msgB,tag:'ag-'+ct.id,requireInteraction:false}); }catch(e){}
+      try{ new Notification('AnesteSys - Recordatorio',{body:pacN+'\n'+msgB,tag:'ag-'+ct.id,requireInteraction:false}); }catch(e){}
     }
-    var icon = cfg ? (cfg.icon||'') : '';
     try{ addAlert('info','Recordatorio: '+icon+' '+msgS); }catch(e){}
-    showToast('Recordatorio: '+msgS+' a las '+ct.hora);
+    showToast('Recordatorio: '+msgS+' a las '+(ct.hora||'--'));
     if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
   },ms);
 }
