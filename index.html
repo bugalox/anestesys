@@ -47,7 +47,7 @@ body{
   background:linear-gradient(90deg,var(--cyan),var(--purple),var(--orange))}
 .brand{font-size:18px;font-weight:800;color:var(--cyan);letter-spacing:-0.5px}
 .brand span{color:var(--orange)}
-.topbar-clock{font-size:22px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;font-family:'Menlo',monospace}
+.topbar-clock{font-size:11px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;font-family:'Menlo',monospace;line-height:1.2;text-align:right;white-space:nowrap;min-width:0;max-width:62px;overflow:hidden}
 .topbar-info{text-align:center;font-size:10px;color:var(--muted);line-height:1.4}
 .topbar-info b{color:var(--white);font-size:11px}
 
@@ -494,12 +494,12 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <span id="tb-cat" style="font-size:11px;margin-right:3px" title="Privado">🔒</span><b id="tb-nombre">✏️ Nuevo Paciente</b><br>
     <span id="tb-sub" style="font-size:9px">Toca para editar</span>
   </div>
-  <div style="display:flex;align-items:center;gap:6px">
+  <div style="display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden">
     <button onclick="loginAndNew()" style="background:rgba(0,229,255,.1);border:1px solid #00e5ff;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Nuevo paciente">➕</button>
     <button onclick="openSaveModal()" style="background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:8px;color:#00e676;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Guardar caso">💾</button>
     <button onclick="toggleBigScreen()" style="background:rgba(0,229,255,.08);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Pantalla grande" id="btn-bigscreen">⛶</button>
     <button onclick="showLogin()" style="background:rgba(0,229,255,.1);border:1px solid #1e2d44;border-radius:8px;color:#00e5ff;font-size:11px;font-weight:800;padding:6px 11px;cursor:pointer" title="Historial de casos">📁</button>
-    <div class="topbar-clock" id="clock">00:00:00</div>
+    <div class="topbar-clock" id="clock" style="flex-shrink:0">00:00:00</div>
   </div>
 </div>
 
@@ -2452,6 +2452,24 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
           <i class="ph ph-hospital" style="margin-right:5px"></i>Hospital
         </button>
       </div>
+      <!-- Buscador de pacientes -->
+      <div style="position:relative;margin-bottom:10px">
+        <i class="ph ph-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:#3d5a78;pointer-events:none"></i>
+        <input type="text" id="hist-search"
+          oninput="histSearch(this.value)"
+          placeholder="Buscar por nombre, diagnóstico, cirugía..."
+          style="width:100%;padding:11px 14px 11px 36px;font-size:14px;
+                 background:#04060d;border:1.5px solid #1e2d44;border-radius:12px;
+                 color:#dde8ff;box-sizing:border-box;outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='#00e5ff'"
+          onblur="this.style.borderColor='#1e2d44'">
+        <button id="hist-search-clear" onclick="histSearchClear()"
+          style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);
+                 background:none;border:none;color:#3d5a78;font-size:16px;cursor:pointer;
+                 padding:4px;line-height:1">✕</button>
+      </div>
+      <div id="hist-search-info" style="display:none;font-size:10px;color:#3d5a78;margin-bottom:8px;text-align:right"></div>
+
       <div id="historial-list">
         <div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px">Cargando...</div>
       </div>
@@ -5765,6 +5783,24 @@ function confirmCancel() {
 // HISTORIAL DE CASOS
 // ═══════════════════════════════════════════════════════════════
 var _histTab = 'privado';
+var _histSearch = '';
+function histSearch(val) {
+  _histSearch = (val||'').trim().toLowerCase();
+  var clr = document.getElementById('hist-search-clear');
+  if (clr) clr.style.display = _histSearch ? 'block' : 'none';
+  refreshHistorial();
+}
+function histSearchClear() {
+  _histSearch = '';
+  var inp = document.getElementById('hist-search');
+  if (inp) inp.value = '';
+  var clr = document.getElementById('hist-search-clear');
+  if (clr) clr.style.display = 'none';
+  var info = document.getElementById('hist-search-info');
+  if (info) info.style.display = 'none';
+  refreshHistorial();
+}
+
 function setHistTab(tab) {
   _histTab = tab;
   var tPriv = document.getElementById('hist-tab-priv');
@@ -5794,6 +5830,27 @@ function refreshHistorial() {
   var el = document.getElementById('historial-list');
   if (!el) return;
   var casos = getCasos(_histTab);
+  // Filtrar por búsqueda
+  if (_histSearch) {
+    casos = casos.filter(function(cs) {
+      var hay = [
+        cs.pac && cs.pac.nombre,
+        cs.pac && cs.pac.dx,
+        cs.pac && cs.pac.cx,
+        cs.pac && cs.pac.exp,
+        cs.fecha
+      ].map(function(v){ return (v||'').toLowerCase(); }).join(' ');
+      return hay.indexOf(_histSearch) >= 0;
+    });
+    var info = document.getElementById('hist-search-info');
+    if (info) {
+      info.style.display = 'block';
+      info.textContent = casos.length + ' resultado' + (casos.length !== 1 ? 's' : '') + ' para "' + _histSearch + '"';
+    }
+  } else {
+    var info = document.getElementById('hist-search-info');
+    if (info) info.style.display = 'none';
+  }
   // Auto-switch to the tab that has cases if current is empty
   if(!casos.length){
     var _xalt=_histTab==='privado'?'hospital':'privado';
