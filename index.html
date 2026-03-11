@@ -8090,9 +8090,10 @@ function agSchedReminder(ct) {
   var cdt   = new Date(ct.fecha+'T'+ct.hora+':00');
   var alertT= new Date(cdt.getTime()-ct.recordatorio*60000);
   var ms    = alertT.getTime()-Date.now();
-  if(ms<=0||ms>86400000) return;
+  // Ya pasó
+  if(ms<=0) return;
 
-  // ── Enviar al Service Worker (notificacion aunque app este cerrada) ──
+  // ── Siempre enviar al SW (guarda en IndexedDB, sobrevive cierre de app) ──
   if(navigator.serviceWorker) {
     navigator.serviceWorker.ready.then(function(reg) {
       var target = reg.active || navigator.serviceWorker.controller;
@@ -8102,7 +8103,9 @@ function agSchedReminder(ct) {
     }).catch(function(){});
   }
 
-  // ── Fallback setTimeout (cuando app esta abierta) ──
+  // ── setTimeout solo si la cita es dentro de 24h (límite del browser) ──
+  if(ms > 86400000) return; // para citas >24h el SW maneja via IndexedDB al arrancar
+
   _agTimers[ct.id]=setTimeout(function(){
     var cfg=(typeof agCfg==='function')?agCfg(ct.tipo||'otro'):{};
     var pacN=(ct.pacNombre&&ct.pacNombre!=='undefined')?ct.pacNombre:'Paciente';
