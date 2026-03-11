@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// AnesteSys — Service Worker v1.0
+// AnesteSys — Service Worker v1.1
 // Maneja notificaciones en background (app cerrada)
 // ═══════════════════════════════════════════════════════════
 
@@ -19,14 +19,12 @@ self.addEventListener('activate', function(e) {
 self.addEventListener('message', function(e) {
   if (!e.data) return;
 
-  // Programar recordatorio
   if (e.data.type === 'SCHEDULE_REMINDER') {
     var ct  = e.data.cita;
-    var ms  = e.data.ms;  // milisegundos hasta disparar
+    var ms  = e.data.ms;
     if (!ct || ms <= 0) return;
 
-    // Guardar en IndexedDB para sobrevivir cierre de app
-    var req = self.indexedDB || indexedDB;
+    // Guardar en IndexedDB
     try {
       var dbReq = indexedDB.open('ag_reminders', 1);
       dbReq.onupgradeneeded = function(ev) {
@@ -43,24 +41,20 @@ self.addEventListener('message', function(e) {
       };
     } catch(err) {}
 
-    // setTimeout dentro del SW (funciona mientras el SW está activo)
     setTimeout(function() {
       _fireNotification(ct);
       _deleteReminder(ct.id);
     }, ms);
   }
 
-  // Cancelar recordatorio
   if (e.data.type === 'CANCEL_REMINDER') {
     _deleteReminder(e.data.citaId);
   }
 });
 
-// ── Al iniciar SW: revisar recordatorios pendientes en IndexedDB ──
+// ── Al activar SW: revisar recordatorios pendientes en IndexedDB ──
 self.addEventListener('activate', function(e) {
-  e.waitUntil(
-    _checkPendingReminders()
-  );
+  e.waitUntil(_checkPendingReminders());
 });
 
 function _checkPendingReminders() {
@@ -80,17 +74,14 @@ function _checkPendingReminders() {
           items.forEach(function(item) {
             var ms = item.fireAt - now;
             if (ms <= 0) {
-              // Ya pasó — disparar inmediatamente
               _fireNotification(item.cita);
               str.delete(item.id);
             } else if (ms < 86400000) {
-              // Aún vigente — reprogramar
               setTimeout(function() {
                 _fireNotification(item.cita);
                 _deleteReminder(item.id);
               }, ms);
             } else {
-              // Muy lejano — eliminar (se reprogramará cuando abra la app)
               str.delete(item.id);
             }
           });
@@ -104,20 +95,60 @@ function _checkPendingReminders() {
 
 function _fireNotification(ct) {
   if (!ct) return;
-  var tipos = {
+
+  var iconosTipo = {
+    cirugia:     '🔪',
+    consulta:    '🩺',
+    seguimiento: '📋',
+    urgencia:    '🚨',
+    revision:    '🔬',
+    otro:        '📌'
+  };
+  var nombresTipo = {
     cirugia:'Cirugía', consulta:'Consulta', seguimiento:'Seguimiento',
     urgencia:'Urgencia', revision:'Revisión', otro:'Cita'
   };
-  var pacN = (ct.pacNombre && ct.pacNombre !== 'undefined') ? ct.pacNombre : 'Paciente';
-  var tipo = tipos[ct.tipo] || ct.tipo || 'Cita';
-  var body = (ct.pacDx || tipo) + '\nCita a las ' + (ct.hora||'--') + (ct.sala?' | '+ct.sala:'');
 
-  self.registration.showNotification('AnesteSys — Recordatorio', {
-    body:              pacN + '\n' + body,
-    tag:               'ag-' + ct.id,
-    requireInteraction: false,
-    vibrate:           [200, 100, 200, 100, 200],
-    data:              { citaId: ct.id }
+  var pacN  = (ct.pacNombre && ct.pacNombre !== 'undefined') ? ct.pacNombre : 'Paciente';
+  var tipo  = nombresTipo[ct.tipo] || ct.tipo || 'Cita';
+  var icono = iconosTipo[ct.tipo]  || '📅';
+  var hora  = ct.hora  || '--:--';
+  var sala  = ct.sala  ? ' · ' + ct.sala : '';
+  var dx    = ct.pacDx ? ct.pacDx : tipo;
+
+  // Calcular tiempo restante desde ahora hasta la cita
+  var tiempoRestante = '';
+  if (ct.fecha && ct.hora) {
+    var diff = new Date(ct.fecha + 'T' + ct.hora + ':00').getTime() - Date.now();
+    if (diff > 0) {
+      var mins = Math.round(diff / 60000);
+      if (mins < 60)        tiempoRestante = 'en ' + mins + ' min';
+      else if (mins < 120)  tiempoRestante = 'en 1 hora';
+      else                  tiempoRestante = 'en ' + Math.round(mins/60) + ' horas';
+    }
+  }
+
+  // Título: tipo + tiempo restante
+  var title = icono + ' ' + tipo + (tiempoRestante ? '  —  ' + tiempoRestante : '');
+
+  // Cuerpo: paciente + dx + hora + sala
+  var body  = '👤 ' + pacN
+            + '\n' + dx
+            + '\n🕐 ' + hora + sala;
+
+  if (ct.pacEdad) {
+    var unidad = ct.pacEdadUnit === 'meses' ? 'm' : ct.pacEdadUnit === 'dias' ? 'd' : ct.pacEdadUnit === 'semanas' ? 'sem' : 'a';
+    body += '  ·  ' + ct.pacEdad + ' ' + unidad;
+  }
+
+  self.registration.showNotification(title, {
+    body:               body,
+    icon:               '/anestesys/icon.svg',
+    badge:              '/anestesys/icon.svg',
+    tag:                'ag-' + ct.id,
+    requireInteraction: true,
+    vibrate:            [300, 100, 300, 100, 300, 200, 500],
+    data:               { citaId: ct.id, url: 'https://bugalox.github.io/anestesys/' }
   });
 }
 
