@@ -5769,7 +5769,8 @@ window.addEventListener('load', function() {
   lsMostrarPerfil(u);
   if (casos.length > 0) { restoreState(casos[0]); }
   refreshHistorial();
-  showLogin(); setAccessUI(false);
+  // NO forzar showLogin aquí — Firebase onAuthStateChanged maneja el estado de auth
+  // Si no hay sesión, Firebase llamará showLogin() automáticamente
 });
 
 
