@@ -2184,21 +2184,21 @@ if("serviceWorker"in navigator){window.addEventListener("load",function(){naviga
               style="width:100%;padding:15px;font-size:15px;font-weight:800;
                      background:linear-gradient(135deg,#00e676,#00c853);
                      color:#04060d;border:none;border-radius:14px;cursor:pointer;
-                     letter-spacing:.3px">
+                     letter-spacing:.3px;margin-bottom:10px">
         ➕ Nuevo Paciente
       </button>
 
-      <!-- ── Mi Agenda CTA ── -->
-      <button onclick="nav('agenda', document.getElementById('nb-agenda'))"
-              style="width:100%;padding:14px;font-size:15px;font-weight:800;
-                     background:linear-gradient(135deg,rgba(255,109,0,.15),rgba(255,145,0,.1));
+      <!-- ── Agenda CTA ── -->
+      <button onclick="hideLogin();nav('agenda',document.getElementById('nb-agenda'))"
+              style="width:100%;padding:14px;font-size:14px;font-weight:800;
+                     background:linear-gradient(135deg,rgba(255,109,0,.18),rgba(255,145,0,.12));
                      border:1.5px solid #ff6d00;border-radius:14px;cursor:pointer;
-                     color:#ff9100;letter-spacing:.3px;position:relative;margin-top:10px">
-        📅 Mi Agenda
-        <span id="ls-agenda-badge"
-              style="display:none;position:absolute;top:10px;right:14px;
-                     background:#ff6d00;color:#fff;border-radius:10px;
-                     font-size:10px;font-weight:800;padding:2px 7px"></span>
+                     color:#ff9100;letter-spacing:.3px;
+                     display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="ph-bold ph-calendar-check" style="font-size:18px"></i>
+        Mi Agenda
+        <span id="ls-agenda-badge" style="display:none;background:#ff6d00;color:#fff;
+              font-size:9px;font-weight:900;padding:1px 7px;border-radius:10px">0</span>
       </button>
     </div>
 
