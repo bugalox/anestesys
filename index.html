@@ -7269,6 +7269,14 @@ function histSearchClear() {
   window.addEventListener('offline',function(){showNetBadge('Sin conexion','#ff1744');});
   window.addEventListener('online', function(){showNetBadge('Conexion restaurada','#00c853');});
 })();
+
+// ── Exponer funciones al scope global (necesario para Firebase module) ──
+window.showLogin    = showLogin;
+window.hideLogin    = hideLogin;
+window.setAccessUI  = setAccessUI;
+window.showToast    = showToast;
+window.addAlert     = addAlert;
+window.refreshHistorial = refreshHistorial;
 </script>
 
 <div class="page" id="page-agenda">
