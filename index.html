@@ -1854,7 +1854,10 @@ if("serviceWorker"in navigator){window.addEventListener("load",function(){naviga
       <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#00e5ff">
         <i class="ph ph-clock-countdown" style="margin-right:5px"></i>Próximas Citas
       </div>
-      <button onclick="agOpenNew(null)" style="background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:10px;color:#fff;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">+ Nueva</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="agTestNotification()" title="Probar notificaciones" style="background:rgba(255,214,0,.12);border:1.5px solid #ffd600;border-radius:10px;color:#ffd600;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer">🔔 Test</button>
+        <button onclick="agOpenNew(null)" style="background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:10px;color:#fff;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">+ Nueva</button>
+      </div>
     </div>
     <div id="ag-proximas-list" style="overflow:visible">
       <div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas registradas</div>
@@ -5924,11 +5927,10 @@ function lsMostrarPerfil(u) {
   var savedEl = document.getElementById('ls-perfil-guardado');
   var nomEl   = document.getElementById('ls-nombre-display');
   var instEl  = document.getElementById('ls-inst-display');
-  if (!u || !u.nombre) {
-    if (formEl)  formEl.style.display  = 'block';
+  if (!u || !u.nombre || !window.__ACCESS_GRANTED) {
+    if (formEl)  formEl.style.display  = 'none';
     if (savedEl) savedEl.style.display = 'none';
-    // Auto-expand form when no profile yet
-    setTimeout(function() { _setPerfilFormOpen(true); }, 50);
+    if (!u || !u.nombre) setTimeout(function() { _setPerfilFormOpen(true); }, 50);
   } else {
     if (nomEl)   nomEl.textContent  = u.nombre;
     if (instEl) instEl.textContent = u.inst || '';
@@ -8091,12 +8093,13 @@ function agSchedReminder(ct) {
   if(ms<=0||ms>86400000) return;
 
   // ── Enviar al Service Worker (notificacion aunque app este cerrada) ──
-  if(navigator.serviceWorker && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'SCHEDULE_REMINDER',
-      cita: ct,
-      ms:   ms
-    });
+  if(navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      var target = reg.active || navigator.serviceWorker.controller;
+      if(target) {
+        target.postMessage({ type: 'SCHEDULE_REMINDER', cita: ct, ms: ms });
+      }
+    }).catch(function(){});
   }
 
   // ── Fallback setTimeout (cuando app esta abierta) ──
@@ -8164,6 +8167,59 @@ agInitReminders();
   }
 })();
 
+// ─── TEST DE NOTIFICACIONES ───────────────────────────────────────────
+window.agTestNotification = function() {
+  if(typeof Notification === 'undefined') {
+    try{showToast('❌ Notificaciones no soportadas');}catch(e){alert('No soportado');}
+    return;
+  }
+  if(Notification.permission === 'denied') {
+    try{showToast('🔕 Bloqueadas — actívalas en ajustes del browser');}catch(e){}
+    return;
+  }
+  var doTest = function() {
+    var testCita = {
+      id: 'test-' + Date.now(),
+      tipo: 'cirugia',
+      pacNombre: 'Paciente Prueba',
+      pacDx: 'Test de Notificación',
+      fecha: new Date().toISOString().slice(0,10),
+      hora: new Date(Date.now()+5000).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false}),
+      sala: 'Qx 1',
+      recordatorio: 0
+    };
+    if(navigator.serviceWorker) {
+      navigator.serviceWorker.ready.then(function(reg) {
+        var target = reg.active || navigator.serviceWorker.controller;
+        if(target) {
+          target.postMessage({ type: 'SCHEDULE_REMINDER', cita: testCita, ms: 5000 });
+          try{showToast('🔔 Notificación de prueba en 5 segundos (SW)');}catch(e){}
+          return;
+        }
+        // fallback directo
+        setTimeout(function(){
+          try{ new Notification('AnesteSys — Prueba',{body:'Paciente Prueba\nTest exitoso ✅',tag:'test-ag',requireInteraction:false}); }catch(e){}
+        }, 5000);
+        try{showToast('🔔 Test en 5 seg (directa)');}catch(e){}
+      }).catch(function(){
+        try{showToast('❌ SW no disponible');}catch(e){}
+      });
+    } else {
+      setTimeout(function(){
+        try{new Notification('AnesteSys — Prueba',{body:'Sin SW — OK',tag:'test'});}catch(e){}
+      },5000);
+      try{showToast('🔔 Test en 5 seg');}catch(e){}
+    }
+  };
+  if(Notification.permission === 'granted') {
+    doTest();
+  } else {
+    Notification.requestPermission().then(function(p){
+      if(p==='granted') doTest();
+      else try{showToast('❌ Permiso denegado — activa notificaciones');}catch(e){}
+    });
+  }
+};
 
 </script>
 
