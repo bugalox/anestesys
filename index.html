@@ -2511,6 +2511,15 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
 
 <script>
 
+// ── Service Worker registration (solo en producción) ──────
+if('serviceWorker' in navigator && location.hostname === 'bugalox.github.io') {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/anestesys/sw.js', { scope: '/anestesys/' })
+      .then(function(reg) { window._swReg = reg; })
+      .catch(function(e) { console.warn('SW registro falló:', e); });
+  });
+}
+
 // ═══════════════════════════════════════════════
 // ACCESS FLAG (bloqueo total)
 window.__ACCESS_GRANTED = false;
