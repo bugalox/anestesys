@@ -8086,42 +8086,47 @@ function agSetRemind(btn,mins) {
 // ─────────────────────────────────────────────────────────────
 function agSchedReminder(ct) {
   if(!ct.recordatorio||!ct.fecha||!ct.hora) return;
-  if(_agTimers[ct.id]) clearTimeout(_agTimers[ct.id]);
-  var cdt   = new Date(ct.fecha+'T'+ct.hora+':00');
-  var alertT= new Date(cdt.getTime()-ct.recordatorio*60000);
-  var ms    = alertT.getTime()-Date.now();
-  // Ya pasó
-  if(ms<=0) return;
 
-  // ── Siempre enviar al SW (guarda en IndexedDB, sobrevive cierre de app) ──
+  // Calcular ms con validación estricta
+  var cdt = new Date(ct.fecha+'T'+ct.hora+':00');
+  if(isNaN(cdt.getTime())) return; // fecha/hora inválida
+  var alertT = new Date(cdt.getTime() - ct.recordatorio*60000);
+  var ms = alertT.getTime() - Date.now();
+  if(!isFinite(ms)||ms<=0) return; // ya pasó o inválido
+
+  // Limpiar timer anterior si existe
+  if(_agTimers[ct.id]) clearTimeout(_agTimers[ct.id]);
+
+  // ── Siempre enviar al SW (persiste en IndexedDB) ──
   if(navigator.serviceWorker) {
     navigator.serviceWorker.ready.then(function(reg) {
       var target = reg.active || navigator.serviceWorker.controller;
-      if(target) {
-        target.postMessage({ type: 'SCHEDULE_REMINDER', cita: ct, ms: ms });
-      }
+      if(target) target.postMessage({ type:'SCHEDULE_REMINDER', cita:ct, ms:ms });
     }).catch(function(){});
   }
 
-  // ── setTimeout solo si la cita es dentro de 24h (límite del browser) ──
-  if(ms > 86400000) return; // para citas >24h el SW maneja via IndexedDB al arrancar
+  // ── setTimeout local SOLO para citas dentro de 30 min ──
+  // Para tiempos mayores el SW maneja via IndexedDB
+  if(ms > 1800000) return;
 
-  _agTimers[ct.id]=setTimeout(function(){
-    var cfg=(typeof agCfg==='function')?agCfg(ct.tipo||'otro'):{};
-    var pacN=(ct.pacNombre&&ct.pacNombre!=='undefined')?ct.pacNombre:'Paciente';
-    var tipL=(cfg&&cfg.lbl)?cfg.lbl:(ct.tipo||'Cita');
-    var msgS=pacN+' - '+(ct.pacDx||tipL);
-    var msgB='Cita a las '+(ct.hora||'--')+(ct.sala?' | '+ct.sala:'');
-    var icon=(cfg&&cfg.icon)?cfg.icon:'';
+  _agTimers[ct.id] = setTimeout(function(){
+    var cfg  = (typeof agCfg==='function') ? agCfg(ct.tipo||'otro') : {};
+    var pacN = (ct.pacNombre&&ct.pacNombre!=='undefined') ? ct.pacNombre : 'Paciente';
+    var tipL = (cfg&&cfg.lbl) ? cfg.lbl : (ct.tipo||'Cita');
+    var msgS = pacN+' - '+(ct.pacDx||tipL);
+    var icon = (cfg&&cfg.icon) ? cfg.icon : '';
+    var msgB = 'Cita a las '+(ct.hora||'--')+(ct.sala?' | '+ct.sala:'');
+    // Notificación directa (app en primer plano)
     if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
-      try{new Notification('AnesteSys - Recordatorio',{body:pacN+'\n'+msgB,tag:'ag-'+ct.id,requireInteraction:false});}catch(e){}
+      try{ new Notification((icon?icon+' ':'')+(cfg&&cfg.lbl?cfg.lbl:'Recordatorio'),{
+        body: pacN+'\n'+msgB, tag:'ag-'+ct.id, requireInteraction:false
+      }); }catch(e){}
     }
-    try{addAlert('info','Recordatorio: '+icon+' '+msgS);}catch(e){}
-    showToast('Recordatorio: '+msgS+' a las '+(ct.hora||'--'));
-    if(navigator.vibrate)navigator.vibrate([200,100,200,100,200]);
-  },ms);
+    try{ addAlert('info','Recordatorio: '+icon+' '+msgS); }catch(e){}
+    showToast('🔔 Recordatorio: '+msgS+' — '+msgB);
+    if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+  }, ms);
 }
-
 function agInitReminders() {
   var lista=agGet();
   for(var i=0;i<lista.length;i++){ if(lista[i].estado==='pendiente') agSchedReminder(lista[i]); }
@@ -8148,7 +8153,12 @@ function agInit() {
   }
 })();
 
-agInitReminders();
+// Inicializar recordatorios DESPUÉS de que el SW esté activo
+if(navigator.serviceWorker) {
+  navigator.serviceWorker.ready.then(function(){ agInitReminders(); }).catch(function(){ agInitReminders(); });
+} else {
+  agInitReminders();
+}
 
 (function(){
   if(typeof Notification!=='undefined'&&Notification.permission==='default'){
