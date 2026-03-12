@@ -2137,7 +2137,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       </div>
 
       <!-- ── Nuevo Paciente CTA ── -->
-      <button onclick="nav('agenda',null)"
+      <button onclick="irAgenda()"
               id="nb-agenda"
               style="width:100%;padding:13px;font-size:14px;font-weight:800;
                      background:rgba(255,109,0,.12);border:1.5px solid #ff6d00;
@@ -8231,6 +8231,22 @@ window.agTestNotification = function() {
     });
   }
 };
+
+// ── Navegar a Agenda desde Mi Perfil (sin navbtn) ──
+function irAgenda() {
+  // Cerrar login-screen si está abierto
+  var ls = document.getElementById('login-screen');
+  if (ls) ls.style.display = 'none';
+  document.body.style.overflow = '';
+  // Activar página agenda
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  var pa = document.getElementById('page-agenda');
+  if (pa) pa.classList.add('active');
+  // Desmarcar todos los navbtn y no marcar ninguno (agenda no está en el nav)
+  document.querySelectorAll('.navbtn').forEach(function(b){ b.classList.remove('active'); });
+  window.scrollTo(0,0);
+  try { agRender(); } catch(e) {}
+}
 
 </script>
 <script type="module">
