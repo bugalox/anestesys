@@ -7984,11 +7984,21 @@ function agSaveCita() {
     showToast('✅ Cita guardada');
   }
   agPut(lista);
+  // Cancelar y reprogramar ANTES de cerrar el modal (ct aún en scope limpio)
+  agCancelReminder(ct.id);
+  (function(cita) {
+    setTimeout(function() {
+      console.log('[Agenda] agSchedReminder para:', cita.id, 'recordatorio:', cita.recordatorio, 'fecha:', cita.fecha, 'hora:', cita.hora);
+      agSchedReminder(cita);
+      // Verificar qué quedó en ag_sched
+      try {
+        var s = JSON.parse(localStorage.getItem('ag_sched') || '{}');
+        console.log('[Agenda] ag_sched tras guardar:', JSON.stringify(s[cita.id]));
+      } catch(e) {}
+    }, 150);
+  })(ct);
   agCloseModal();
   agRender();
-  // Cancelar recordatorio anterior en el SW antes de reprogramar
-  agCancelReminder(ct.id);
-  setTimeout(function(){ agSchedReminder(ct); }, 150);
 }
 
 function agDelCita() {
@@ -8042,13 +8052,23 @@ var _agFired = {};
 
 // ── Registrar recordatorio: guarda en SW + marca hora de disparo en localStorage ──
 function agSchedReminder(ct) {
-  if(!ct.recordatorio || !ct.fecha || !ct.hora) return;
+  if(!ct.recordatorio || !ct.fecha || !ct.hora) {
+    console.log('[Agenda] agSchedReminder: salió por guard — recordatorio:', ct.recordatorio, 'fecha:', ct.fecha, 'hora:', ct.hora);
+    return;
+  }
 
   var cdt = new Date(ct.fecha + 'T' + ct.hora + ':00');
-  if(isNaN(cdt.getTime())) return;
+  if(isNaN(cdt.getTime())) {
+    console.log('[Agenda] agSchedReminder: fecha inválida:', ct.fecha, ct.hora);
+    return;
+  }
   var alertT = new Date(cdt.getTime() - ct.recordatorio * 60000);
   var ms = alertT.getTime() - Date.now();
-  if(!isFinite(ms) || ms <= 0) return;
+  console.log('[Agenda] agSchedReminder: ms calculado =', ms, '| fireAt:', new Date(Date.now()+ms).toLocaleTimeString());
+  if(!isFinite(ms) || ms <= 0) {
+    console.log('[Agenda] agSchedReminder: ms <= 0, ya pasó el momento de alerta');
+    return;
+  }
 
   // Persistir fireAt en localStorage para que el polling lo detecte
   try {
