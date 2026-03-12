@@ -2872,6 +2872,12 @@ function tick() {
   _tickIsquemia(now);
   // ── PANTALLA GRANDE ──
   if(_bigScreenOn) updateBigScreen();
+
+  // ── AGENDA: polling de recordatorios cada 30 seg ──
+  if(!tick._agLast || (now.getTime() - tick._agLast) >= 30000) {
+    tick._agLast = now.getTime();
+    try { agCheckReminders(); } catch(e) {}
+  }
 }
 setInterval(tick,1000); tick();
 
@@ -8016,9 +8022,47 @@ function agSetRemind(btn,mins) {
 // ─────────────────────────────────────────────────────────────
 
 // ── Cancelar recordatorio (al editar o eliminar cita) ──
+// agCancelReminder defined above in agSchedReminder block
+// ── IDs ya disparados en esta sesión (evita doble disparo) ──
+var _agFired = {};
+
+// ── Registrar recordatorio: guarda en SW + marca hora de disparo en localStorage ──
+function agSchedReminder(ct) {
+  if(!ct.recordatorio || !ct.fecha || !ct.hora) return;
+
+  var cdt = new Date(ct.fecha + 'T' + ct.hora + ':00');
+  if(isNaN(cdt.getTime())) return;
+  var alertT = new Date(cdt.getTime() - ct.recordatorio * 60000);
+  var ms = alertT.getTime() - Date.now();
+  if(!isFinite(ms) || ms <= 0) return;
+
+  // Persistir fireAt en localStorage para que el polling lo detecte
+  try {
+    var sched = JSON.parse(localStorage.getItem('ag_sched') || '{}');
+    sched[ct.id] = { fireAt: Date.now() + ms, cita: ct };
+    localStorage.setItem('ag_sched', JSON.stringify(sched));
+  } catch(e) {}
+
+  // También enviar al SW (backup para cuando la app está cerrada)
+  if(navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      var target = reg.active || navigator.serviceWorker.controller;
+      if(target) target.postMessage({ type:'SCHEDULE_REMINDER', cita:ct, ms:ms });
+    }).catch(function(){});
+  }
+}
+
+// ── Cancelar recordatorio ──
 function agCancelReminder(id) {
   if(!id) return;
-  if(_agTimers[id]){ clearTimeout(_agTimers[id]); delete _agTimers[id]; }
+  // Limpiar localStorage
+  try {
+    var sched = JSON.parse(localStorage.getItem('ag_sched') || '{}');
+    delete sched[id];
+    localStorage.setItem('ag_sched', JSON.stringify(sched));
+  } catch(e) {}
+  delete _agFired[id];
+  // Avisar al SW
   if(navigator.serviceWorker) {
     navigator.serviceWorker.ready.then(function(reg) {
       var target = reg.active || navigator.serviceWorker.controller;
@@ -8026,52 +8070,88 @@ function agCancelReminder(id) {
     }).catch(function(){});
   }
 }
-function agSchedReminder(ct) {
-  if(!ct.recordatorio||!ct.fecha||!ct.hora) return;
 
-  // Calcular ms con validación estricta
-  var cdt = new Date(ct.fecha+'T'+ct.hora+':00');
-  if(isNaN(cdt.getTime())) return; // fecha/hora inválida
-  var alertT = new Date(cdt.getTime() - ct.recordatorio*60000);
-  var ms = alertT.getTime() - Date.now();
-  if(!isFinite(ms)||ms<=0) return; // ya pasó o inválido
+// ── Disparar notificación de recordatorio ──
+function agFireReminderNow(ct) {
+  var iconos  = { cirugia:'🔪', consulta:'🩺', seguimiento:'📋', urgencia:'🚨', revision:'🔬', otro:'📌' };
+  var nombres = { cirugia:'Cirugía', consulta:'Consulta', seguimiento:'Seguimiento', urgencia:'Urgencia', revision:'Revisión', otro:'Cita' };
+  var pacN  = (ct.pacNombre && ct.pacNombre !== 'undefined') ? ct.pacNombre : 'Paciente';
+  var tipo  = nombres[ct.tipo] || ct.tipo || 'Cita';
+  var icono = iconos[ct.tipo] || '📅';
+  var hora  = ct.hora || '--:--';
+  var sala  = ct.sala ? ' · ' + ct.sala : '';
+  var dx    = ct.pacDx || tipo;
 
-  // Limpiar timer anterior si existe
-  if(_agTimers[ct.id]) clearTimeout(_agTimers[ct.id]);
+  var diff = new Date(ct.fecha + 'T' + ct.hora + ':00').getTime() - Date.now();
+  var mins = Math.round(diff / 60000);
+  var tiempoRestante = mins <= 0 ? 'ahora' : mins < 60 ? 'en ' + mins + ' min' : mins < 120 ? 'en 1 hora' : 'en ' + Math.round(mins/60) + ' horas';
 
-  // ── Siempre enviar al SW (persiste en IndexedDB) ──
-  if(navigator.serviceWorker) {
-    navigator.serviceWorker.ready.then(function(reg) {
-      var target = reg.active || navigator.serviceWorker.controller;
-      if(target) target.postMessage({ type:'SCHEDULE_REMINDER', cita:ct, ms:ms });
-    }).catch(function(){});
-  }
+  var title = icono + ' ' + tipo + '  —  ' + tiempoRestante;
+  var body  = '👤 ' + pacN + '\n' + dx + '\n🕐 ' + hora + sala;
 
-  // ── setTimeout local SOLO para citas dentro de 30 min ──
-  // Para tiempos mayores el SW maneja via IndexedDB
-  if(ms > 1800000) return;
-
-  _agTimers[ct.id] = setTimeout(function(){
-    var cfg  = (typeof agCfg==='function') ? agCfg(ct.tipo||'otro') : {};
-    var pacN = (ct.pacNombre&&ct.pacNombre!=='undefined') ? ct.pacNombre : 'Paciente';
-    var tipL = (cfg&&cfg.lbl) ? cfg.lbl : (ct.tipo||'Cita');
-    var msgS = pacN+' - '+(ct.pacDx||tipL);
-    var icon = (cfg&&cfg.icon) ? cfg.icon : '';
-    var msgB = 'Cita a las '+(ct.hora||'--')+(ct.sala?' | '+ct.sala:'');
-    // Notificación directa (app en primer plano)
-    if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
-      try{ new Notification((icon?icon+' ':'')+(cfg&&cfg.lbl?cfg.lbl:'Recordatorio'),{
-        body: pacN+'\n'+msgB, tag:'ag-'+ct.id, requireInteraction:false
-      }); }catch(e){}
+  // Notificación nativa
+  if(typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body: body,
+        icon: '/anestesys/icon.svg',
+        tag: 'ag-' + ct.id,
+        requireInteraction: true,
+        vibrate: [300,100,300,100,300,200,500]
+      });
+    } catch(e) {
+      // Fallback via SW si la API directa falla (iOS)
+      if(navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(function(reg) {
+          reg.showNotification(title, {
+            body: body, icon: '/anestesys/icon.svg',
+            tag: 'ag-' + ct.id, requireInteraction: true,
+            vibrate: [300,100,300,100,300,200,500]
+          });
+        }).catch(function(){});
+      }
     }
-    try{ addAlert('info','Recordatorio: '+icon+' '+msgS); }catch(e){}
-    showToast('🔔 Recordatorio: '+msgS+' — '+msgB);
-    if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
-  }, ms);
+  }
+  // Toast + alerta en la app
+  try { showToast('🔔 ' + icono + ' ' + pacN + ' — ' + tiempoRestante); } catch(e) {}
+  try { addAlert('info', 'Recordatorio: ' + icono + ' ' + pacN + ' — ' + dx + ' a las ' + hora); } catch(e) {}
+  if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+}
+
+// ── Polling: se llama cada 30 seg desde tick() ──
+function agCheckReminders() {
+  try {
+    var sched = JSON.parse(localStorage.getItem('ag_sched') || '{}');
+    var now   = Date.now();
+    var changed = false;
+
+    for(var id in sched) {
+      var entry = sched[id];
+      if(!entry || !entry.fireAt) continue;
+      // Disparar si ya llegó la hora (con ±2 min de tolerancia hacia atrás)
+      if(entry.fireAt <= now + 120000 && entry.fireAt > now - 120000) {
+        if(!_agFired[id]) {
+          _agFired[id] = true;
+          agFireReminderNow(entry.cita);
+        }
+      }
+      // Limpiar entradas que ya pasaron hace más de 5 min
+      if(entry.fireAt < now - 300000) {
+        delete sched[id];
+        changed = true;
+      }
+    }
+    if(changed) localStorage.setItem('ag_sched', JSON.stringify(sched));
+  } catch(e) {}
 }
 function agInitReminders() {
-  var lista=agGet();
-  for(var i=0;i<lista.length;i++){ if(lista[i].estado==='pendiente') agSchedReminder(lista[i]); }
+  // Re-programar citas pendientes que aún no han disparado
+  var lista = agGet();
+  for(var i = 0; i < lista.length; i++) {
+    if(lista[i].estado === 'pendiente') agSchedReminder(lista[i]);
+  }
+  // Disparar inmediatamente cualquier recordatorio vencido
+  try { agCheckReminders(); } catch(e) {}
 }
 
 // ─────────────────────────────────────────────────────────────
