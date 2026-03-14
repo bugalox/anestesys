@@ -1,0 +1,41 @@
+<!-- ══ ALERTAS ══ -->
+<div class="page" id="page-alert">
+  <!-- NEXT ALARM -->
+  <div style="background:var(--s1);border:2px solid var(--purple);border-radius:14px;padding:20px;text-align:center;margin-bottom:10px" id="alarm-box">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px"><i class="ph ph-bell"></i>&nbsp;Próxima alarma horaria en</div>
+    <div style="font-size:56px;font-weight:800;color:var(--purple);font-variant-numeric:tabular-nums" id="alarm-big">60:00</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Se activa automáticamente cada hora desde inicio de anestesia</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="section" style="margin-bottom:10px">
+    <div class="section-header"><h2><i class="ph ph-sliders sec-ico"></i>Límites de Alarma</h2><button class="btn sm g" onclick="saveAlarmCfg()">Guardar</button></div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>TA Sist. ALTA</label><input type="number" inputmode="decimal" id="lim-thi" value="160"></div>
+        <div class="field"><label>TA Sist. BAJA</label><input type="number" inputmode="decimal" id="lim-tlo" value="80"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>FC ALTA</label><input type="number" inputmode="decimal" id="lim-fhi" value="120"></div>
+        <div class="field"><label>FC BAJA</label><input type="number" inputmode="decimal" id="lim-flo" value="45"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>SpO2 BAJA (%)</label><input type="number" inputmode="decimal" id="lim-slo" value="92"></div>
+        <div class="field"><label>Temp. ALTA (°C)</label><input type="number" inputmode="decimal" id="lim-tphi" value="38.5" step="0.1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERT LIST -->
+  <div class="section">
+    <div class="section-header">
+      <h2><i class="ph ph-warning-circle sec-ico" style="color:var(--red)"></i>Historial</h2>
+      <button class="btn sm ghost" onclick="clearAlerts()">Limpiar</button>
+    </div>
+    <div class="section-body" id="alert-list">
+      <div class="alert danger"><span class="alert-icon">🚨</span><div><div>Intubación difícil — Fibroscopia + Videolaringoscopia</div><span class="alert-time">15:35</span></div></div>
+      <div class="alert warn"><span class="alert-icon">⚠️</span><div><div>Lidocaína: revisar dosis acumulada</div><span class="alert-time">15:30</span></div></div>
+    </div>
+  </div>
+</div><!-- /alert -->
+

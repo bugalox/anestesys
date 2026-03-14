@@ -1,0 +1,856 @@
+<!-- ══ MODAL GUARDAR CASO ══ -->
+<div id="save-modal" onclick="if(event.target===this)closeSaveModal()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:rgba(4,6,13,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);align-items:flex-end;justify-content:center;box-sizing:border-box">
+  <div style="width:100%;max-width:520px;background:var(--s1);border-radius:20px 20px 0 0;padding:24px 20px 32px;padding-bottom:calc(32px + env(safe-area-inset-bottom));border-top:1px solid var(--border)">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:17px;font-weight:800;color:var(--white)">💾 Guardar caso</div>
+      <button onclick="closeSaveModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:14px;padding:6px 12px;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Patient name preview -->
+    <div id="save-pac-preview" style="font-size:12px;color:var(--muted);margin-bottom:18px"></div>
+
+    <!-- Category selector -->
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;font-weight:700">¿En qué carpeta deseas guardar?</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <!-- PRIVADO -->
+      <label id="save-lbl-priv" onclick="selectSaveCat('privado')" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,229,255,.1);border:2px solid var(--cyan);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center">
+        <span style="font-size:32px">🔒</span>
+        <div style="font-size:14px;font-weight:800;color:var(--cyan)">Privado</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.4">Solo visible para ti.<br>Consultas privadas.</div>
+        <div id="save-count-priv" style="font-size:10px;color:var(--muted)"></div>
+      </label>
+
+      <!-- HOSPITAL -->
+      <label id="save-lbl-hosp" onclick="selectSaveCat('hospital')" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:rgba(0,230,118,.04);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;text-align:center">
+        <span style="font-size:32px">🏥</span>
+        <div style="font-size:14px;font-weight:800;color:var(--green)">Hospital</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.4">Caso institucional.<br>Registro hospitalario.</div>
+        <div id="save-count-hosp" style="font-size:10px;color:var(--muted)"></div>
+      </label>
+    </div>
+
+    <!-- Selected indicator -->
+    <div id="save-selected-msg" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px;min-height:18px"></div>
+
+    <!-- Confirm button -->
+    <button id="save-confirm-btn" onclick="confirmSave()" style="width:100%;padding:16px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--cyan),#0066aa);border:none;border-radius:12px;color:#000;cursor:pointer;letter-spacing:.3px;transition:opacity .2s" disabled>
+      💾 Guardar en esta carpeta
+    </button>
+
+    <!-- Cancel -->
+    <button onclick="closeSaveModal()" style="width:100%;padding:12px;font-size:13px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;margin-top:6px">
+      Cancelar
+    </button>
+  </div>
+</div>
+
+<!-- ══ BANNER MODO SOLO LECTURA ══ -->
+<!-- ══ READONLY MODE INDICATOR ══ -->
+<!-- Thin top strip: always visible when in readonly mode -->
+<div id="readonly-strip" style="display:none;position:fixed;top:0;left:0;right:0;z-index:300;
+     height:3px;background:linear-gradient(90deg,#ffd600,#ff6d00,#ffd600);
+     background-size:200% 100%;animation:stripPulse 2s ease-in-out infinite">
+</div>
+
+<!-- Full readonly banner: slides down from topbar -->
+<div id="readonly-banner" style="display:none;position:fixed;top:62px;left:0;right:0;z-index:250;
+     background:rgba(12,18,32,0.97);
+     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+     border-bottom:1px solid rgba(255,214,0,.25);
+     box-shadow:0 8px 32px rgba(0,0,0,.6);
+     transform:translateY(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
+
+  <!-- Amber accent line at top -->
+  <div style="height:2px;background:linear-gradient(90deg,transparent,#ffd600 30%,#ff6d00 70%,transparent)"></div>
+
+  <div style="padding:12px 16px 14px">
+
+    <!-- Row 1: Status label -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#ffd600;
+                  box-shadow:0 0 8px #ffd600;animation:pulse 1.5s ease-in-out infinite;flex-shrink:0"></div>
+      <span style="font-size:11px;font-weight:800;color:#ffd600;text-transform:uppercase;
+                   letter-spacing:1.5px">Modo solo lectura</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,214,0,.5);font-weight:600">
+        Caso histórico
+      </span>
+    </div>
+
+    <!-- Row 2: Patient info -->
+    <div id="ro-pac-info" style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;
+         padding:8px 10px;background:rgba(255,214,0,.06);border-radius:8px;
+         border-left:3px solid rgba(255,214,0,.4);line-height:1.5">
+      —
+    </div>
+
+    <!-- Row 3: Action buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+      <!-- Edit end time -->
+      <button onclick="editFinHoraModal()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:12px 8px;border-radius:10px;border:1px solid rgba(255,214,0,.35);
+               background:rgba(255,214,0,.1);color:#ffd600;font-size:12px;
+               font-weight:700;cursor:pointer;transition:background .15s;
+               -webkit-tap-highlight-color:transparent">
+        <span style="font-size:16px">⏱</span>
+        <span>Editar tiempos</span>
+      </button>
+
+      <!-- Edit full case -->
+      <button onclick="convertToEditable();closeBanner()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:12px 8px;border-radius:10px;border:none;
+               background:linear-gradient(135deg,#00e676,#00c853);
+               color:#000;font-size:12px;font-weight:800;cursor:pointer;
+               transition:opacity .15s;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:16px">✏️</span>
+        <span>Editar caso</span>
+      </button>
+
+    </div>
+
+    <!-- Row 4: Dismiss hint -->
+    <div style="text-align:center;margin-top:10px">
+      <button onclick="closeBanner()"
+        style="background:none;border:none;color:rgba(255,255,255,.25);
+               font-size:11px;cursor:pointer;padding:4px 12px">
+        ✕ Cerrar aviso
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- BOTTOM NAV -->
+<div class="page" id="page-agenda">
+  <!-- Header vista + nav periodo -->
+  <div style="background:linear-gradient(135deg,rgba(255,109,0,.07),rgba(0,229,255,.04));border:1px solid rgba(255,109,0,.2);border-radius:14px;padding:12px 14px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button id="ag-vbtn-mes"     onclick="agSetView('mes')"     style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer"><i class="ph ph-calendar-blank" style="margin-right:3px"></i>Mes</button>
+      <button id="ag-vbtn-semana"  onclick="agSetView('semana')"  style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer"><i class="ph ph-calendar-dots" style="margin-right:3px"></i>Semana</button>
+      <button id="ag-vbtn-lista"   onclick="agSetView('lista')"   style="flex:1;padding:7px 4px;border-radius:9px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:800;cursor:pointer"><i class="ph ph-list-bullets" style="margin-right:3px"></i>Lista</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <button onclick="agNavPrev()" style="background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);border-radius:10px;color:#ff6d00;width:36px;height:36px;font-size:20px;font-weight:900;cursor:pointer;line-height:1;flex-shrink:0">&#8249;</button>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#ff6d00;font-weight:700;margin-bottom:1px">Agenda</div>
+        <div id="ag-periodo-label" style="font-size:16px;font-weight:900;color:#dde8ff">&#8212;</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <button onclick="agHoy()" style="background:rgba(255,109,0,.15);border:1.5px solid #ff6d00;border-radius:10px;color:#ff6d00;padding:0 12px;height:36px;font-size:10px;font-weight:800;cursor:pointer">HOY</button>
+        <button onclick="agNavNext()" style="background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);border-radius:10px;color:#ff6d00;width:36px;height:36px;font-size:20px;font-weight:900;cursor:pointer;line-height:1">&#8250;</button>
+      </div>
+    </div>
+    <div id="ag-dow-header" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;margin-bottom:4px">
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">DOM</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">LUN</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">MAR</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">MI&#201;</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">JUE</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">VIE</div>
+      <div style="text-align:center;font-size:9px;font-weight:800;color:#3d5a78">S&#193;B</div>
+    </div>
+    <div id="ag-swipe-zone" style="touch-action:pan-y">
+      <div id="ag-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+    </div>
+  </div>
+  <!-- Día seleccionado -->
+  <div id="ag-day-section" style="display:none;background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+    <div id="ag-day-title" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#ff6d00;margin-bottom:10px">Citas del d&#237;a</div>
+    <div id="ag-day-list"></div>
+  </div>
+  <!-- Próximas citas + buscador -->
+  <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#00e5ff">
+        <i class="ph ph-clock-countdown" style="margin-right:5px"></i>Pr&#243;ximas Citas
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="agTestNotification()" title="Probar notificaciones" style="background:rgba(255,214,0,.12);border:1.5px solid #ffd600;border-radius:10px;color:#ffd600;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer">&#128276; Test</button>
+        <button onclick="agOpenNew(null)" style="background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:10px;color:#fff;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">+ Nueva</button>
+      </div>
+    </div>
+    <!-- Buscador -->
+    <div style="position:relative;margin-bottom:10px">
+      <input id="ag-search" type="search" inputmode="search"
+        oninput="agSearchFilter(this.value)"
+        placeholder="Buscar paciente, diagn&#243;stico, sala..."
+        style="width:100%;padding:10px 36px 10px 14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:10px;color:#dde8ff;font-size:16px;box-sizing:border-box;outline:none;-webkit-appearance:none">
+      <button id="ag-search-clear" onclick="agSearchClear()"
+        style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3d5a78;font-size:18px;cursor:pointer;padding:4px">&#10005;</button>
+    </div>
+    <div id="ag-search-info" style="display:none;font-size:11px;color:#3d5a78;margin-bottom:8px"></div>
+    <div id="ag-proximas-list" style="overflow:visible">
+      <div style="text-align:center;color:#3d5a78;padding:20px;font-size:13px">Sin citas registradas</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA / EDITAR CITA -->
+<div id="ag-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(4,6,13,.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto;padding-bottom:40px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="ag-modal-title" style="font-size:18px;font-weight:800;color:#ff6d00">Nueva Cita</div>
+      <button onclick="agCloseModal()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">&#10005; Cerrar</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Tipo de cita</div>
+      <div id="ag-tipo-btns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <button onclick="agSetTipo(this,'cirugia')"     data-tipo="cirugia"     style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#128298; Cirug&#237;a</button>
+        <button onclick="agSetTipo(this,'consulta')"    data-tipo="consulta"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#129658; Consulta</button>
+        <button onclick="agSetTipo(this,'seguimiento')" data-tipo="seguimiento" style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#128203; Seguim.</button>
+        <button onclick="agSetTipo(this,'urgencia')"    data-tipo="urgencia"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#128680; Urgencia</button>
+        <button onclick="agSetTipo(this,'revision')"    data-tipo="revision"    style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#128302; Revisi&#243;n</button>
+        <button onclick="agSetTipo(this,'otro')"        data-tipo="otro"        style="padding:10px 4px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:11px;font-weight:700;cursor:pointer">&#128204; Otro</button>
+      </div>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Paciente</div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Nombre completo *</label>
+        <input type="text" id="ag-pac-nombre" placeholder="Ej. Juan Garc&#237;a L&#243;pez" style="width:100%;padding:11px;font-size:16px;font-weight:600;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Edad</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="ag-pac-edad" inputmode="numeric" placeholder="&#8212;" style="flex:1;min-width:0;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;text-align:center">
+            <select id="ag-pac-edad-unit" style="padding:0 8px;font-size:12px;font-weight:700;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#3d5a78;cursor:pointer;width:68px;flex-shrink:0">
+              <option value="anios" selected>a&#241;os</option>
+              <option value="meses">meses</option>
+              <option value="semanas">sem.</option>
+              <option value="dias">d&#237;as</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Expediente</label>
+          <input type="text" id="ag-pac-exp" placeholder="&#8212;" style="width:100%;padding:11px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diagn&#243;stico / Procedimiento</label>
+        <input type="text" id="ag-pac-dx" placeholder="Ej. Colecistectom&#237;a laparosc&#243;pica" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#ff6d00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Fecha y Hora</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Fecha *</label>
+          <input type="date" id="ag-fecha" style="width:100%;padding:11px;font-size:14px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff9100;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hora</label>
+          <input type="time" id="ag-hora" style="width:100%;padding:11px;font-size:14px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff9100;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Sala / Quir&#243;fano</label>
+          <input type="text" id="ag-sala" placeholder="Ej. Qx 3" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Duraci&#243;n (min)</label>
+          <input type="number" id="ag-duracion" inputmode="numeric" placeholder="60" style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;text-align:center">
+        </div>
+      </div>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#ffd600;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Recordatorio</div>
+      <div id="ag-remind-btns" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+        <button onclick="agSetRemind(this,0)"    data-min="0"    style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">Sin rec.</button>
+        <button onclick="agSetRemind(this,15)"   data-min="15"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">15 min</button>
+        <button onclick="agSetRemind(this,30)"   data-min="30"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">30 min</button>
+        <button onclick="agSetRemind(this,60)"   data-min="60"   style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">1 hora</button>
+        <button onclick="agSetRemind(this,120)"  data-min="120"  style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">2 horas</button>
+        <button onclick="agSetRemind(this,360)"  data-min="360"  style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">6 horas</button>
+        <button onclick="agSetRemind(this,1440)" data-min="1440" style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">1 d&#237;a</button>
+        <button onclick="agSetRemind(this,2880)" data-min="2880" style="padding:9px 2px;border-radius:10px;border:1.5px solid #1e2d44;background:transparent;color:#3d5a78;font-size:10px;font-weight:700;cursor:pointer">2 d&#237;as</button>
+      </div>
+    </div>
+    <div id="ag-estado-sec" style="display:none;background:#0a0f1c;border:1px solid #1e2d44;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;color:#dde8ff;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Cambiar Estado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="agSetEstado('completada')" style="padding:10px;border-radius:10px;border:1.5px solid #00e676;background:rgba(0,230,118,.1);color:#00e676;font-size:12px;font-weight:700;cursor:pointer">Completada</button>
+        <button onclick="agSetEstado('cancelada')"  style="padding:10px;border-radius:10px;border:1.5px solid #3d5a78;background:rgba(61,90,120,.15);color:#3d5a78;font-size:12px;font-weight:700;cursor:pointer">Cancelar</button>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:8px">Notas</label>
+      <textarea id="ag-notas" rows="3" placeholder="Ej. Ayuno 8h, alergia penicilina, ASA III..." style="width:100%;padding:11px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box;resize:none;font-family:inherit"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button id="ag-del-btn" onclick="agDelCita()" style="display:none;padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">Eliminar</button>
+      <button id="ag-save-btn" onclick="agSaveCita()" style="grid-column:1/-1;padding:14px;font-size:15px;font-weight:800;background:linear-gradient(135deg,#ff6d00,#ff9100);border:none;border-radius:12px;color:#fff;cursor:pointer">Guardar Cita</button>
+    </div>
+  </div>
+</div>
+<nav class="bottomnav">
+  <button class="navbtn active" onclick="nav('monitor',this)" id="nb-monitor">
+    <i class="ph-bold ph-heartbeat nav-ico"></i><span class="label">Monitor</span>
+  </button>
+  <button class="navbtn" onclick="nav('liq',this)" id="nb-liq">
+    <i class="ph-bold ph-drop nav-ico"></i><span class="label">Líquidos</span>
+  </button>
+  <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
+    <i class="ph-bold ph-wind nav-ico"></i><span class="label">Ventil.</span>
+  </button>
+  <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
+    <i class="ph-bold ph-syringe nav-ico"></i><span class="label">Fármacos</span>
+  </button>
+  <button class="navbtn" onclick="nav('alert',this)" id="nb-alert" style="position:relative">
+    <i class="ph-bold ph-warning nav-ico"></i><span class="label">Alertas</span>
+    <span class="badge r" id="alert-badge" style="position:absolute;top:4px;right:6px;font-size:9px;padding:1px 5px;display:none">0</span>
+  </button>
+  <button class="navbtn" onclick="nav('lab',this)" id="nb-lab">
+    <i class="ph-bold ph-test-tube nav-ico"></i><span class="label">Labs</span>
+  </button>
+  <button class="navbtn" onclick="nav('res',this)" id="nb-res">
+    <i class="ph-bold ph-file-text nav-ico"></i><span class="label">Resumen</span>
+  </button>
+</nav>
+
+<!-- PRINT AREA (hidden on screen, shows on print) -->
+<div id="print-area" style="display:none"></div>
+
+</div><!-- /app -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA DE LOGIN / HISTORIAL  (z-index 500)
+════════════════════════════════════════════════════════ -->
+<div id="login-screen" style="display:block;position:fixed;inset:0;z-index:500;background:#04060d;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 40px">
+
+  <!-- ✕ Cerrar — SOLO visible cuando ya estás autenticado y abres historial -->
+  <button id="btn-close-login"
+    onclick="hideLogin()"
+    style="display:none;position:fixed;top:calc(16px + env(safe-area-inset-top));right:16px;
+           width:40px;height:40px;border-radius:50%;
+           background:rgba(0,229,255,.12);border:1.5px solid rgba(0,229,255,.35);
+           color:#00e5ff;font-size:18px;font-weight:700;cursor:pointer;z-index:520;
+           line-height:40px;text-align:center;padding:0;
+           transition:background .2s,border-color .2s">✕</button>
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(180deg,#060c1a 0%,#04060d 100%);
+              padding:56px 24px 28px;text-align:center;
+              border-bottom:1px solid #1e2d44;position:relative">
+    <div style="font-size:40px;font-weight:900;color:#00e5ff;letter-spacing:-1.5px;line-height:1">
+      Aneste<span style="color:#dde8ff">Sys</span>
+    </div>
+    <div style="font-size:10px;color:#3d5a78;letter-spacing:4px;text-transform:uppercase;margin-top:8px">
+      Registro Anestésico Pro
+    </div>
+    <!-- Línea degradado decorativa -->
+    <div style="position:absolute;bottom:0;left:0;right:0;height:1px;
+                background:linear-gradient(90deg,transparent,#00e5ff,#d500f9,transparent)"></div>
+  </div>
+
+  <div style="max-width:420px;margin:0 auto;padding:24px 16px">
+
+    <!-- ══ CARD LOGIN ══ -->
+    <div id="access-card" style="background:#080d1a;border:1px solid #1e2d44;border-radius:20px;
+                                  padding:24px;margin-bottom:16px;
+                                  box-shadow:0 4px 32px rgba(0,0,0,.4)">
+
+      <!-- Título con ícono -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,229,255,.1);
+                    border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;
+                    justify-content:center;font-size:18px;flex-shrink:0">🔐</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#dde8ff;letter-spacing:.5px">Iniciar Sesión</div>
+          <div style="font-size:10px;color:#3d5a78;margin-top:1px">Acceso con cuenta registrada</div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1.5px;display:block;margin-bottom:6px">Email</label>
+        <input type="email" id="auth-email"
+               placeholder="medico@hospital.com"
+               onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"
+               style="width:100%;padding:13px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                      box-sizing:border-box;transition:border-color .2s"
+               onfocus="this.style.borderColor='#00e5ff'"
+               onblur="this.style.borderColor='#1e2d44'">
+      </div>
+
+      <!-- Contraseña -->
+      <div style="margin-bottom:20px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1.5px;display:block;margin-bottom:6px">Contraseña</label>
+        <input type="password" id="auth-pass"
+               placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin()"
+               style="width:100%;padding:13px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                      box-sizing:border-box;transition:border-color .2s"
+               onfocus="this.style.borderColor='#00e5ff'"
+               onblur="this.style.borderColor='#1e2d44'">
+      </div>
+
+      <!-- Botón iniciar sesión -->
+      <button id="login-btn" onclick="doLogin()"
+              style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                     background:linear-gradient(135deg,#00e676,#00c853);
+                     color:#04060d;border:none;border-radius:14px;cursor:pointer;
+                     letter-spacing:.5px;transition:opacity .2s,transform .1s;margin-bottom:10px"
+              onmousedown="this.style.transform='scale(.98)'"
+              onmouseup="this.style.transform=''"
+              ontouchstart="this.style.transform='scale(.98)'"
+              ontouchend="this.style.transform=''">
+        Iniciar sesión
+      </button>
+
+      <!-- Cerrar sesión (modo texto, menos prominente) -->
+      <button onclick="doLogout()"
+              style="width:100%;padding:10px;font-size:12px;font-weight:600;
+                     background:none;border:none;color:#3d5a78;cursor:pointer;
+                     letter-spacing:.3px">
+        Cerrar sesión
+      </button>
+
+      <!-- Mensaje de estado -->
+      <div id="access-msg"
+           style="margin-top:10px;font-size:12px;color:#3d5a78;
+                  line-height:1.6;text-align:center;min-height:18px">
+        Inicia sesión para continuar.
+      </div>
+    </div>
+
+    <!-- ══ PERFIL GUARDADO (visible post-login) ══ -->
+    <div id="ls-perfil-guardado"
+         style="display:none;background:#080d1a;border:1px solid #1e2d44;
+                border-radius:20px;padding:20px;margin-bottom:16px">
+
+      <!-- ── Header row ── -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#00e5ff;
+                    text-transform:uppercase;letter-spacing:2px">
+          <i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Mi Perfil
+        </div>
+        <button onclick="lsAbrirEditPerfil()"
+                style="display:flex;align-items:center;gap:5px;
+                       background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);
+                       border-radius:8px;color:#00e5ff;font-size:12px;
+                       padding:6px 14px;cursor:pointer;font-weight:700">
+          <i class="ph ph-pencil-simple" style="font-size:13px"></i>Editar
+        </button>
+      </div>
+
+      <!-- ── Profile data display ── -->
+      <div style="background:#04060d;border:1px solid #1e2d44;border-radius:14px;
+                  padding:14px 16px;margin-bottom:14px">
+        <!-- Avatar + name -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:46px;height:46px;border-radius:50%;
+                      background:linear-gradient(135deg,#00e5ff22,#00e5ff11);
+                      border:2px solid #00e5ff44;display:flex;align-items:center;
+                      justify-content:center;flex-shrink:0">
+            <i class="ph-bold ph-user-circle" style="font-size:24px;color:#00e5ff66"></i>
+          </div>
+          <div>
+            <div id="ls-nombre-display"
+                 style="font-size:17px;font-weight:800;color:#dde8ff;line-height:1.2"></div>
+            <div id="ls-inst-display"
+                 style="font-size:12px;color:#3d5a78;margin-top:2px"></div>
+          </div>
+        </div>
+        <!-- Cedulas row -->
+        <div id="ls-cedulas-display"
+             style="display:none;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.15);
+                    border-radius:8px;padding:7px 10px;margin-bottom:8px;
+                    font-size:11px;color:#00e5ff;font-weight:700;letter-spacing:.3px"></div>
+        <!-- Email row -->
+        <div id="ls-email-display"
+             style="font-size:12px;color:#3d5a78"></div>
+      </div>
+
+      <!-- ── Nuevo Paciente CTA ── -->
+      <button onclick="irAgenda()"
+              id="nb-agenda"
+              style="width:100%;padding:13px;font-size:14px;font-weight:800;
+                     background:rgba(255,109,0,.12);border:1.5px solid #ff6d00;
+                     border-radius:14px;color:#ff6d00;cursor:pointer;
+                     letter-spacing:.3px;margin-bottom:10px;position:relative">
+        <i class="ph-bold ph-calendar" style="margin-right:6px"></i>Agenda Médica
+        <span id="agenda-badge" style="display:none;position:absolute;top:8px;right:14px;
+              background:#ff6d00;color:#fff;border-radius:50%;width:18px;height:18px;
+              font-size:10px;font-weight:800;line-height:18px;text-align:center"></span>
+      </button>
+      <button onclick="loginAndNew()"
+              style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                     background:linear-gradient(135deg,#00e676,#00c853);
+                     color:#04060d;border:none;border-radius:14px;cursor:pointer;
+                     letter-spacing:.3px">
+        ➕ Nuevo Paciente
+      </button>
+    </div>
+
+    <!-- ══ EDIT PROFILE MODAL (inline overlay) ══ -->
+    <div id="ls-edit-modal"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+                z-index:2000;overflow-y:auto;padding:20px;box-sizing:border-box">
+      <div style="max-width:440px;margin:0 auto;background:#080d1a;
+                  border:1px solid #1e2d44;border-radius:20px;padding:22px">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div style="font-size:13px;font-weight:800;color:#00e5ff;
+                      text-transform:uppercase;letter-spacing:2px">
+            <i class="ph-bold ph-user-circle" style="margin-right:6px"></i>Editar Perfil
+          </div>
+          <button onclick="lsCerrarEditPerfil()"
+                  style="background:none;border:1px solid #1e2d44;border-radius:8px;
+                         color:#3d5a78;font-size:18px;width:34px;height:34px;
+                         cursor:pointer;line-height:1">✕</button>
+        </div>
+
+        <!-- Nombre -->
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Nombre completo *
+          </label>
+          <input type="text" id="ep-nombre"
+                 placeholder="Dr. / Dra. Apellido Nombre"
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Institución -->
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Institución / Hospital
+          </label>
+          <input type="text" id="ep-inst"
+                 placeholder="Hospital General / Clínica..."
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Cédulas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                          letter-spacing:1px;display:block;margin-bottom:6px">
+              Cédula Profesional
+            </label>
+            <input type="text" id="ep-cedula"
+                   placeholder="00000000" inputmode="numeric"
+                   style="width:100%;padding:12px 14px;font-size:14px;background:#04060d;
+                          border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                          box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                          letter-spacing:1px;display:block;margin-bottom:6px">
+              Cédula Especialidad
+            </label>
+            <input type="text" id="ep-cedula-esp"
+                   placeholder="00000000" inputmode="numeric"
+                   style="width:100%;padding:12px 14px;font-size:14px;background:#04060d;
+                          border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                          box-sizing:border-box">
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div style="margin-bottom:20px">
+          <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                        letter-spacing:1px;display:block;margin-bottom:6px">
+            Correo (para enviar PDFs)
+          </label>
+          <input type="email" id="ep-email"
+                 placeholder="correo@hospital.com"
+                 style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                        border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;
+                        box-sizing:border-box">
+        </div>
+
+        <!-- Buttons -->
+        <button onclick="lsGuardarEditPerfil()"
+                style="width:100%;padding:15px;font-size:15px;font-weight:800;
+                       background:linear-gradient(135deg,#00e5ff,#0077aa);
+                       color:#04060d;border:none;border-radius:14px;
+                       cursor:pointer;margin-bottom:10px">
+          <i class="ph ph-floppy-disk" style="margin-right:6px"></i>Guardar cambios
+        </button>
+        <button onclick="lsCerrarEditPerfil()"
+                style="width:100%;padding:12px;font-size:14px;
+                       background:none;border:1px solid #1e2d44;border-radius:14px;
+                       color:#3d5a78;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
+      </div><!-- /perfil-form-body -->
+    </div>
+
+    <!-- ══ FORM PERFIL (visible post-login si no hay perfil) ══ -->
+    <div id="ls-perfil-form"
+         style="display:none;background:#080d1a;border:1px solid #1e2d44;
+                border-radius:20px;padding:20px;margin-bottom:16px">
+      <div onclick="togglePerfilForm()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0;margin-bottom:0;user-select:none">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">
+          <i class="ph-bold ph-user-circle" style="margin-right:5px"></i>Mi Perfil
+        </div>
+        <i id="perfil-form-chevron" class="ph ph-caret-down" style="font-size:16px;color:#3d5a78;transition:transform .25s"></i>
+      </div>
+      <!-- collapsible body -->
+      <div id="perfil-form-body" style="overflow:hidden;max-height:0;transition:max-height .3s ease;margin-top:0">
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Nombre del Anestesiólogo *
+        </label>
+        <input type="text" id="login-user" placeholder="Dr. / Dra. Apellido Nombre"
+               style="width:100%;padding:12px 14px;font-size:16px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Institución (opcional)
+        </label>
+        <input type="text" id="login-inst" placeholder="Hospital / Clínica..."
+               style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Cédula Profesional</label>
+          <input type="text" id="login-cedula" placeholder="00000000" inputmode="numeric"
+          style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Cédula de Especialidad</label>
+          <input type="text" id="login-cedula-esp" placeholder="00000000" inputmode="numeric"
+          style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:10px;color:#3d5a78;text-transform:uppercase;
+                      letter-spacing:1px;display:block;margin-bottom:6px">
+          Correo (para enviar PDFs)
+        </label>
+        <input type="email" id="login-email" placeholder="correo@hospital.com"
+               style="width:100%;padding:12px 14px;font-size:15px;background:#04060d;
+                      border:1.5px solid #1e2d44;border-radius:12px;color:#dde8ff;box-sizing:border-box">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="lsGuardarPerfil()"
+                style="padding:14px;font-size:14px;font-weight:800;background:#00e5ff;
+                       color:#04060d;border:none;border-radius:12px;cursor:pointer">
+          ✓ Guardar
+        </button>
+        <button onclick="loginAndNew()"
+                style="padding:14px;font-size:14px;font-weight:700;
+                       background:linear-gradient(135deg,#00e676,#00c853);
+                       color:#04060d;border:none;border-radius:12px;cursor:pointer">
+          ➕ Nuevo
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ CASOS GUARDADOS (visible post-login) ══ -->
+    <div style="background:#080d1a;border:1px solid #1e2d44;border-radius:20px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:2px">📁 Casos Guardados</div>
+        <button id="btn-refresh-hist" onclick="refreshHistorial()" style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:8px;color:#00e5ff;font-size:14px;width:32px;height:32px;cursor:pointer;line-height:32px;text-align:center;padding:0">↻</button>
+      </div>
+      <!-- Category tabs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <button id="hist-tab-priv" onclick="setHistTab('privado')"
+                style="padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;
+                       background:rgba(0,229,255,.15);border:2px solid #00e5ff;color:#00e5ff;transition:all .2s">
+          🔒 Privado
+        </button>
+        <button id="hist-tab-hosp" onclick="setHistTab('hospital')"
+                style="padding:10px;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;
+                       background:rgba(0,0,0,0);border:2px solid #1e2d44;color:#3d5a78;transition:all .2s">
+          <i class="ph ph-hospital" style="margin-right:5px"></i>Hospital
+        </button>
+      </div>
+      <div id="historial-list">
+        <div style="text-align:center;color:#3d5a78;padding:24px;font-size:13px">Cargando...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR VSC / SANGRADO PERMISIBLE
+════════════════════════════════════════════════════════ -->
+<div id="edit-vsc-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:400px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">🩸 VSC y Permisible</div>
+      <button onclick="closeVSCModal()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <!-- Info auto calculado -->
+    <div id="vsc-auto-info" style="background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:#3d5a78;line-height:1.7"></div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">VSC (ml)</label>
+          <input type="number" inputmode="decimal" id="ev-vsc" style="width:100%;padding:12px;font-size:20px;font-weight:800;background:#04060d;border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Permisible (ml)</label>
+          <input type="number" inputmode="decimal" id="ev-vsp" style="width:100%;padding:12px;font-size:20px;font-weight:800;background:#04060d;border:1.5px solid #ffd600;border-radius:10px;color:#ffd600;box-sizing:border-box">
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="resetVSCManual()" style="padding:14px;font-size:13px;font-weight:700;background:rgba(0,229,255,.1);border:1px solid #00e5ff;border-radius:12px;color:#00e5ff;cursor:pointer">↻ Recalcular auto</button>
+      <button onclick="saveVSCEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e5ff;border:none;border-radius:12px;color:#04060d;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL CONFIRMACIÓN CUSTOM (reemplaza confirm() bloqueado en Safari PWA)
+════════════════════════════════════════════════════════ -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(4,6,13,0.92);align-items:center;justify-content:center;align-items:center;justify-content:center;padding:20px" onclick="confirmCancel()">
+  <div onclick="event.stopPropagation()" style="background:#0a0f1c;border:2px solid #ff1744;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(255,23,68,.3)">
+    <div style="font-size:36px;margin-bottom:12px">🗑</div>
+    <div id="confirm-msg" style="font-size:16px;font-weight:700;color:#dde8ff;margin-bottom:8px">¿Eliminar este caso?</div>
+    <div id="confirm-sub" style="font-size:13px;color:#3d5a78;margin-bottom:24px">Esta acción no se puede deshacer</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="confirmCancel()" style="padding:14px;font-size:14px;font-weight:700;background:#0f1628;border:1.5px solid #1e2d44;border-radius:12px;color:#3d5a78;cursor:pointer">Cancelar</button>
+      <button id="confirm-ok-btn" onclick="confirmOk()" style="padding:14px;font-size:14px;font-weight:700;background:#ff1744;border:none;border-radius:12px;color:#fff;cursor:pointer">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR FILA LÍQUIDOS
+════════════════════════════════════════════════════════ -->
+<div id="edit-liq-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div id="edit-liq-title" style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Hora</div>
+      <button onclick="closeEditLiq()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;color:#00e676;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📥 Ingresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">NaCl 0.9% (ml)</label><input type="number" inputmode="decimal" id="el-nacl" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hartman (ml)</label><input type="number" inputmode="decimal" id="el-hart" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Plasma/Coloides (ml)</label><input type="number" inputmode="decimal" id="el-col" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Paq. Globular (ml)</label><input type="number" inputmode="decimal" id="el-pg" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Medicamentos (ml)</label><input type="number" inputmode="decimal" id="el-med" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Otro ingreso (ml)</label><input type="number" inputmode="decimal" id="el-otro" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+      </div>
+      <div style="font-size:10px;font-weight:800;color:#ff1744;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">📤 Egresos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">🩸 Sangrado (ml)</label><input type="number" inputmode="decimal" id="el-sang" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff1744;border-radius:8px;color:#ff1744;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Diuresis (ml)</label><input type="number" inputmode="decimal" id="el-diu" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Trauma Qx (ml)</label><input type="number" inputmode="decimal" id="el-trau" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">P. Insensibles (ml)</label><input type="number" inputmode="decimal" id="el-ins" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #3d5a78;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Req. Basal (ml)</label><input type="number" inputmode="decimal" id="el-bas" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #3d5a78;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Otro egreso (ml)</label><input type="number" inputmode="decimal" id="el-oeg" style="width:100%;padding:10px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #3d5a78;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteLiqRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar fila</button>
+      <button onclick="saveLiqEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e5ff;border:none;border-radius:12px;color:#04060d;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR VENTILADOR
+════════════════════════════════════════════════════════ -->
+<div id="edit-vent-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e676">✏️ Editar Registro Ventilador</div>
+      <button onclick="closeEditVent()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Hora</label><input type="time" id="ev2-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Modo</label><input type="text" id="ev2-modo" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">FiO2 (%)</label><input type="number" inputmode="decimal" id="ev2-fio2" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Vol. Corriente (ml)</label><input type="number" inputmode="decimal" id="ev2-vc" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">FR (rpm)</label><input type="number" inputmode="decimal" id="ev2-fr" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">PEEP (cmH₂O)</label><input type="number" inputmode="decimal" id="ev2-peep" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">P. Pico (cmH₂O)</label><input type="number" inputmode="decimal" id="ev2-ppeak" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">EtCO2 (mmHg)</label><input type="number" inputmode="decimal" id="ev2-etco2" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px">Vol. Min. (L/min)</label><input type="number" inputmode="decimal" id="ev2-vm" step="0.1" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteVentRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveVentEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR SIGNO VITAL  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-vital-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#00e5ff">✏️ Editar Registro de Vitales</div>
+      <button onclick="closeEditVital()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ev-hora" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Sistólica</label><input type="number" inputmode="decimal" id="ev-tas" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">TA Diastólica</label><input type="number" inputmode="decimal" id="ev-tad" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e5ff;border-radius:8px;color:#00e5ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">PAM</label><input type="number" inputmode="decimal" id="ev-pam" placeholder="auto" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #d500f9;border-radius:8px;color:#d500f9;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FC (lpm)</label><input type="number" inputmode="decimal" id="ev-fc" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FR (rpm)</label><input type="number" inputmode="decimal" id="ev-fr" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">SpO2 (%)</label><input type="number" inputmode="decimal" id="ev-spo2" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Temp (°C)</label><input type="number" inputmode="decimal" id="ev-temp" step="0.1" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ffd600;border-radius:8px;color:#ffd600;box-sizing:border-box"></div>
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padd  try { labLoad(); } catch(e) {}
+  ing:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteVitalRow()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveVitalEdit()" style="padding:14px;font-size:14px;font-weight:700;background:#00e676;border:none;border-radius:12px;color:#04060d;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL EDITAR FÁRMACO  (z-index 400)
+════════════════════════════════════════════════════════ -->
+<div id="edit-farm-modal2" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(4,6,13,0.97);overflow-y:auto;padding:20px 16px;padding-top:calc(24px + env(safe-area-inset-top))">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:800;color:#ff6d00">✏️ Editar Fármaco</div>
+      <button onclick="closeEditFarm2()" style="background:#0f1628;border:1px solid #1e2d44;border-radius:8px;color:#dde8ff;padding:8px 14px;font-size:13px;cursor:pointer">✕ Cerrar</button>
+    </div>
+    <div style="background:#0a0f1c;border:1px solid #1e2d44;border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="margin-bottom:12px"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Fármaco</label><input type="text" id="ef2-nombre" style="width:100%;padding:12px;font-size:16px;font-weight:700;background:#04060d;border:1.5px solid #ff6d00;border-radius:8px;color:#ff6d00;box-sizing:border-box"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Dosis</label><input type="text" id="ef2-dosis" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Vía</label><input type="text" id="ef2-via" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hora</label><input type="time" id="ef2-hora" style="width:100%;padding:10px;font-size:15px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Indicación</label><input type="text" id="ef2-nota" style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button onclick="deleteFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:rgba(255,23,68,.15);border:1px solid #ff1744;border-radius:12px;color:#ff1744;cursor:pointer">🗑 Eliminar</button>
+      <button onclick="saveFarm2()" style="padding:14px;font-size:14px;font-weight:700;background:#ff6d00;border:none;border-radius:12px;color:#fff;cursor:pointer"><i class="ph ph-floppy-disk btn-ico"></i>Guardar</button>
+    </div>
+  </div>
+</div>

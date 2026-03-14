@@ -1,0 +1,151 @@
+    <!-- ══ PREOPERATORIO ══ -->
+    <div style="background:var(--s1);border:1px solid rgba(255,23,68,.25);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);margin-bottom:12px;font-weight:700">🩺 Valoración Preoperatoria</div>
+
+      <!-- Alergias -->
+      <div class="field">
+        <label>Alergias conocidas</label>
+        <input type="text" id="m-alergias" placeholder="Ninguna / Penicilina / Látex...">
+      </div>
+
+      <!-- Ayuno -->
+      <div class="field-row">
+        <div class="field">
+          <label>Horas de ayuno</label>
+          <input type="number" inputmode="decimal" id="m-ayuno" placeholder="h" min="0" max="24">
+        </div>
+        <div class="field">
+          <label>Último alimento</label>
+          <select id="m-ayuno-tipo">
+            <option value="">— Tipo —</option>
+            <option>Sólidos</option>
+            <option>Líquidos claros</option>
+            <option>Leche materna</option>
+            <option>Fórmula</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Antecedentes relevantes -->
+      <div class="field">
+        <label>Antecedentes médicos relevantes</label>
+        <textarea id="m-antecedentes" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="HTA, DM, cardiopatía, EPOC, hepatopatía..."></textarea>
+      </div>
+
+      <!-- Medicamentos crónicos -->
+      <div class="field">
+        <label>Medicamentos crónicos</label>
+        <textarea id="m-medcronicos" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white)" placeholder="Metformina, Losartán, Metoprolol..."></textarea>
+      </div>
+
+      <!-- Vía aérea: Mallampati -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px">🦷 Evaluación Vía Aérea</div>
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field">
+            <label>Mallampati</label>
+            <select id="m-mallampati">
+              <option value="">— Grado —</option>
+              <option value="I">I — Uvula visible completa</option>
+              <option value="II">II — Paladar blando + uvula parcial</option>
+              <option value="III">III — Solo paladar blando</option>
+              <option value="IV">IV — Solo paladar duro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Apertura bucal</label>
+            <select id="m-apertura">
+              <option value="">—</option>
+              <option>Normal (≥3 cm)</option>
+              <option>Reducida (1-3 cm)</option>
+              <option>Muy reducida (&lt;1 cm)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Distancia tiromentoniana</label>
+            <select id="m-dtm">
+              <option value="">—</option>
+              <option>Normal (≥6.5 cm)</option>
+              <option>Reducida (6-6.5 cm)</option>
+              <option>Corta (&lt;6 cm)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Antec. intubación difícil</label>
+            <select id="m-antid">
+              <option value="No">No</option>
+              <option value="Sí">Sí</option>
+              <option value="Desconocido">Desconocido</option>
+            </select>
+          </div>
+        </div>
+        <!-- Score LEMON simplificado -->
+        <div id="lemon-alert" style="display:none;background:rgba(255,23,68,.12);border:1px solid var(--red);border-radius:8px;padding:8px;margin-top:6px;font-size:11px;color:var(--red);font-weight:700">
+          ⚠️ Vía aérea difícil probable — Preparar plan B
+        </div>
+      </div>
+
+      <!-- Premedicación -->
+      <div class="field">
+        <label>Premedicación</label>
+        <input type="text" id="m-premed" placeholder="Midazolam 2mg IV / Nada...">
+      </div>
+
+      <!-- Categoría del caso -->
+      <div class="field">
+        <label>Categoría del caso</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <label id="cat-priv-lbl" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,229,255,.08);border:2px solid var(--cyan);border-radius:10px;cursor:pointer;transition:all .2s">
+            <input type="radio" name="cat-caso" value="privado" id="cat-privado" checked style="width:18px;height:18px;accent-color:var(--cyan)">
+            <div><div style="font-size:13px;font-weight:700;color:var(--cyan)">🔒 Privado</div><div style="font-size:10px;color:var(--muted)">Solo visible para ti</div></div>
+          </label>
+          <label id="cat-hosp-lbl" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,230,118,.05);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s">
+            <input type="radio" name="cat-caso" value="hospital" id="cat-hospital" style="width:18px;height:18px;accent-color:var(--green)">
+            <div><div style="font-size:13px;font-weight:700;color:var(--green)"><i class="ph ph-hospital" style="margin-right:5px"></i>Hospital</div><div style="font-size:10px;color:var(--muted)">Caso institucional</div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EQUIPO MÉDICO ══ -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:12px;font-weight:700"><i class="ph-bold ph-user-circle-gear" style="margin-right:5px"></i>Equipo Médico</div>
+      <div class="field" style="margin-bottom:5px"><label>Anestesiólogo responsable</label>
+        <div class="doc-wrap">
+          <input type="text" id="m-anest" placeholder="Dr. / Dra. ..."
+            oninput="docSuggest('anest',this.value)"
+            onfocus="docSuggest('anest',this.value)">
+          <div id="doc-drop-anest" class="doc-drop" style="display:none"></div>
+        </div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Céd. Prof. Anest.</label>
+          <input type="text" id="m-anest-ced" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+        <div class="field" style="margin:0"><label>Céd. Esp. Anest.</label>
+          <input type="text" id="m-anest-ced-esp" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+      </div>
+      <div class="field" style="margin-bottom:5px"><label>Cirujano responsable</label>
+        <div class="doc-wrap">
+          <input type="text" id="m-ciru" placeholder="Dr. / Dra. ..."
+            oninput="docSuggest('ciru',this.value)"
+            onfocus="docSuggest('ciru',this.value)">
+          <div id="doc-drop-ciru" class="doc-drop" style="display:none"></div>
+        </div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Céd. Prof. Cir.</label>
+          <input type="text" id="m-ciru-ced" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+        <div class="field" style="margin:0"><label>Céd. Esp. Cir.</label>
+          <input type="text" id="m-ciru-ced-esp" inputmode="numeric" placeholder="—" style="font-size:13px"></div>
+      </div>
+      <div class="field"><label>Institución / Servicio</label><input type="text" id="m-inst" placeholder="Hospital / Clínica / Servicio..."></div>
+    </div>
+
+    <button class="btn g full" style="margin-bottom:12px" onclick="savePacModal()"><i class="ph ph-floppy-disk btn-ico"></i>Guardar y Continuar</button>
+    <button class="btn ghost full" onclick="closePacModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="pages">
+

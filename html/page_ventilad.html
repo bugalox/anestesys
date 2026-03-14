@@ -1,0 +1,78 @@
+<!-- ══ VENTILADOR ══ -->
+<div class="page" id="page-vent">
+  <div class="section">
+    <div class="section-header">
+      <h2><i class="ph ph-wind sec-ico"></i>Parámetros</h2>
+      <button class="btn sm g" onclick="regVent()">📌 Registrar</button>
+    </div>
+    <div class="section-body">
+      <div class="field" style="margin-bottom:14px">
+        <label>Modo Ventilatorio</label>
+        <select id="vm-modo"><option>VC — Volumen Control</option><option>PC — Presión Control</option><option>SIMV</option><option>PSV — Soporte de Presión</option></select>
+      </div>
+
+      <div class="vent-grid">
+        <div class="vent-big" style="color:var(--cyan)"><div class="vb-val" id="dvv-fio2">40%</div><div class="vb-lbl">FiO2</div></div>
+        <div class="vent-big" style="color:var(--green)"><div class="vb-val" id="dvv-vc">400 ml</div><div class="vb-lbl">Vol. Corriente</div></div>
+        <div class="vent-big" style="color:var(--orange)"><div class="vb-val" id="dvv-fr">12 rpm</div><div class="vb-lbl">Frecuencia</div></div>
+        <div class="vent-big" style="color:var(--yellow)"><div class="vb-val" id="dvv-peep">5 cmH₂O</div><div class="vb-lbl">PEEP</div></div>
+        <div class="vent-big" style="color:var(--red)"><div class="vb-val" id="dvv-ppeak">20 cmH₂O</div><div class="vb-lbl">P. Pico</div></div>
+        <div class="vent-big" style="color:var(--purple)"><div class="vb-val" id="dvv-etco2">38 mmHg</div><div class="vb-lbl">EtCO2</div></div>
+      </div>
+
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">FiO2 (%)</span></div>
+        <input type="range" id="sv-fio2" min="21" max="100" value="40" oninput="upVent('fio2',this.value,'%')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Vol. Corriente (ml)</span></div>
+        <input type="range" id="sv-vc" min="200" max="800" value="400" step="10" oninput="upVent('vc',this.value,' ml')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Frecuencia (rpm)</span></div>
+        <input type="range" id="sv-fr" min="6" max="30" value="12" oninput="upVent('fr',this.value,' rpm')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">PEEP (cmH₂O)</span></div>
+        <input type="range" id="sv-peep" min="0" max="20" value="5" oninput="upVent('peep',this.value,' cmH₂O')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">Presión Pico (cmH₂O)</span></div>
+        <input type="range" id="sv-ppeak" min="10" max="50" value="20" oninput="upVent('ppeak',this.value,' cmH₂O')"></div>
+      <div class="vslider-row"><div class="vslider-top"><span class="vslider-label">EtCO2 (mmHg)</span></div>
+        <input type="range" id="sv-etco2" min="20" max="60" value="38" oninput="upVent('etco2',this.value,' mmHg')"></div>
+
+      <!-- HALOGENADO -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:4px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Agente Halogenado</div>
+        <div class="field-row">
+          <div class="field"><label>Agente</label>
+            <select id="vm-hal"><option>Sevoflurano</option><option>Isoflurano</option><option>Desflurano</option></select></div>
+          <div class="field"><label>Vol % — <span id="dvv-hal" style="color:var(--purple)">2%</span></label>
+            <input type="range" id="sv-hal" min="0" max="8" step="0.5" value="2" oninput="document.getElementById('dvv-hal').textContent=this.value+'%'">
+          </div>
+        </div>
+      </div>
+
+      <!-- DERIVED -->
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">VM</div>
+          <div style="font-size:20px;font-weight:800;color:var(--green)" id="calc-vm">4.8 L/min</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Complianza</div>
+          <div style="font-size:20px;font-weight:800;color:var(--yellow)" id="calc-comp">26 ml/cmH₂O</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">VT/kg</div>
+          <div style="font-size:20px;font-weight:800" id="calc-vtkg" style="color:var(--green)">7.1 ml/kg</div>
+        </div>
+      </div>
+      <div id="vent-alert-box" style="margin-top:10px;font-size:12px;color:var(--green)">✓ Parámetros dentro de límites</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><h2><i class="ph ph-wind sec-ico"></i>Historial Ventilador</h2></div>
+    <div class="swipe-hint">← desliza →</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="htable">
+        <thead><tr><th>Hora</th><th>Modo</th><th>FiO2</th><th>VC</th><th>FR</th><th>PEEP</th><th>Pico</th><th>EtCO2</th><th>VM</th></tr></thead>
+        <tbody id="vent-tbody"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div><!-- /vent -->
+
