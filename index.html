@@ -997,7 +997,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="swipe-hint">← desliza la tabla →</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
-        <thead><tr><th>Hora</th><th>TAS</th><th>TAD</th><th>PAM</th><th>FC</th><th>SpO₂</th><th>EtCO₂</th><th>Temp</th><th>Nota</th></tr></thead>
+        <thead><tr><th>Hora</th><th>TAS</th><th>TAD</th><th>PAM</th><th>FC</th><th>FR</th><th>SpO₂</th><th>EtCO₂</th><th>Temp</th><th>Nota</th></tr></thead>
         <tbody id="vital-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
@@ -2485,8 +2485,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">FR (rpm)</label><input type="number" inputmode="decimal" id="ev-fr" style="width:100%;padding:10px;font-size:16px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
         <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">SpO2 (%)</label><input type="number" inputmode="decimal" id="ev-spo2" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #00e676;border-radius:8px;color:#00e676;box-sizing:border-box"></div>
         <div><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Temp (°C)</label><input type="number" inputmode="decimal" id="ev-temp" step="0.1" style="width:100%;padding:10px;font-size:18px;font-weight:700;background:#04060d;border:1.5px solid #ffd600;border-radius:8px;color:#ffd600;box-sizing:border-box"></div>
-        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padd  try { labLoad(); } catch(e) {}
-  ing:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
+        <div style="grid-column:1/-1"><label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nota / Observación</label><input type="text" id="ev-nota" placeholder="Observación..." style="width:100%;padding:10px;font-size:14px;background:#04060d;border:1.5px solid #1e2d44;border-radius:8px;color:#dde8ff;box-sizing:border-box"></div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -2986,7 +2985,7 @@ function checkAlarms(v, hora) {
 
 function renderVitalTable() {
   const b = document.getElementById('vital-tbody');
-  if(!S.history.length){b.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:16px">Sin registros — toca "Registrar Punto"</td></tr>';return;}
+  if(!S.history.length){b.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros — toca "Registrar Punto"</td></tr>';return;}
   const n = S.history.length;
   b.innerHTML=[...S.history].map((r,i)=>({r,i})).reverse().map(({r,i})=>`
     <tr onclick="openEditVital(${i})" style="cursor:pointer;transition:background .15s">
@@ -2995,6 +2994,7 @@ function renderVitalTable() {
       <td>${r.tad}</td>
       <td style="color:#d500f9;font-weight:700">${r.pam||Math.round(r.tad+(r.tas-r.tad)/3)}</td>
       <td class="${r.fc>120||r.fc<45?'dc':''}">${r.fc}</td>
+      <td class="${r.fr&&r.fr>28?'wc':r.fr&&r.fr<8?'dc':''}">${r.fr||'--'}</td>
       <td class="${r.spo2<92?'dc':r.spo2<94?'wc':''}">${r.spo2}</td>
       <td class="${(r.etco2&&(r.etco2>50||r.etco2<30))?'wc':''}">${r.etco2||'--'}</td>
       <td class="${parseFloat(r.temp)>=38.5?'wc':''}">${r.temp}</td>
@@ -4396,16 +4396,38 @@ function addLiqHoraManual() {
   var trau = get('eg-trau'), ins  = get('eg-ins');
   var bas  = get('eg-bas'),  oeg  = get('eg-otro');
 
+  // FIX BUG-V: calcular deltas por ingrediente para breakdown correcto en tabla
+  var prevNacl = lastSnap ? (lastSnap._absNacl||0) : 0;
+  var prevHart = lastSnap ? (lastSnap._absHart||0) : 0;
+  var prevCol  = lastSnap ? (lastSnap._absCol ||0) : 0;
+  var prevPg   = lastSnap ? (lastSnap._absPg  ||0) : 0;
+  var prevMed  = lastSnap ? (lastSnap._absMed ||0) : 0;
+  var prevOtro = lastSnap ? (lastSnap._absOtro||0) : 0;
+  var prevSang2= lastSnap ? (lastSnap._absSang||0) : 0;
+  var prevDiu2 = lastSnap ? (lastSnap._absDiu ||0) : 0;
+  var prevTrau = lastSnap ? (lastSnap._absTrau||0) : 0;
+  var prevIns  = lastSnap ? (lastSnap._absIns ||0) : 0;
+  var prevBas  = lastSnap ? (lastSnap._absBas ||0) : 0;
+  var prevOeg  = lastSnap ? (lastSnap._absOeg ||0) : 0;
+
   S.liqHora.push({
     hora:hora,
-    // valores absolutos actuales (para detalle en tabla)
-    nacl:nacl, hart:hart, col:col, pg:pg, med:med, otro:otro,
-    sang:sang, diu:diu, trau:trau, ins:ins, bas:bas, oeg:oeg,
-    // deltas de esta hora (lo que realmente entró/salió en esta hora)
+    // deltas por ingrediente (lo que realmente entró/salió ESTA hora)
+    nacl : Math.max(0, nacl-prevNacl), hart: Math.max(0, hart-prevHart),
+    col  : Math.max(0, col -prevCol),  pg:   Math.max(0, pg  -prevPg),
+    med  : Math.max(0, med -prevMed),  otro: Math.max(0, otro-prevOtro),
+    sang : Math.max(0, sang-prevSang2),diu:  Math.max(0, diu -prevDiu2),
+    trau : Math.max(0, trau-prevTrau), ins:  Math.max(0, ins -prevIns),
+    bas  : Math.max(0, bas -prevBas),  oeg:  Math.max(0, oeg -prevOeg),
+    // totales del delta de esta hora
     totalIn:deltaIn, totalEg:deltaEg,
     balHr:balHr, acum:acum,
-    // snapshots para calcular el delta de la SIGUIENTE hora
-    _snapIn:snapIn, _snapEg:snapEg
+    // snapshots para calcular delta de la SIGUIENTE hora
+    _snapIn:snapIn, _snapEg:snapEg,
+    // absolutos actuales para calcular deltas de la siguiente fila
+    _absNacl:nacl, _absHart:hart, _absCol:col,  _absPg:pg,
+    _absMed:med,   _absOtro:otro, _absSang:sang, _absDiu:diu,
+    _absTrau:trau, _absIns:ins,   _absBas:bas,   _absOeg:oeg
   });
   try { addToHourBucket('liq', {in:deltaIn, eg:deltaEg, sang:snapSang - (lastSnap ? (lastSnap._snapSang||0) : 0), diu:snapDiu - (lastSnap ? (lastSnap._snapDiu||0) : 0)}); } catch(e) {}
   // Actualizar snapshots de sang/diu para cálculo correcto de deltas
@@ -4752,6 +4774,7 @@ function genRes() {
       '</td><td style="padding:3px 5px">' + r.tad +
       '</td><td style="padding:3px 5px;font-weight:700">' + pam +
       '</td><td style="padding:3px 5px;' + fcCl + '">' + r.fc +
+      '</td><td style="padding:3px 5px">' + (r.fr||'--') +
       '</td><td style="padding:3px 5px;' + spCl + '">' + r.spo2 +
       '</td><td style="padding:3px 5px;' + (r.etco2&&(r.etco2>50||r.etco2<28)?'color:orange;font-weight:800':'') + '">' + (r.etco2||'--') +
       '</td><td style="padding:3px 5px;' + tpCl + '">' + r.temp + '</td></tr>';
@@ -4864,7 +4887,7 @@ function genRes() {
         '<thead><tr style="background:#0077aa;color:#fff">' +
           '<th style="padding:4px 5px">Hora</th><th style="padding:4px 5px">TA Sist.</th><th style="padding:4px 5px">TA Diast.</th>' +
           '<th style="padding:4px 5px">PAM</th><th style="padding:4px 5px">FC</th>' +
-          '<th style="padding:4px 5px">SpO₂%</th><th style="padding:4px 5px">EtCO₂</th><th style="padding:4px 5px">Temp°C</th>' +
+          '<th style="padding:4px 5px">FR</th><th style="padding:4px 5px">SpO₂%</th><th style="padding:4px 5px">EtCO₂</th><th style="padding:4px 5px">Temp°C</th>' +
         '</tr></thead><tbody>' + vitalRows + '</tbody></table>' +
       '<div style="font-size:7px;color:#888;margin-top:3px">* Valores en rojo = fuera de límites</div>'
       : '<div style="color:#999;padding:8px;text-align:center">Sin registros de signos vitales</div>') +
@@ -5973,8 +5996,22 @@ function deleteLiqRow() {
     '🗑 Eliminar', '#ff1744',
     function() {
       S.liqHora.splice(_editLiqIdx, 1);
-      var acum = 0;
-      S.liqHora.forEach(function(r, i) { acum += r.balHr; S.liqHora[i].acum = acum; });
+      // FIX BUG-N: recalculate _snapIn/_snapEg chain + acum after deletion
+      // Without this, rows after the deleted one have stale delta snapshots
+      var _runSnapIn = 0, _runSnapEg = 0, _acumDel = 0;
+      S.liqHora.forEach(function(r, i) {
+        // Recalculate delta from rebuilt snap chain
+        var newDeltaIn = Math.max(0, (r._snapIn||0) - _runSnapIn);
+        var newDeltaEg = Math.max(0, (r._snapEg||0) - _runSnapEg);
+        S.liqHora[i].totalIn = newDeltaIn;
+        S.liqHora[i].totalEg = newDeltaEg;
+        S.liqHora[i].balHr   = newDeltaIn - newDeltaEg;
+        _acumDel += S.liqHora[i].balHr;
+        S.liqHora[i].acum    = _acumDel;
+        // Advance snap pointers
+        _runSnapIn = r._snapIn || _runSnapIn;
+        _runSnapEg = r._snapEg || _runSnapEg;
+      });
       closeEditLiq();
       renderLiqHoraTable();
       renderLiqHoraBtns();
@@ -6220,7 +6257,7 @@ function setAccessUI(isAuthed) {
         + '</tr>';
     }
 
-    var header = '<tr data-summary="vital"><td colspan="9" style="text-align:center;color:var(--muted);padding:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border);background:rgba(255,255,255,.02)">Resumen clínico — '+S.history.length+' registros</td></tr>';
+    var header = '<tr data-summary="vital"><td colspan="10" style="text-align:center;color:var(--muted);padding:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border);background:rgba(255,255,255,.02)">Resumen clínico — '+S.history.length+' registros</td></tr>';
     var rLast = row('ÚLTIMO', _fmt0(_num(last.tas)), _fmt0(_num(last.tad)), _fmt0(lastPam), _fmt0(_num(last.fc)), _fmt0(_num(last.fr)), _fmt0(_num(last.spo2)), _fmt1(_num(last.temp)), '');
     var rAvg  = row('PROM', _fmt0(_avg(tas)), _fmt0(_avg(tad)), _fmt0(_avg(pam)), _fmt0(_avg(fc)), _fmt0(_avg(fr)), _fmt0(_avg(spo2)), _fmt1(_avg(temp)), '');
     var rMM   = row('MÍN–MÁX', _fmt0(_min(tas))+'–'+_fmt0(_max(tas)), _fmt0(_min(tad))+'–'+_fmt0(_max(tad)), _fmt0(_min(pam))+'–'+_fmt0(_max(pam)), _fmt0(_min(fc))+'–'+_fmt0(_max(fc)), _fmt0(_min(fr))+'–'+_fmt0(_max(fr)), _fmt0(_min(spo2))+'–'+_fmt0(_max(spo2)), _fmt1(_min(temp))+'–'+_fmt1(_max(temp)), '');
@@ -7080,7 +7117,7 @@ function _labUpdateFechaLabel(val) {
 
 // ── Clear all ─────────────────────────────────────────────────────────────────
 function labClearAll() {
-  showConfirm('¿Limpiar todos los laboratorios de este caso?', function() {
+  showConfirm('¿Limpiar todos los laboratorios de este caso?', 'Esta acción no se puede deshacer', '🧹 Limpiar', '#ff6d00', function() {
     _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
                 glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
     _labClearInputs();
@@ -8403,6 +8440,9 @@ if(navigator.serviceWorker) {
 
 
 // ── Buscador de agenda ──────────────────────────────────────
+// FIX BUG-G: agCitaCard was called but never defined — alias to agCard
+function agCitaCard(ct) { return agCard(ct, false); }
+
 function agSearchFilter(q) {
   var clearBtn = document.getElementById('ag-search-clear');
   var infoEl   = document.getElementById('ag-search-info');
