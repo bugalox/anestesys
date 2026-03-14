@@ -1024,7 +1024,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
         <div class="field"><label>Paq. Globular (ml)</label><input type="number" inputmode="decimal" id="in-pg" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Medicamentos (ml)</label><input type="number" inputmode="decimal" id="in-med" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
+        <div class="field"><label>Medicamentos (ml) <span style="color:var(--muted);font-size:9px;font-weight:400" title="Incluir solo el volumen de medicamentos IV no contabilizado en la sección de Fármacos para evitar duplicar">⚠ no duplicar con Fármacos</span></label><input type="number" inputmode="decimal" id="in-med" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
         <div class="field"><label>Otro (ml)</label><input type="number" inputmode="decimal" id="in-otro" oninput="calcLiq();debounceSave()" value="0" onchange="calcLiq()"></div>
       </div>
       <div style="display:flex;justify-content:space-between;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:12px 14px;margin-top:4px">
@@ -3486,7 +3486,7 @@ function renderHourBuckets() {
         <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Ingresos IV</span><b style="color:var(--green)">${b.liqIn} ml</b></div>
         <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Sangrado</span><b style="color:var(--red)">${b.sang} ml</b></div>
         <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Diuresis</span><b style="color:var(--cyan)">${b.diu} ml</b></div>
-        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Balance hr</span><b style="color:${b.liqIn-(b.sang+b.diu)>=0?'var(--green)':'var(--yellow)'}">${b.liqIn-(b.sang+b.diu)>=0?'+':''}${b.liqIn-(b.sang+b.diu)} ml</b></div>
+        <div style="background:var(--s2);border-radius:6px;padding:6px 8px"><span style="color:var(--muted);font-size:10px;display:block">Balance hr</span><b style="color:${(b.liqIn-b.liqEg)>=0?'var(--green)':'var(--yellow)'}">${(b.liqIn-b.liqEg)>=0?'+':''}${b.liqIn-b.liqEg} ml</b></div>
       </div>
       ${b.farms.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Fármacos (${b.farms.length})</div>${b.farms.map(f=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">${f.h} — <b>${f.n}</b> ${f.d} ${f.v}</div>`).join('')}`:''}
     </div>`;
@@ -4179,6 +4179,11 @@ function calcLiq() {
       insEl.title = 'Auto: 2 ml/kg/h × ' + hrsCx.toFixed(1) + 'h';
       var insLbl = document.getElementById('lbl-ins-auto');
       if(insLbl) insLbl.textContent = '⚡ auto';
+      insEl.setAttribute('data-auto','1');
+    } else if (insEl && insEl.getAttribute('data-auto') === '1') {
+      // FIX BALANCE-3: recalcular auto si el peso cambió
+      insEl.value = Math.round(2 * peso * hrsCx);
+      insEl.title = 'Auto: 2 ml/kg/h × ' + hrsCx.toFixed(1) + 'h';
     }
     if (basEl && !basEl.value) {
       var basalHr = peso <= 10 ? 4*peso :
@@ -4189,6 +4194,14 @@ function calcLiq() {
       basEl.title = 'Auto: Holiday-Segar × ' + hrsCx.toFixed(1) + 'h';
       var basLbl = document.getElementById('lbl-bas-auto');
       if(basLbl) basLbl.textContent = '⚡ auto';
+      basEl.setAttribute('data-auto','1');
+    } else if (basEl && basEl.getAttribute('data-auto') === '1') {
+      // FIX BALANCE-3: recalcular auto si el peso cambió
+      var basalHrRecalc = peso <= 10 ? 4*peso :
+                          peso <= 20 ? 40 + 2*(peso-10) :
+                                       60 + 1*(peso-20);
+      basEl.value = Math.round(basalHrRecalc * hrsCx);
+      basEl.title = 'Auto: Holiday-Segar × ' + hrsCx.toFixed(1) + 'h';
     }
   }
 
@@ -4224,20 +4237,45 @@ calcLiq();
 function forceHourSnapshot() {
   const get=id=>parseInt(document.getElementById(id)?.value)||0;
   const lbl = getCurrentHourLabel();
+
+  // FIX BALANCE-2: calcular deltas respecto al snapshot del bucket anterior.
+  // Bug original: += con total acumulado global -> inflaba valores en cada llamada.
+  var totalInNow  = get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
+  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-ins')+get('eg-bas')+get('eg-otro');
+  var sangNow     = get('eg-sang');
+  var diuNow      = get('eg-diu');
+
+  var hrsKeys    = Object.keys(S.hourBuckets);
+  var lastKey    = hrsKeys.length ? hrsKeys[hrsKeys.length-1] : null;
+  var prevBucket = lastKey ? S.hourBuckets[lastKey] : null;
+  var prevSnap   = (prevBucket && lastKey !== lbl) ? (prevBucket._snap || null) : null;
+
+  var prevIn   = prevSnap ? (prevSnap.totalIn || 0) : 0;
+  var prevEg   = prevSnap ? (prevSnap.totalEg || 0) : 0;
+  var prevSang = prevSnap ? (prevSnap.sang    || 0) : 0;
+  var prevDiu  = prevSnap ? (prevSnap.diu     || 0) : 0;
+
+  var deltaIn   = Math.max(0, totalInNow  - prevIn);
+  var deltaEg   = Math.max(0, totalEgNow  - prevEg);
+  var deltaSang = Math.max(0, sangNow     - prevSang);
+  var deltaDiu  = Math.max(0, diuNow      - prevDiu);
+
   if(!S.hourBuckets[lbl]) S.hourBuckets[lbl]={farms:[],liqIn:0,liqEg:0,sang:0,diu:0,vitals:[]};
-  var _totalIn = get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
-  var _totalEg = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-ins')+get('eg-bas')+get('eg-otro');
-  S.hourBuckets[lbl].liqIn += _totalIn;
-  S.hourBuckets[lbl].liqEg += _totalEg;
-  S.hourBuckets[lbl].sang  += get('eg-sang');
-  S.hourBuckets[lbl].diu   += get('eg-diu');
+
+  // Asignar delta de esta hora (no acumular el total global)
+  S.hourBuckets[lbl].liqIn = deltaIn;
+  S.hourBuckets[lbl].liqEg = deltaEg;
+  S.hourBuckets[lbl].sang  = deltaSang;
+  S.hourBuckets[lbl].diu   = deltaDiu;
+  // Guardar snapshot para calcular el delta del siguiente bucket horario
+  S.hourBuckets[lbl]._snap = { totalIn:totalInNow, totalEg:totalEgNow, sang:sangNow, diu:diuNow };
+
   renderHourBuckets();
   const bc = document.getElementById('hr-bucket-count');
   if(bc) bc.textContent = Object.keys(S.hourBuckets).length+' horas';
   if(navigator.vibrate) navigator.vibrate(30);
   addAlert('info','📌 Snapshot horario registrado: '+getCurrentHourLabel(),getT());
 }
-
 // ──────────────────────────────────────────────────────
 // REGISTRO HORA POR HORA — funciones principales
 // ──────────────────────────────────────────────────────
@@ -4329,21 +4367,49 @@ function addLiqHoraManual() {
 
   var get = function(id){ var e=document.getElementById(id); return e?parseInt(e.value)||0:0; };
   var hora = getT();
+
+  // ── FIX BALANCE-1: calcular DELTAS respecto al snapshot anterior ──
+  // Los campos in-nacl, in-hart… son acumuladores TOTALES desde inicio del caso.
+  // El balance "de esa hora" debe ser la diferencia entre el total actual y el
+  // total del snapshot anterior, igual que lo hace el papel.
+  var snapIn  = get('in-nacl') + get('in-hart') + get('in-col') + get('in-pg') + get('in-med') + get('in-otro');
+  var snapEg  = get('eg-sang') + get('eg-diu')  + get('eg-trau') + get('eg-ins') + get('eg-bas') + get('eg-otro');
+  var snapSang= get('eg-sang');
+  var snapDiu = get('eg-diu');
+
+  var lastSnap = S.liqHora.length ? S.liqHora[S.liqHora.length-1] : null;
+  var prevSnapIn  = lastSnap ? (lastSnap._snapIn  || 0) : 0;
+  var prevSnapEg  = lastSnap ? (lastSnap._snapEg  || 0) : 0;
+
+  var deltaIn = snapIn  - prevSnapIn;   // lo que entró ESTA hora
+  var deltaEg = snapEg  - prevSnapEg;   // lo que salió ESTA hora
+  var balHr   = deltaIn - deltaEg;      // balance real de esta hora
+
+  var prev = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
+  var acum = prev + balHr;
+
+  // Guardar también los valores absolutos actuales para el detalle visual
   var nacl = get('in-nacl'), hart = get('in-hart');
   var col  = get('in-col'),  pg   = get('in-pg');
   var med  = get('in-med'),  otro = get('in-otro');
-  var totalIn = nacl + hart + col + pg + med + otro;
   var sang = get('eg-sang'), diu  = get('eg-diu');
   var trau = get('eg-trau'), ins  = get('eg-ins');
   var bas  = get('eg-bas'),  oeg  = get('eg-otro');
-  var totalEg = sang + diu + trau + ins + bas + oeg;
-  var balHr = totalIn - totalEg;
-  var prev  = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
-  var acum  = prev + balHr;
-  S.liqHora.push({hora:hora, nacl:nacl, hart:hart, col:col, pg:pg, med:med, otro:otro,
-                  sang:sang, diu:diu, trau:trau, ins:ins, bas:bas, oeg:oeg,
-                  totalIn:totalIn, totalEg:totalEg, balHr:balHr, acum:acum});
-  try { addToHourBucket('liq', {in:totalIn, eg:totalEg, sang:sang, diu:diu}); } catch(e) {}
+
+  S.liqHora.push({
+    hora:hora,
+    // valores absolutos actuales (para detalle en tabla)
+    nacl:nacl, hart:hart, col:col, pg:pg, med:med, otro:otro,
+    sang:sang, diu:diu, trau:trau, ins:ins, bas:bas, oeg:oeg,
+    // deltas de esta hora (lo que realmente entró/salió en esta hora)
+    totalIn:deltaIn, totalEg:deltaEg,
+    balHr:balHr, acum:acum,
+    // snapshots para calcular el delta de la SIGUIENTE hora
+    _snapIn:snapIn, _snapEg:snapEg
+  });
+  try { addToHourBucket('liq', {in:deltaIn, eg:deltaEg, sang:snapSang - (lastSnap ? (lastSnap._snapSang||0) : 0), diu:snapDiu - (lastSnap ? (lastSnap._snapDiu||0) : 0)}); } catch(e) {}
+  // Actualizar snapshots de sang/diu para cálculo correcto de deltas
+  if(S.liqHora.length>0){ S.liqHora[S.liqHora.length-1]._snapSang = snapSang; S.liqHora[S.liqHora.length-1]._snapDiu = snapDiu; }
   renderLiqHoraTable();
   renderLiqHoraBtns();
   if (navigator.vibrate) navigator.vibrate([30,30,30]);
@@ -4807,7 +4873,7 @@ function genRes() {
   // ── HOJA 2: Líquidos + Horario + Fármacos ──
   const hrsRows = hrs.map(function(hr, i) {
     const b = S.hourBuckets[hr];
-    const bhr = b.liqIn - b.sang - b.diu;
+    const bhr = b.liqIn - b.liqEg; // FIX BALANCE-5: usar liqEg completo (incluye Trauma Qx, Insensibles, Req.Basal)
     const bg2 = i % 2 === 0 ? '#fff' : '#f5f8ff';
     return '<tr style="background:' + bg2 + '">' +
       '<td style="padding:3px 5px;font-weight:700;color:#334455">' + hr + '</td>' +
@@ -6619,9 +6685,17 @@ function saveLiqEdit(){
     sang:sang, diu:diu, trau:trau, ins:ins, bas:bas, oeg:oeg,
     totalIn:totalIn, totalEg:totalEg, balHr:balHr, acum:0
   };
-  // Recalcular acumulado en cascada para todas las filas
+  // FIX BALANCE-1b: Recalcular acumulado en cascada para todas las filas
+  // Y recalcular balHr de cada fila a partir de su totalIn/totalEg editados
   var acum=0;
-  S.liqHora.forEach(function(x,i){ acum += (x.balHr||0); S.liqHora[i].acum = acum; });
+  S.liqHora.forEach(function(x,i){
+    // Recalcular balHr desde sus propios totalIn/totalEg
+    var tIn = x.totalIn != null ? x.totalIn : (x.nacl||0)+(x.hart||0)+(x.col||0)+(x.pg||0)+(x.med||0)+(x.otro||0);
+    var tEg = x.totalEg != null ? x.totalEg : (x.sang||0)+(x.diu||0)+(x.trau||0)+(x.ins||0)+(x.bas||0)+(x.oeg||0);
+    S.liqHora[i].balHr = tIn - tEg;
+    acum += S.liqHora[i].balHr;
+    S.liqHora[i].acum = acum;
+  });
   closeEditLiq();
   renderLiqHoraTable(); renderLiqHoraBtns();
   try{ autoSave(); }catch(e){}
