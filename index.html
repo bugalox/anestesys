@@ -10,27 +10,19 @@
 <meta name="theme-color" content="#04060d">
 <title>AnesteSys Pro</title>
 
-<!-- Iconos Phosphor -->
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-
-<!-- PWA manifest (archivo separado para GitHub Pages) -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2304060d'/><text y='68' x='50' text-anchor='middle' font-size='55' font-family='monospace' fill='%2300e5ff'>&#x2665;</text></svg>">
-
-<!-- Estilos propios -->
 <link rel="stylesheet" href="css/main.css">
 
-<!-- Librerías para PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-<!-- Modales globales (inyectados por el loader) -->
 <div id="modals-container"></div>
 
-<!-- APP SHELL -->
 <div class="app">
 
   <div class="topbar">
@@ -55,33 +47,34 @@
   </div>
 
   <nav class="bottomnav">
-    <button class="navbtn active" id="nav-monitor"  onclick="nav('monitor')">
-      <i class="ph-bold ph-activity icon"></i><span class="label">Monitor</span>
+    <button class="navbtn active" onclick="nav('monitor',this)" id="nb-monitor">
+      <i class="ph-bold ph-heartbeat nav-ico"></i><span class="label">Monitor</span>
     </button>
-    <button class="navbtn" id="nav-liq"     onclick="nav('liq')">
-      <i class="ph-bold ph-drop icon"></i><span class="label">Líquidos</span>
+    <button class="navbtn" onclick="nav('liq',this)" id="nb-liq">
+      <i class="ph-bold ph-drop nav-ico"></i><span class="label">Líquidos</span>
     </button>
-    <button class="navbtn" id="nav-vent"    onclick="nav('vent')">
-      <i class="ph-bold ph-wind icon"></i><span class="label">Vent.</span>
+    <button class="navbtn" onclick="nav('vent',this)" id="nb-vent">
+      <i class="ph-bold ph-wind nav-ico"></i><span class="label">Ventil.</span>
     </button>
-    <button class="navbtn" id="nav-farm"    onclick="nav('farm')">
-      <i class="ph-bold ph-pill icon"></i><span class="label">Fármacos</span>
+    <button class="navbtn" onclick="nav('farm',this)" id="nb-farm">
+      <i class="ph-bold ph-syringe nav-ico"></i><span class="label">Fármacos</span>
     </button>
-    <button class="navbtn" id="nav-alerts"  onclick="nav('alerts')">
-      <i class="ph-bold ph-bell icon"></i><span class="label">Alertas</span>
-      <span class="badge" id="alert-badge" style="display:none">0</span>
+    <button class="navbtn" onclick="nav('alert',this)" id="nb-alert" style="position:relative">
+      <i class="ph-bold ph-warning nav-ico"></i><span class="label">Alertas</span>
+      <span class="badge r" id="alert-badge" style="position:absolute;top:4px;right:6px;font-size:9px;padding:1px 5px;display:none">0</span>
     </button>
-    <button class="navbtn" id="nav-res"     onclick="nav('res')">
-      <i class="ph-bold ph-clipboard-text icon"></i><span class="label">Resumen</span>
+    <button class="navbtn" onclick="nav('lab',this)" id="nb-lab">
+      <i class="ph-bold ph-test-tube nav-ico"></i><span class="label">Labs</span>
     </button>
-    <button class="navbtn" id="nav-perfil"  onclick="nav('perfil')">
-      <i class="ph-bold ph-user icon"></i><span class="label">Perfil</span>
+    <button class="navbtn" onclick="nav('res',this)" id="nb-res">
+      <i class="ph-bold ph-file-text nav-ico"></i><span class="label">Resumen</span>
     </button>
   </nav>
 
 </div>
 
-<!-- LOADER -->
+<div id="print-area" style="display:none"></div>
+
 <script>
 (function () {
   'use strict';
@@ -96,6 +89,7 @@
     'html/page_resumen.html',
     'html/page_laborat.html',
     'html/page_grande.html',
+    'html/page_agenda.html',
   ];
 
   var JS_MODULES = [
@@ -128,7 +122,6 @@
     'js/init.js',
   ];
 
-  // Cache-bust diario (GitHub Pages cachea agresivamente)
   var d = new Date();
   var V = d.getFullYear() + '' + (d.getMonth()+1) + '' + d.getDate();
 
@@ -167,7 +160,6 @@
     });
   }
 
-  // Arranque
   Promise.all([
     Promise.all(HTML_PAGES.map(get)),
     get('html/modals.html')
