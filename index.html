@@ -1038,8 +1038,8 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2><i class="ph ph-arrow-circle-up sec-ico"></i>Egresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
-        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Diuresis (ml)</label><input type="number" inputmode="decimal" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
@@ -1108,21 +1108,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       </table>
     </div>
   </div>
-  <!-- HOURLY BUCKETS -->
-  <div class="section">
-    <div class="section-header">
-      <h2><i class="ph ph-chart-line sec-ico"></i>Resumen por Hora</h2>
-      <span class="badge" id="hr-bucket-count">0 horas</span>
-    </div>
-    <div class="section-body" id="hour-buckets">
-      <div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">
-        Se acumula automáticamente cada hora desde el inicio de anestesia.<br>También puedes forzar un registro tocando el botón de abajo.
-      </div>
-    </div>
-    <div style="padding:12px 16px;border-top:1px solid var(--border)">
-      <button class="btn o full" onclick="forceHourSnapshot()">📌 Registrar Hora Actual Ahora</button>
-    </div>
-  </div>
+
 
 </div><!-- /liq -->
 
@@ -2377,6 +2363,14 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
           <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Permisible (ml)</label>
           <input type="number" inputmode="decimal" id="ev-vsp" style="width:100%;padding:12px;font-size:20px;font-weight:800;background:#04060d;border:1.5px solid #ffd600;border-radius:10px;color:#ffd600;box-sizing:border-box">
         </div>
+        <div style="grid-column:1/-1">
+          <label style="font-size:10px;color:#3d5a78;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Hto mínimo aceptable (%)
+            <span style="font-size:9px;color:#3d5a78;font-weight:400;text-transform:none"> — 30% adulto general · 32-35% cardíaco · ≥36% anciano/ASA III+</span>
+          </label>
+          <input type="number" inputmode="decimal" id="ev-htomin" min="18" max="45" step="1"
+            style="width:100%;padding:12px;font-size:18px;font-weight:800;background:#04060d;border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;box-sizing:border-box"
+            placeholder="30">
+        </div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -2569,6 +2563,7 @@ const S = {
   _frozenTcx:  null,
   _vscManual:  null,
   _vspManual:  null,
+  _htoMin:     30,   // Hto mínimo aceptable (%) — configurable por el médico
   _sangAlerted:false,
 };
 
@@ -3525,6 +3520,8 @@ function editVSCModal() {
   const {vsc, vsp} = calcVSCyPermisible();
   document.getElementById('ev-vsc').value = vsc;
   document.getElementById('ev-vsp').value = vsp;
+  var htoMinEl = document.getElementById('ev-htomin');
+  if(htoMinEl) htoMinEl.value = (S._htoMin != null) ? S._htoMin : 30;
   // Mostrar info del cálculo automático
   var peso = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
   var edad = parseInt(S.pac.edad) || 30;
@@ -3535,11 +3532,13 @@ function editVSCModal() {
   if(edad < 1) hto0 = 44; else if(edad <= 5) hto0 = 40;
   var vscAuto = Math.round(peso * factor);
   var vspAuto = Math.round(vscAuto * (hto0 - 21) / hto0);
+  var _hm = (S._htoMin != null) ? S._htoMin : 30;
   document.getElementById('vsc-auto-info').innerHTML =
     '<b style="color:#00e5ff">Cálculo automático</b><br>' +
     'Paciente: ' + peso + ' kg · ' + edad + ' años · ' + sexo + '<br>' +
-    'Factor VSC: ' + factor + ' ml/kg   Hto ref: ' + hto0 + '%<br>' +
-    'VSC auto: <b>' + vscAuto + ' ml</b> &nbsp; Permisible auto: <b>' + vspAuto + ' ml</b>';
+    'Factor VSC: ' + factor + ' ml/kg   Hto ref: ' + hto0 + '%   Hto mín: ' + _hm + '%<br>' +
+    'VSC auto: <b>' + vscAuto + ' ml</b> &nbsp; Permisible auto: <b>' + vspAuto + ' ml</b><br>' +
+    '<span style="font-size:10px;color:#3d5a78">Ajusta el Hto mínimo según el paciente (30% general · 35% cardíaco · 38% anciano ASA III+)</span>';
   document.getElementById('edit-vsc-modal').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
@@ -3552,8 +3551,10 @@ function closeVSCModal() {
 function saveVSCEdit() {
   var v = parseInt(document.getElementById('ev-vsc').value);
   var p = parseInt(document.getElementById('ev-vsp').value);
+  var hm = parseInt((document.getElementById('ev-htomin')||{}).value);
   if(v > 0) S._vscManual = v;
   if(p > 0) S._vspManual = p;
+  if(hm >= 18 && hm <= 45) { S._htoMin = hm; S._vspManual = null; calcVSCyPermisible(); }
   calcLiq();
   closeVSCModal();
   showToast('✅ VSC y permisible actualizados');
@@ -3562,9 +3563,12 @@ function saveVSCEdit() {
 function resetVSCManual() {
   S._vscManual = null;
   S._vspManual = null;
+  S._htoMin    = 30;
   const {vsc, vsp} = calcVSCyPermisible();
   document.getElementById('ev-vsc').value = vsc;
   document.getElementById('ev-vsp').value = vsp;
+  var htoMinEl2 = document.getElementById('ev-htomin');
+  if(htoMinEl2) htoMinEl2.value = 30;
   calcLiq();
   showToast('↻ Recalculado automáticamente');
 }
@@ -4142,8 +4146,9 @@ function calcVSCyPermisible() {
   var hto0 = sexo.includes('fem') || sexo === 'f' ? 42 : 45;
   if(edad < 1)       hto0 = 44;
   else if(edad <= 5) hto0 = 40;
-  // Sangrado permisible = VSC × (Hto inicial - Hto mínimo aceptable 21%) / Hto inicial
-  var htoMin = 21;
+  // Sangrado permisible = VSC × (Hto inicial - Hto mínimo aceptable 30%) / Hto inicial
+  // 30% = umbral clínico de transfusión estándar (no 21% que es límite de supervivencia)
+  var htoMin = (typeof S !== 'undefined' && S._htoMin != null) ? S._htoMin : 30; // médico-configurable
   var vspCalc = Math.round(vscCalc * (hto0 - htoMin) / hto0);
   // Si el usuario editó manualmente, respetar esos valores
   var vscManual  = S._vscManual  != null  ? S._vscManual  : vscCalc;
@@ -5378,6 +5383,7 @@ function serializeState() {
     },
     vscManual: S._vscManual || null,
     vspManual: S._vspManual || null,
+    htoMin:    S._htoMin    != null ? S._htoMin : 30,
     etco2:     (S.etco2 != null ? S.etco2 : 38),
     bis:       (S.bis   != null ? S.bis   : null),
     aldrete: {
@@ -5593,6 +5599,7 @@ function restoreState(caso) {
   // VSC manual overrides
   S._vscManual = caso.vscManual || null;
   S._vspManual = caso.vspManual || null;
+  S._htoMin    = caso.htoMin    != null ? caso.htoMin : 30;
   S.etco2 = caso.etco2 != null ? caso.etco2 : 38;
   S.bis   = caso.bis   != null ? caso.bis   : null;
   // Sync EtCO2 display
