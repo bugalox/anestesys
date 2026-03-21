@@ -1097,14 +1097,14 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
       <span class="badge" id="liq-hora-count">0 horas</span>
     </div>
     <div style="padding:12px 16px 0">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center">Toca el botón de la hora correspondiente para registrar el balance de esa hora</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center">Toca el botón de hora para registrar. Cada columna = una hora del procedimiento</div>
       <div id="liq-hora-btns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px"></div>
     </div>
     <div class="swipe-hint">← desliza →</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="htable">
-        <!-- FIX #9: Columnas consolidadas Ingresos/Egresos --><thead><tr><th>#</th><th>Hora</th><th>Ingresos</th><th>Egresos</th><th>Bal. Hr</th><th>Acumulado</th><th></th></tr></thead>
-        <tbody id="liq-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
+        <thead id="liq-thead"><tr><th>Concepto</th></tr></thead>
+        <tbody id="liq-tbody"><tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -4328,44 +4328,145 @@ function renderLiqHoraBtns() {
 }
 
 function renderLiqHoraTable() {
-  var b = document.getElementById('liq-tbody');
+  var thead = document.getElementById('liq-thead');
+  var b     = document.getElementById('liq-tbody');
   if (!b) return;
+
   if (!S.liqHora || !S.liqHora.length) {
-    b.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Sin registros hora por hora</td></tr>';
+    if (thead) thead.innerHTML = '<tr><th>Concepto</th></tr>';
+    b.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px">Sin registros — toca el botón de hora para registrar</td></tr>';
     return;
   }
-  b.innerHTML = S.liqHora.map(function(r, i) {
-    var tIn = r.totalIn != null ? r.totalIn : (r.nacl||0)+(r.hart||0)+(r.col||0)+(r.pg||0)+(r.med||0)+(r.otro||0);
-    var tEg = r.totalEg != null ? r.totalEg : (r.sang||0)+(r.diu||0)+(r.trau||0)+(r.ins||0)+(r.bas||0)+(r.oeg||0);
-    var inD=[], egD=[];
-    if(r.nacl) inD.push('NaCl:'+r.nacl);
-    if(r.hart) inD.push('Hart:'+r.hart);
-    if(r.col)  inD.push('Col:'+r.col);
-    if(r.pg)   inD.push('PG:'+r.pg);
-    if(r.med)  inD.push('Med:'+r.med);
-    if(r.sang) egD.push('🩸'+r.sang);
-    if(r.diu)  egD.push('💧'+r.diu);
-    if(r.trau) egD.push('Trau:'+r.trau);
-    if(r.ins)  egD.push('Ins:'+r.ins);
-    if(r.bas)  egD.push('Bas:'+r.bas);
-    return '<tr onclick="openEditLiq('+i+')" style="cursor:pointer">' +
-      '<td style="font-weight:800;color:var(--cyan);font-size:11px">'+_liqHoraLabel(i)+'</td>' +
-      '<td class="hl" style="font-weight:800">'+r.hora+'</td>' +
-      '<td style="color:var(--green)">'+tIn+'<br><span style="color:var(--muted);font-size:9px">'+inD.join(' ')+'</span></td>' +
-      '<td style="color:var(--red)">'+tEg+'<br><span style="color:var(--muted);font-size:9px">'+egD.join(' ')+'</span></td>' +
-      '<td class="'+(r.balHr<0?'wc':'')+'" style="font-weight:800">'+( r.balHr>=0?'+':'')+r.balHr+'</td>' +
-      '<td class="'+(r.acum<-500?'dc':r.acum<0?'wc':'hl')+'">'+( r.acum>=0?'+':'')+r.acum+'</td>' +
-      '<td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td>' +
-    '</tr>';
-  }).join('');
+
+  var n = S.liqHora.length;
+
+  // ── Build column headers ──
+  var hdrHtml = '<tr><th style="text-align:left;min-width:110px">Concepto</th>';
+  for (var hi = 0; hi < n; hi++) {
+    hdrHtml += '<th style="text-align:center;min-width:60px">' + _liqHoraLabel(hi) + '<br>'
+            + '<span style="font-weight:400;color:var(--muted);font-size:9px">' + S.liqHora[hi].hora + '</span></th>';
+  }
+  hdrHtml += '<th style="text-align:center;min-width:60px;color:var(--cyan)">TOTAL</th></tr>';
+  if (thead) thead.innerHTML = hdrHtml;
+
+  // ── Helper: sum a field across all hours ──
+  function sumField(field) {
+    return S.liqHora.reduce(function(s, r) { return s + (r[field] || 0); }, 0);
+  }
+
+  // ── Helper: cell value per hour ──
+  function cellVal(r, field) {
+    var v = r[field] || 0;
+    return v > 0 ? v : '<span style="color:var(--muted)">—</span>';
+  }
+
+  // ── Style helpers ──
+  var cEg = 'color:var(--red)';
+  var cIn = 'color:var(--green)';
+  var cMu = 'color:var(--muted)';
+
+  function sectionRow(label, color) {
+    var cols = '';
+    for (var i = 0; i < n + 1; i++) cols += '<td style="background:var(--s2)"></td>';
+    return '<tr><td colspan="' + (n + 2) + '" style="background:var(--s2);padding:6px 10px;'
+         + 'font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:' + color + '">'
+         + label + '</td></tr>';
+  }
+
+  function dataRow(label, field, color, icon) {
+    var total = sumField(field);
+    var row = '<tr style="cursor:default">'
+            + '<td style="font-size:11px;' + cMu + ';padding:6px 10px">'
+            + (icon ? icon + ' ' : '') + label + '</td>';
+    for (var i = 0; i < n; i++) {
+      var v = S.liqHora[i][field] || 0;
+      row += '<td style="text-align:center;font-size:12px;' + (v > 0 ? color : cMu) + '">'
+           + (v > 0 ? v : '—') + '</td>';
+    }
+    row += '<td style="text-align:center;font-size:13px;font-weight:800;' + (total > 0 ? color : cMu) + '">'
+         + (total > 0 ? total : '—') + '</td>';
+    row += '</tr>';
+    return row;
+  }
+
+  // ── Build rows ──
+  var html = '';
+
+  // EGRESOS section
+  html += sectionRow('📤 EGRESOS', 'var(--red)');
+  html += dataRow('P. Insensibles', 'ins',  cEg, '');
+  html += dataRow('Req. Basal',     'bas',  cEg, '');
+  html += dataRow('Trauma Qx',      'trau', cEg, '');
+  html += dataRow('🩸 Sangrado',    'sang', cEg, '');
+  html += dataRow('Diuresis',       'diu',  cEg, '💧');
+  html += dataRow('Otro',           'oeg',  cEg, '');
+
+  // EGRESOS subtotal
+  var html2 = '<tr style="border-top:1px solid var(--border)">'
+            + '<td style="font-size:11px;font-weight:800;color:var(--red);padding:6px 10px">Subtotal Egresos</td>';
+  var runEgAccum = 0;
+  for (var i = 0; i < n; i++) {
+    var egHr = (S.liqHora[i].ins||0)+(S.liqHora[i].bas||0)+(S.liqHora[i].trau||0)
+             + (S.liqHora[i].sang||0)+(S.liqHora[i].diu||0)+(S.liqHora[i].oeg||0);
+    html2 += '<td style="text-align:center;font-size:12px;font-weight:800;color:var(--red)">' + egHr + '</td>';
+    runEgAccum += egHr;
+  }
+  var totalEg = sumField('ins')+sumField('bas')+sumField('trau')+sumField('sang')+sumField('diu')+sumField('oeg');
+  html2 += '<td style="text-align:center;font-size:14px;font-weight:900;color:var(--red)">' + totalEg + '</td></tr>';
+  html += html2;
+
+  // INGRESOS section
+  html += sectionRow('📥 INGRESOS', 'var(--green)');
+  html += dataRow('NaCl 0.9%',   'nacl', cIn, '');
+  html += dataRow('Sol. Hartman','hart', cIn, '');
+  html += dataRow('Coloides',    'col',  cIn, '');
+  html += dataRow('Paq. Globular','pg',  cIn, '');
+  html += dataRow('Medicamentos','med',  cIn, '💊');
+  html += dataRow('Otro',        'otro', cIn, '');
+
+  // INGRESOS subtotal
+  var html3 = '<tr style="border-top:1px solid var(--border)">'
+            + '<td style="font-size:11px;font-weight:800;color:var(--green);padding:6px 10px">Subtotal Ingresos</td>';
+  for (var i = 0; i < n; i++) {
+    var inHr = (S.liqHora[i].nacl||0)+(S.liqHora[i].hart||0)+(S.liqHora[i].col||0)
+             + (S.liqHora[i].pg||0)+(S.liqHora[i].med||0)+(S.liqHora[i].otro||0);
+    html3 += '<td style="text-align:center;font-size:12px;font-weight:800;color:var(--green)">' + inHr + '</td>';
+  }
+  var totalIn = sumField('nacl')+sumField('hart')+sumField('col')+sumField('pg')+sumField('med')+sumField('otro');
+  html3 += '<td style="text-align:center;font-size:14px;font-weight:900;color:var(--green)">' + totalIn + '</td></tr>';
+  html += html3;
+
+  // BALANCE TOTAL row
+  var balTotal = totalIn - totalEg;
+  var balColor = balTotal >= 0 ? 'var(--green)' : 'var(--red)';
+  var balBg    = balTotal >= 0 ? 'rgba(0,230,118,.08)' : 'rgba(255,23,68,.08)';
+  var htmlBal  = '<tr style="border-top:2px solid var(--border);background:' + balBg + '">'
+               + '<td style="font-size:12px;font-weight:900;color:' + balColor + ';padding:8px 10px">⚖ BALANCE TOTAL</td>';
+  for (var i = 0; i < n; i++) {
+    var r   = S.liqHora[i];
+    var inH = (r.nacl||0)+(r.hart||0)+(r.col||0)+(r.pg||0)+(r.med||0)+(r.otro||0);
+    var egH = (r.ins||0)+(r.bas||0)+(r.trau||0)+(r.sang||0)+(r.diu||0)+(r.oeg||0);
+    var bh  = inH - egH;
+    var bc  = bh >= 0 ? 'var(--green)' : 'var(--red)';
+    htmlBal += '<td style="text-align:center;font-size:12px;font-weight:800;color:' + bc + '">'
+             + (bh >= 0 ? '+' : '') + bh + '</td>';
+  }
+  htmlBal += '<td style="text-align:center;font-size:16px;font-weight:900;color:' + balColor + '">'
+           + (balTotal >= 0 ? '+' : '') + balTotal + ' ml</td></tr>';
+  html += htmlBal;
+
+  // Edit hint row
+  html += '<tr><td colspan="' + (n + 2) + '" style="text-align:center;font-size:10px;color:var(--muted);padding:6px">'
+        + 'Toca el botón de hora para editar cada registro</td></tr>';
+
+  b.innerHTML = html;
 }
 
 function addLiqHora() { addLiqHoraManual(); }
 
 var _liqHoraLock = false;
 function addLiqHoraManual() {
-  // FIX #2: Guard contra double-tap / ghost click en iOS
-  // 1500ms cubre el delay de 300ms de iOS + el ciclo de render del DOM
+  // Guard contra double-tap en iOS
   if (_liqHoraLock) return;
   _liqHoraLock = true;
   setTimeout(function(){ _liqHoraLock = false; }, 1500);
@@ -4373,82 +4474,35 @@ function addLiqHoraManual() {
   var get = function(id){ var e=document.getElementById(id); return e?parseInt(e.value)||0:0; };
   var hora = getT();
 
-  // ── FIX BALANCE-1: calcular DELTAS respecto al snapshot anterior ──
-  // Los campos in-nacl, in-hart… son acumuladores TOTALES desde inicio del caso.
-  // El balance "de esa hora" debe ser la diferencia entre el total actual y el
-  // total del snapshot anterior, igual que lo hace el papel.
-  var snapIn  = get('in-nacl') + get('in-hart') + get('in-col') + get('in-pg') + get('in-med') + get('in-otro');
-  var snapEg  = get('eg-sang') + get('eg-diu')  + get('eg-trau') + get('eg-ins') + get('eg-bas') + get('eg-otro');
-  var snapSang= get('eg-sang');
-  var snapDiu = get('eg-diu');
+  // Cada registro guarda los valores DE ESA HORA directamente.
+  // NO se usan deltas: el usuario ingresa lo que ocurrió en cada hora
+  // (igual que llena cada celda en el cuaderno — cada celda = valor de esa hora).
+  var nacl=get('in-nacl'), hart=get('in-hart'), col=get('in-col');
+  var pg=get('in-pg'),     med=get('in-med'),   otro=get('in-otro');
+  var sang=get('eg-sang'), diu=get('eg-diu'),   trau=get('eg-trau');
+  var ins=get('eg-ins'),   bas=get('eg-bas'),   oeg=get('eg-otro');
 
-  var lastSnap = S.liqHora.length ? S.liqHora[S.liqHora.length-1] : null;
-  var prevSnapIn  = lastSnap ? (lastSnap._snapIn  || 0) : 0;
-  var prevSnapEg  = lastSnap ? (lastSnap._snapEg  || 0) : 0;
+  var totalIn = nacl+hart+col+pg+med+otro;
+  var totalEg = sang+diu+trau+ins+bas+oeg;
+  var balHr   = totalIn - totalEg;
+  var prev    = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
+  var acum    = prev + balHr;
 
-  var deltaIn = snapIn  - prevSnapIn;   // lo que entró ESTA hora
-  var deltaEg = snapEg  - prevSnapEg;   // lo que salió ESTA hora
-  var balHr   = deltaIn - deltaEg;      // balance real de esta hora
+  S.liqHora.push({ hora, nacl, hart, col, pg, med, otro,
+    sang, diu, trau, ins, bas, oeg, totalIn, totalEg, balHr, acum });
 
-  var prev = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
-  var acum = prev + balHr;
+  try { addToHourBucket('liq',{in:totalIn,eg:totalEg,sang,diu}); } catch(e) {}
 
-  // Guardar también los valores absolutos actuales para el detalle visual
-  var nacl = get('in-nacl'), hart = get('in-hart');
-  var col  = get('in-col'),  pg   = get('in-pg');
-  var med  = get('in-med'),  otro = get('in-otro');
-  var sang = get('eg-sang'), diu  = get('eg-diu');
-  var trau = get('eg-trau'), ins  = get('eg-ins');
-  var bas  = get('eg-bas'),  oeg  = get('eg-otro');
-
-  // FIX BUG-V: calcular deltas por ingrediente para breakdown correcto en tabla
-  var prevNacl = lastSnap ? (lastSnap._absNacl||0) : 0;
-  var prevHart = lastSnap ? (lastSnap._absHart||0) : 0;
-  var prevCol  = lastSnap ? (lastSnap._absCol ||0) : 0;
-  var prevPg   = lastSnap ? (lastSnap._absPg  ||0) : 0;
-  var prevMed  = lastSnap ? (lastSnap._absMed ||0) : 0;
-  var prevOtro = lastSnap ? (lastSnap._absOtro||0) : 0;
-  var prevSang2= lastSnap ? (lastSnap._absSang||0) : 0;
-  var prevDiu2 = lastSnap ? (lastSnap._absDiu ||0) : 0;
-  var prevTrau = lastSnap ? (lastSnap._absTrau||0) : 0;
-  var prevIns  = lastSnap ? (lastSnap._absIns ||0) : 0;
-  var prevBas  = lastSnap ? (lastSnap._absBas ||0) : 0;
-  var prevOeg  = lastSnap ? (lastSnap._absOeg ||0) : 0;
-
-  S.liqHora.push({
-    hora:hora,
-    // deltas por ingrediente (lo que realmente entró/salió ESTA hora)
-    nacl : Math.max(0, nacl-prevNacl), hart: Math.max(0, hart-prevHart),
-    col  : Math.max(0, col -prevCol),  pg:   Math.max(0, pg  -prevPg),
-    med  : Math.max(0, med -prevMed),  otro: Math.max(0, otro-prevOtro),
-    sang : Math.max(0, sang-prevSang2),diu:  Math.max(0, diu -prevDiu2),
-    trau : Math.max(0, trau-prevTrau), ins:  Math.max(0, ins -prevIns),
-    bas  : Math.max(0, bas -prevBas),  oeg:  Math.max(0, oeg -prevOeg),
-    // totales del delta de esta hora
-    totalIn:deltaIn, totalEg:deltaEg,
-    balHr:balHr, acum:acum,
-    // snapshots para calcular delta de la SIGUIENTE hora
-    _snapIn:snapIn, _snapEg:snapEg,
-    // absolutos actuales para calcular deltas de la siguiente fila
-    _absNacl:nacl, _absHart:hart, _absCol:col,  _absPg:pg,
-    _absMed:med,   _absOtro:otro, _absSang:sang, _absDiu:diu,
-    _absTrau:trau, _absIns:ins,   _absBas:bas,   _absOeg:oeg
-  });
-  try { addToHourBucket('liq', {in:deltaIn, eg:deltaEg, sang:snapSang - (lastSnap ? (lastSnap._snapSang||0) : 0), diu:snapDiu - (lastSnap ? (lastSnap._snapDiu||0) : 0)}); } catch(e) {}
-  // Actualizar snapshots de sang/diu para cálculo correcto de deltas
-  if(S.liqHora.length>0){ S.liqHora[S.liqHora.length-1]._snapSang = snapSang; S.liqHora[S.liqHora.length-1]._snapDiu = snapDiu; }
+  // Feedback visual
   renderLiqHoraTable();
   renderLiqHoraBtns();
-  if (navigator.vibrate) navigator.vibrate([30,30,30]);
-  // Visual feedback
   var msg = document.createElement('div');
-  msg.textContent = '✓ '+_liqHoraLabel(S.liqHora.length-1)+' registrada';
-  msg.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00c853;color:#fff;padding:10px 20px;border-radius:20px;font-weight:800;z-index:9999;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+  msg.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00e676;color:#04060d;padding:10px 22px;border-radius:20px;font-weight:800;font-size:14px;z-index:999;pointer-events:none';
+  msg.textContent = '✓ Hora registrada — ' + hora;
   document.body.appendChild(msg);
   setTimeout(function(){ msg.remove(); }, 2500);
   try { autoSave(); } catch(e) {}
 }
-
 // ═══════════════════════════════════════════════
 // VENTILADOR
 // ═══════════════════════════════════════════════
@@ -4628,11 +4682,27 @@ function genRes() {
 
   // ── All data upfront, declared ONCE ──
   function getF(id) { const el = document.getElementById(id); return el ? (parseInt(el.value) || 0) : 0; }
-  const nacl    = getF('in-nacl'), hart = getF('in-hart'), col = getF('in-col');
-  const pg_ml   = getF('in-pg'),  med_ml = getF('in-med'), otro_in = getF('in-otro');
-  const ins_ml  = getF('eg-ins'), bas_ml = getF('eg-bas');
-  const sang_ml = getF('eg-sang'), diu_ml = getF('eg-diu');
-  const trau_ml = getF('eg-trau'), otro_eg = getF('eg-otro');
+
+  // Si hay registros hora-por-hora, usar la SUMA de todas las horas como total real.
+  // Si no, usar los valores actuales de los campos (caso sin registros).
+  function sumLiqHora(field) {
+    return (S.liqHora||[]).reduce(function(s,r){ return s+(r[field]||0); }, 0);
+  }
+  var _hasHours = S.liqHora && S.liqHora.length > 0;
+
+  const nacl    = _hasHours ? sumLiqHora('nacl') : getF('in-nacl');
+  const hart    = _hasHours ? sumLiqHora('hart') : getF('in-hart');
+  const col     = _hasHours ? sumLiqHora('col')  : getF('in-col');
+  const pg_ml   = _hasHours ? sumLiqHora('pg')   : getF('in-pg');
+  const med_ml  = _hasHours ? sumLiqHora('med')  : getF('in-med');
+  const otro_in = _hasHours ? sumLiqHora('otro') : getF('in-otro');
+  const ins_ml  = _hasHours ? sumLiqHora('ins')  : getF('eg-ins');
+  const bas_ml  = _hasHours ? sumLiqHora('bas')  : getF('eg-bas');
+  const sang_ml = _hasHours ? sumLiqHora('sang') : getF('eg-sang');
+  const diu_ml  = _hasHours ? sumLiqHora('diu')  : getF('eg-diu');
+  const trau_ml = _hasHours ? sumLiqHora('trau') : getF('eg-trau');
+  const otro_eg = _hasHours ? sumLiqHora('oeg')  : getF('eg-otro');
+
   const ti  = nacl + hart + col + pg_ml + med_ml + otro_in;
   const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg;
   const bal = ti - te;
@@ -4947,71 +5017,83 @@ function genRes() {
       '<div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:1px">Balance Hídrico Total</div>' +
       '<div style="font-size:8px;color:#888;margin-top:2px">VSP: ' + vsp + ' ml · Sangrado: ' + sang_ml + ' ml (' + sangPct + '% permisible)</div>' +
     '</div>' +
-    (hrs.length ?
-      ST('🕐 RESUMEN POR HORA', '#334455') +
-      '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
-        '<thead><tr style="background:#334455;color:#fff">' +
-          '<th style="padding:4px 5px">Hora</th><th style="padding:4px 5px;text-align:center">Ingresos IV</th>' +
-          '<th style="padding:4px 5px;text-align:center">Sangrado</th><th style="padding:4px 5px;text-align:center">Diuresis</th>' +
-          '<th style="padding:4px 5px;text-align:center">Balance Hr</th><th style="padding:4px 5px">Fármacos</th>' +
-        '</tr></thead><tbody>' + hrsRows + '</tbody></table>'
+        (S.liqHora && S.liqHora.length ?
+      (function() {
+        var n = S.liqHora.length;
+        // ── Build column headers ──
+        var hdrs = '<th style="padding:4px 6px;text-align:left">Concepto</th>';
+        for (var hi = 0; hi < n; hi++) {
+          hdrs += '<th style="padding:4px 6px;text-align:center">' + ((hi+1)+'ª Hora') + '<br>'
+               + '<span style="font-weight:400;font-size:7px">' + S.liqHora[hi].hora + '</span></th>';
+        }
+        hdrs += '<th style="padding:4px 6px;text-align:center">TOTAL</th>';
+
+        function sumF(field) { return S.liqHora.reduce(function(s,r){ return s+(r[field]||0); },0); }
+
+        function dataRowPdf(label, field, color) {
+          var total = sumF(field);
+          var row = '<tr><td style="padding:3px 6px;color:#555">' + label + '</td>';
+          for (var i = 0; i < n; i++) {
+            var v = S.liqHora[i][field]||0;
+            row += '<td style="padding:3px 6px;text-align:center;color:' + (v>0?color:'#aaa') + '">' + (v>0?v:'—') + '</td>';
+          }
+          row += '<td style="padding:3px 6px;text-align:center;font-weight:800;color:' + (total>0?color:'#aaa') + '">' + (total>0?total:'—') + '</td></tr>';
+          return row;
+        }
+
+        function subTotalRowPdf(label, fields, color) {
+          var row = '<tr style="background:#f5f5f5"><td style="padding:3px 6px;font-weight:800;color:' + color + '">' + label + '</td>';
+          var grandTotal = 0;
+          for (var i = 0; i < n; i++) {
+            var s = fields.reduce(function(acc,f){ return acc+(S.liqHora[i][f]||0); }, 0);
+            grandTotal += s;
+            row += '<td style="padding:3px 6px;text-align:center;font-weight:800;color:' + color + '">' + s + '</td>';
+          }
+          row += '<td style="padding:3px 6px;text-align:center;font-weight:900;font-size:10px;color:' + color + '">' + grandTotal + '</td></tr>';
+          return row;
+        }
+
+        var egFields = ['ins','bas','trau','sang','diu','oeg'];
+        var inFields = ['nacl','hart','col','pg','med','otro'];
+        var totalEgPdf = egFields.reduce(function(s,f){ return s+sumF(f); },0);
+        var totalInPdf = inFields.reduce(function(s,f){ return s+sumF(f); },0);
+        var balPdf = totalInPdf - totalEgPdf;
+
+        var balRow = '<tr style="background:' + (balPdf>=0?'#e8f5e9':'#ffeeee') + ';border-top:2px solid #333">'
+          + '<td style="padding:4px 6px;font-weight:900;font-size:9px;color:' + (balPdf>=0?'#006633':'#cc0000') + '">⚖ BALANCE TOTAL</td>';
+        for (var i = 0; i < n; i++) {
+          var r = S.liqHora[i];
+          var inH = (r.nacl||0)+(r.hart||0)+(r.col||0)+(r.pg||0)+(r.med||0)+(r.otro||0);
+          var egH = (r.ins||0)+(r.bas||0)+(r.trau||0)+(r.sang||0)+(r.diu||0)+(r.oeg||0);
+          var bh = inH - egH;
+          balRow += '<td style="padding:4px 6px;text-align:center;font-weight:800;color:' + (bh>=0?'#006633':'#cc0000') + '">'+(bh>=0?'+':'')+bh+'</td>';
+        }
+        balRow += '<td style="padding:4px 6px;text-align:center;font-weight:900;font-size:11px;color:' + (balPdf>=0?'#006633':'#cc0000') + '">'+(balPdf>=0?'+':'')+balPdf+' ml</td></tr>';
+
+        return ST('📋 BALANCE HORA POR HORA', '#005f8a') +
+          '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
+          '<thead><tr style="background:#005f8a;color:#fff">' + hdrs + '</tr></thead><tbody>' +
+          '<tr><td colspan="' + (n+2) + '" style="background:#cc000020;padding:3px 6px;font-size:7px;font-weight:800;color:#cc0000;text-transform:uppercase;letter-spacing:1px">📤 Egresos</td></tr>' +
+          dataRowPdf('P. Insensibles','ins','#cc0000') +
+          dataRowPdf('Req. Basal','bas','#cc0000') +
+          dataRowPdf('Trauma Qx','trau','#cc0000') +
+          dataRowPdf('Sangrado','sang','#cc0000') +
+          dataRowPdf('Diuresis','diu','#cc0000') +
+          dataRowPdf('Otro egreso','oeg','#cc0000') +
+          subTotalRowPdf('Subtotal Egresos', egFields, '#cc0000') +
+          '<tr><td colspan="' + (n+2) + '" style="background:#00663320;padding:3px 6px;font-size:7px;font-weight:800;color:#006633;text-transform:uppercase;letter-spacing:1px">📥 Ingresos</td></tr>' +
+          dataRowPdf('NaCl 0.9%','nacl','#006633') +
+          dataRowPdf('Sol. Hartman','hart','#006633') +
+          dataRowPdf('Coloides','col','#006633') +
+          dataRowPdf('Paq. Globular','pg','#006633') +
+          dataRowPdf('Medicamentos','med','#006633') +
+          dataRowPdf('Otro ingreso','otro','#006633') +
+          subTotalRowPdf('Subtotal Ingresos', inFields, '#006633') +
+          balRow +
+          '</tbody></table>';
+      })()
       : '') +
-    (S.liqHora && S.liqHora.length ?
-      ST('📋 BALANCE HORA POR HORA — REGISTRO MANUAL', '#005f8a') +
-      '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
-        '<thead><tr style="background:#005f8a;color:#fff">' +
-          '<th style="padding:4px 5px">#</th>' +
-          '<th style="padding:4px 5px">Hora</th>' +
-          '<th style="padding:4px 5px;text-align:center">Ingresos (ml)</th>' +
-          '<th style="padding:4px 5px;text-align:center">Detalle Ingresos</th>' +
-          '<th style="padding:4px 5px;text-align:center">Egresos (ml)</th>' +
-          '<th style="padding:4px 5px;text-align:center">Detalle Egresos</th>' +
-          '<th style="padding:4px 5px;text-align:center">Bal. Hr</th>' +
-          '<th style="padding:4px 5px;text-align:center">Acumulado</th>' +
-        '</tr></thead><tbody>' +
-        (function() {
-          var _ordinals = ['1ª Hora','2ª Hora','3ª Hora','4ª Hora','5ª Hora','6ª Hora',
-                           '7ª Hora','8ª Hora','9ª Hora','10ª Hora','11ª Hora','12ª Hora'];
-          return S.liqHora.map(function(r, i) {
-            var bg = i % 2 === 0 ? '#fff' : '#f0f8ff';
-            var balCl = r.balHr < 0 ? 'color:#cc6600;font-weight:800' : 'color:#006633;font-weight:800';
-            var acumCl = r.acum < -500 ? 'color:#cc0000;font-weight:900' : r.acum < 0 ? 'color:#cc6600;font-weight:800' : 'color:#006633;font-weight:800';
-            var label = _ordinals[i] || ((i+1)+'ª Hora');
-            var tIn = r.totalIn != null ? r.totalIn : (r.nacl||0)+(r.hart||0)+(r.col||0)+(r.pg||0)+(r.med||0)+(r.otro||0);
-            var tEg = r.totalEg != null ? r.totalEg : (r.sang||0)+(r.diu||0)+(r.trau||0)+(r.ins||0)+(r.bas||0)+(r.oeg||0);
-            var inD=[], egD=[];
-            if(r.nacl) inD.push('NaCl:'+r.nacl);
-            if(r.hart) inD.push('Hart:'+r.hart);
-            if(r.col)  inD.push('Col:'+r.col);
-            if(r.pg)   inD.push('PG:'+r.pg);
-            if(r.med)  inD.push('Med:'+r.med);
-            if(r.sang) egD.push('Sang:'+r.sang);
-            if(r.diu)  egD.push('Diu:'+r.diu);
-            if(r.trau) egD.push('Trau:'+r.trau);
-            if(r.ins)  egD.push('Ins:'+r.ins);
-            if(r.bas)  egD.push('Bas:'+r.bas);
-            return '<tr style="background:'+bg+'">' +
-              '<td style="padding:3px 5px;font-weight:800;color:#005f8a;font-size:7px">'+label+'</td>' +
-              '<td style="padding:3px 5px;font-weight:700;color:#0077aa">'+r.hora+'</td>' +
-              '<td style="padding:3px 5px;text-align:center;font-weight:800;color:#006633">'+tIn+'</td>' +
-              '<td style="padding:3px 5px;font-size:7px;color:#555">'+inD.join(', ')+'</td>' +
-              '<td style="padding:3px 5px;text-align:center;font-weight:800;color:#cc0000">'+tEg+'</td>' +
-              '<td style="padding:3px 5px;font-size:7px;color:#555">'+egD.join(', ')+'</td>' +
-              '<td style="padding:3px 5px;text-align:center;'+balCl+'">'+( r.balHr>=0?'+':'')+r.balHr+'</td>' +
-              '<td style="padding:3px 5px;text-align:center;'+acumCl+'">'+( r.acum>=0?'+':'')+r.acum+'</td>' +
-            '</tr>';
-          }).join('');
-        })() +
-        '<tr style="background:#e8f4fb;border-top:2px solid #005f8a">' +
-          '<td colspan="6" style="padding:4px 5px;font-weight:800;color:#005f8a;font-size:8px">BALANCE ACUMULADO FINAL</td>' +
-          '<td></td>' +
-          '<td style="padding:4px 5px;text-align:center;font-size:11px;font-weight:900;color:' +
-            (S.liqHora[S.liqHora.length-1].acum >= 0 ? '#006633' : '#cc6600') + '">' +
-            (S.liqHora[S.liqHora.length-1].acum >= 0 ? '+' : '') + S.liqHora[S.liqHora.length-1].acum + ' ml' +
-          '</td>' +
-        '</tr>' +
-      '</tbody></table>'
-      : '') +
+
     ST('💊 FÁRMACOS ADMINISTRADOS (' + S.farms.length + ')', '#5b2d8e') +
     (S.farms.length ?
       '<table style="width:100%;border-collapse:collapse;font-size:8px">' +
@@ -6003,21 +6085,16 @@ function deleteLiqRow() {
     '🗑 Eliminar', '#ff1744',
     function() {
       S.liqHora.splice(_editLiqIdx, 1);
-      // FIX BUG-N: recalculate _snapIn/_snapEg chain + acum after deletion
-      // Without this, rows after the deleted one have stale delta snapshots
-      var _runSnapIn = 0, _runSnapEg = 0, _acumDel = 0;
+      // Recalcular acum en cascada (cada fila ya tiene sus propios valores directos)
+      var _acumDel = 0;
       S.liqHora.forEach(function(r, i) {
-        // Recalculate delta from rebuilt snap chain
-        var newDeltaIn = Math.max(0, (r._snapIn||0) - _runSnapIn);
-        var newDeltaEg = Math.max(0, (r._snapEg||0) - _runSnapEg);
-        S.liqHora[i].totalIn = newDeltaIn;
-        S.liqHora[i].totalEg = newDeltaEg;
-        S.liqHora[i].balHr   = newDeltaIn - newDeltaEg;
+        var tIn=(r.nacl||0)+(r.hart||0)+(r.col||0)+(r.pg||0)+(r.med||0)+(r.otro||0);
+        var tEg=(r.sang||0)+(r.diu||0)+(r.trau||0)+(r.ins||0)+(r.bas||0)+(r.oeg||0);
+        S.liqHora[i].totalIn = tIn;
+        S.liqHora[i].totalEg = tEg;
+        S.liqHora[i].balHr   = tIn - tEg;
         _acumDel += S.liqHora[i].balHr;
-        S.liqHora[i].acum    = _acumDel;
-        // Advance snap pointers
-        _runSnapIn = r._snapIn || _runSnapIn;
-        _runSnapEg = r._snapEg || _runSnapEg;
+        S.liqHora[i].acum = _acumDel;
       });
       closeEditLiq();
       renderLiqHoraTable();
