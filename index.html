@@ -5456,8 +5456,10 @@ function serializeState() {
       pg:   (document.getElementById('in-pg')    || {value:''}).value,
       med:  (document.getElementById('in-med')   || {value:''}).value,
       otro: (document.getElementById('in-otro')  || {value:''}).value,
-      ins:  (document.getElementById('eg-ins')   || {value:''}).value,
-      bas:  (document.getElementById('eg-bas')   || {value:''}).value,
+      ins:  (function(){ var e=document.getElementById('eg-ins');
+              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
+      bas:  (function(){ var e=document.getElementById('eg-bas');
+              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
       diu:  (document.getElementById('eg-diu')   || {value:''}).value,
       sang: (document.getElementById('eg-sang')  || {value:''}).value,
       trau: (document.getElementById('eg-trau')  || {value:''}).value,
@@ -5691,8 +5693,10 @@ function restoreState(caso) {
 
   // Liquid inputs
   var li = caso.liqInputs || {};
+  // ins/bas are auto-calculated by calcLiq() — never restore from saved state
+  // to avoid stale values showing as balance when ingresos are 0
   var lm = {nacl:'in-nacl',hart:'in-hart',col:'in-col',pg:'in-pg',med:'in-med',otro:'in-otro',
-             ins:'eg-ins',bas:'eg-bas',diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
+             diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
   Object.keys(lm).forEach(function(k){ var el=document.getElementById(lm[k]); if(el) el.value=li[k]||''; });
 
   // Aldrete
@@ -6528,7 +6532,10 @@ function resetForNewCase(){
   ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx',
    'm-anest','m-ciru','m-inst','m-tipoan-nota','m-anlocal-dosis',
    'm-alergias','m-ayuno','m-premed','m-antecedentes','m-medcronicos'
-  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.value=''; el.removeAttribute('data-auto'); }
+  });
   try{document.getElementById('m-ayuno-tipo').value='';}catch(e){}
   try{document.getElementById('m-mallampati').value='';}catch(e){}
   try{document.getElementById('m-apertura').value='';}catch(e){}
@@ -6567,11 +6574,17 @@ function resetForNewCase(){
   // ── Limpiar todos los campos de líquidos ──
   ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
    'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'
-  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.value=''; el.removeAttribute('data-auto'); }
+  });
 
   // ── Limpiar cronómetros completamente ──
   ['time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
-  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ el.value=''; el.removeAttribute('data-auto'); }
+  });
 
   // ── Reset botones de fases ──
   var phBtns = {
