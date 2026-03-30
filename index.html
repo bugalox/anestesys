@@ -1037,7 +1037,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <div class="section">
     <div class="section-header"><h2><i class="ph ph-arrow-circle-up sec-ico"></i>Egresos</h2></div>
     <div class="section-body">
-      
+      <div class="field-row">
+        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Diuresis (ml)</label><input type="number" inputmode="decimal" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
@@ -4211,7 +4213,7 @@ function calcLiq() {
   const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
   const sang=get('eg-sang');
   const diu=get('eg-diu');
-  const te=diu+sang+get('eg-trau')+get('eg-otro'); // ins/bas removed
+  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
   const bal=ti-te;
   document.getElementById('ing-total').textContent=ti+' ml';
   document.getElementById('eg-total').textContent=te+' ml';
@@ -4244,7 +4246,7 @@ function forceHourSnapshot() {
   // FIX BALANCE-2: calcular deltas respecto al snapshot del bucket anterior.
   // Bug original: += con total acumulado global -> inflaba valores en cada llamada.
   var totalInNow  = get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
-  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-otro'); // ins/bas removed from main panel
+  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-ins')+get('eg-bas')+get('eg-otro');
   var sangNow     = get('eg-sang');
   var diuNow      = get('eg-diu');
 
@@ -4481,7 +4483,7 @@ function addLiqHoraManual() {
   var ins=get('eg-ins'),   bas=get('eg-bas'),   oeg=get('eg-otro');
 
   var totalIn = nacl+hart+col+pg+med+otro;
-  var totalEg = sang+diu+trau+oeg; // ins/bas excluded
+  var totalEg = sang+diu+trau+ins+bas+oeg;
   var balHr   = totalIn - totalEg;
   var prev    = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
   var acum    = prev + balHr;
@@ -4694,16 +4696,15 @@ function genRes() {
   const pg_ml   = _hasHours ? sumLiqHora('pg')   : getF('in-pg');
   const med_ml  = _hasHours ? sumLiqHora('med')  : getF('in-med');
   const otro_in = _hasHours ? sumLiqHora('otro') : getF('in-otro');
-  // ins/bas removed from main egresos panel — still counted in liqHora table if registered
-  const ins_ml  = 0;
-  const bas_ml  = 0;
+  const ins_ml  = _hasHours ? sumLiqHora('ins')  : getF('eg-ins');
+  const bas_ml  = _hasHours ? sumLiqHora('bas')  : getF('eg-bas');
   const sang_ml = _hasHours ? sumLiqHora('sang') : getF('eg-sang');
   const diu_ml  = _hasHours ? sumLiqHora('diu')  : getF('eg-diu');
   const trau_ml = _hasHours ? sumLiqHora('trau') : getF('eg-trau');
   const otro_eg = _hasHours ? sumLiqHora('oeg')  : getF('eg-otro');
 
   const ti  = nacl + hart + col + pg_ml + med_ml + otro_in;
-  const te  = diu_ml + sang_ml + trau_ml + otro_eg; // ins/bas removed from main egresos
+  const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg;
   const bal = ti - te;
   // FIX J: vsp correcto = VSC × (Hto0 - 21) / Hto0 (igual que calcVSCyPermisible)
   var _resoPeso  = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
@@ -5455,10 +5456,8 @@ function serializeState() {
       pg:   (document.getElementById('in-pg')    || {value:''}).value,
       med:  (document.getElementById('in-med')   || {value:''}).value,
       otro: (document.getElementById('in-otro')  || {value:''}).value,
-      ins:  (function(){ var e=document.getElementById('eg-ins');
-              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
-      bas:  (function(){ var e=document.getElementById('eg-bas');
-              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
+      ins:  (document.getElementById('eg-ins')   || {value:''}).value,
+      bas:  (document.getElementById('eg-bas')   || {value:''}).value,
       diu:  (document.getElementById('eg-diu')   || {value:''}).value,
       sang: (document.getElementById('eg-sang')  || {value:''}).value,
       trau: (document.getElementById('eg-trau')  || {value:''}).value,
@@ -5692,10 +5691,8 @@ function restoreState(caso) {
 
   // Liquid inputs
   var li = caso.liqInputs || {};
-  // ins/bas are auto-calculated by calcLiq() — never restore from saved state
-  // to avoid stale values showing as balance when ingresos are 0
   var lm = {nacl:'in-nacl',hart:'in-hart',col:'in-col',pg:'in-pg',med:'in-med',otro:'in-otro',
-             diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
+             ins:'eg-ins',bas:'eg-bas',diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
   Object.keys(lm).forEach(function(k){ var el=document.getElementById(lm[k]); if(el) el.value=li[k]||''; });
 
   // Aldrete
@@ -6531,10 +6528,7 @@ function resetForNewCase(){
   ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx',
    'm-anest','m-ciru','m-inst','m-tipoan-nota','m-anlocal-dosis',
    'm-alergias','m-ayuno','m-premed','m-antecedentes','m-medcronicos'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   try{document.getElementById('m-ayuno-tipo').value='';}catch(e){}
   try{document.getElementById('m-mallampati').value='';}catch(e){}
   try{document.getElementById('m-apertura').value='';}catch(e){}
@@ -6573,17 +6567,11 @@ function resetForNewCase(){
   // ── Limpiar todos los campos de líquidos ──
   ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
    'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Limpiar cronómetros completamente ──
   ['time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Reset botones de fases ──
   var phBtns = {
@@ -6811,7 +6799,7 @@ function saveLiqEdit(){
   var r = S.liqHora[_editLiqIdx];
   if(!r) return;
   var totalIn = nacl+hart+col+pg+med+otro;
-  var totalEg = sang+diu+trau+oeg; // ins/bas excluded
+  var totalEg = sang+diu+trau+ins+bas+oeg;
   var balHr   = totalIn - totalEg;
   S.liqHora[_editLiqIdx] = {
     hora:r.hora, nacl:nacl, hart:hart, col:col, pg:pg, med:med, otro:otro,
