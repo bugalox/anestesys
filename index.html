@@ -1037,9 +1037,7 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <div class="section">
     <div class="section-header"><h2><i class="ph ph-arrow-circle-up sec-ico"></i>Egresos</h2></div>
     <div class="section-body">
-      <div class="field-row">
-        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
-        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+      
       </div>
       <div class="field-row">
         <div class="field"><label>Diuresis (ml)</label><input type="number" inputmode="decimal" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
@@ -4213,7 +4211,7 @@ function calcLiq() {
   const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
   const sang=get('eg-sang');
   const diu=get('eg-diu');
-  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
+  const te=diu+sang+get('eg-trau')+get('eg-otro'); // ins/bas removed
   const bal=ti-te;
   document.getElementById('ing-total').textContent=ti+' ml';
   document.getElementById('eg-total').textContent=te+' ml';
@@ -4246,7 +4244,7 @@ function forceHourSnapshot() {
   // FIX BALANCE-2: calcular deltas respecto al snapshot del bucket anterior.
   // Bug original: += con total acumulado global -> inflaba valores en cada llamada.
   var totalInNow  = get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
-  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-ins')+get('eg-bas')+get('eg-otro');
+  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-otro'); // ins/bas removed from main panel
   var sangNow     = get('eg-sang');
   var diuNow      = get('eg-diu');
 
@@ -4483,7 +4481,7 @@ function addLiqHoraManual() {
   var ins=get('eg-ins'),   bas=get('eg-bas'),   oeg=get('eg-otro');
 
   var totalIn = nacl+hart+col+pg+med+otro;
-  var totalEg = sang+diu+trau+ins+bas+oeg;
+  var totalEg = sang+diu+trau+oeg; // ins/bas excluded
   var balHr   = totalIn - totalEg;
   var prev    = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
   var acum    = prev + balHr;
@@ -4696,15 +4694,16 @@ function genRes() {
   const pg_ml   = _hasHours ? sumLiqHora('pg')   : getF('in-pg');
   const med_ml  = _hasHours ? sumLiqHora('med')  : getF('in-med');
   const otro_in = _hasHours ? sumLiqHora('otro') : getF('in-otro');
-  const ins_ml  = _hasHours ? sumLiqHora('ins')  : getF('eg-ins');
-  const bas_ml  = _hasHours ? sumLiqHora('bas')  : getF('eg-bas');
+  // ins/bas removed from main egresos panel — still counted in liqHora table if registered
+  const ins_ml  = 0;
+  const bas_ml  = 0;
   const sang_ml = _hasHours ? sumLiqHora('sang') : getF('eg-sang');
   const diu_ml  = _hasHours ? sumLiqHora('diu')  : getF('eg-diu');
   const trau_ml = _hasHours ? sumLiqHora('trau') : getF('eg-trau');
   const otro_eg = _hasHours ? sumLiqHora('oeg')  : getF('eg-otro');
 
   const ti  = nacl + hart + col + pg_ml + med_ml + otro_in;
-  const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg;
+  const te  = diu_ml + sang_ml + trau_ml + otro_eg; // ins/bas removed from main egresos
   const bal = ti - te;
   // FIX J: vsp correcto = VSC × (Hto0 - 21) / Hto0 (igual que calcVSCyPermisible)
   var _resoPeso  = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
@@ -6812,7 +6811,7 @@ function saveLiqEdit(){
   var r = S.liqHora[_editLiqIdx];
   if(!r) return;
   var totalIn = nacl+hart+col+pg+med+otro;
-  var totalEg = sang+diu+trau+ins+bas+oeg;
+  var totalEg = sang+diu+trau+oeg; // ins/bas excluded
   var balHr   = totalIn - totalEg;
   S.liqHora[_editLiqIdx] = {
     hora:r.hora, nacl:nacl, hart:hart, col:col, pg:pg, med:med, otro:otro,
