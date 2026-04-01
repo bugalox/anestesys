@@ -1037,7 +1037,9 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
   <div class="section">
     <div class="section-header"><h2><i class="ph ph-arrow-circle-up sec-ico"></i>Egresos</h2></div>
     <div class="section-body">
-      
+      <div class="field-row">
+        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Diuresis (ml)</label><input type="number" inputmode="decimal" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
@@ -4180,6 +4182,8 @@ function calcLiq() {
       insEl.value = Math.round(2 * peso * hrsCx);
       insEl.style.borderColor = 'var(--muted)';
       insEl.title = 'Auto: 2 ml/kg/h × ' + hrsCx.toFixed(1) + 'h';
+      var insLbl = document.getElementById('lbl-ins-auto');
+      if(insLbl) insLbl.textContent = '⚡ auto';
       insEl.setAttribute('data-auto','1');
     } else if (insEl && insEl.getAttribute('data-auto') === '1') {
       // FIX BALANCE-3: recalcular auto si el peso cambió
@@ -4193,6 +4197,8 @@ function calcLiq() {
       basEl.value = Math.round(basalHr * hrsCx);
       basEl.style.borderColor = 'var(--muted)';
       basEl.title = 'Auto: Holiday-Segar × ' + hrsCx.toFixed(1) + 'h';
+      var basLbl = document.getElementById('lbl-bas-auto');
+      if(basLbl) basLbl.textContent = '⚡ auto';
       basEl.setAttribute('data-auto','1');
     } else if (basEl && basEl.getAttribute('data-auto') === '1') {
       // FIX BALANCE-3: recalcular auto si el peso cambió
@@ -4207,7 +4213,7 @@ function calcLiq() {
   const ti=get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
   const sang=get('eg-sang');
   const diu=get('eg-diu');
-  const te=diu+sang+get('eg-trau')+get('eg-otro'); // ins/bas removed
+  const te=get('eg-ins')+get('eg-bas')+diu+sang+get('eg-trau')+get('eg-otro');
   const bal=ti-te;
   document.getElementById('ing-total').textContent=ti+' ml';
   document.getElementById('eg-total').textContent=te+' ml';
@@ -4240,7 +4246,7 @@ function forceHourSnapshot() {
   // FIX BALANCE-2: calcular deltas respecto al snapshot del bucket anterior.
   // Bug original: += con total acumulado global -> inflaba valores en cada llamada.
   var totalInNow  = get('in-nacl')+get('in-hart')+get('in-col')+get('in-pg')+get('in-med')+get('in-otro');
-  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-otro'); // ins/bas removed from main panel
+  var totalEgNow  = get('eg-sang')+get('eg-diu')+get('eg-trau')+get('eg-ins')+get('eg-bas')+get('eg-otro');
   var sangNow     = get('eg-sang');
   var diuNow      = get('eg-diu');
 
@@ -4477,7 +4483,7 @@ function addLiqHoraManual() {
   var ins=get('eg-ins'),   bas=get('eg-bas'),   oeg=get('eg-otro');
 
   var totalIn = nacl+hart+col+pg+med+otro;
-  var totalEg = sang+diu+trau+ins+bas+oeg; // ins/bas excluded
+  var totalEg = sang+diu+trau+ins+bas+oeg;
   var balHr   = totalIn - totalEg;
   var prev    = S.liqHora.length ? S.liqHora[S.liqHora.length-1].acum : 0;
   var acum    = prev + balHr;
@@ -4690,16 +4696,15 @@ function genRes() {
   const pg_ml   = _hasHours ? sumLiqHora('pg')   : getF('in-pg');
   const med_ml  = _hasHours ? sumLiqHora('med')  : getF('in-med');
   const otro_in = _hasHours ? sumLiqHora('otro') : getF('in-otro');
-  // ins/bas removed from main panel but still registered per hour in liqHora
-  const ins_ml  = _hasHours ? sumLiqHora('ins') : 0;
-  const bas_ml  = _hasHours ? sumLiqHora('bas') : 0;
+  const ins_ml  = _hasHours ? sumLiqHora('ins')  : getF('eg-ins');
+  const bas_ml  = _hasHours ? sumLiqHora('bas')  : getF('eg-bas');
   const sang_ml = _hasHours ? sumLiqHora('sang') : getF('eg-sang');
   const diu_ml  = _hasHours ? sumLiqHora('diu')  : getF('eg-diu');
   const trau_ml = _hasHours ? sumLiqHora('trau') : getF('eg-trau');
   const otro_eg = _hasHours ? sumLiqHora('oeg')  : getF('eg-otro');
 
   const ti  = nacl + hart + col + pg_ml + med_ml + otro_in;
-  const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg; // ins/bas removed from main egresos
+  const te  = ins_ml + bas_ml + diu_ml + sang_ml + trau_ml + otro_eg;
   const bal = ti - te;
   // FIX J: vsp correcto = VSC × (Hto0 - 21) / Hto0 (igual que calcVSCyPermisible)
   var _resoPeso  = parseFloat(S.pac.pesoC) || parseFloat(S.pac.peso) || 70;
@@ -4963,6 +4968,19 @@ function genRes() {
       : '<div style="color:#999;padding:8px;text-align:center">Sin registros de signos vitales</div>') +
   '</div>';
 
+  // ── HOJA 2: Líquidos + Horario + Fármacos ──
+  const hrsRows = hrs.map(function(hr, i) {
+    const b = S.hourBuckets[hr];
+    const bhr = b.liqIn - b.liqEg; // FIX BALANCE-5: usar liqEg completo (incluye Trauma Qx, Insensibles, Req.Basal)
+    const bg2 = i % 2 === 0 ? '#fff' : '#f5f8ff';
+    return '<tr style="background:' + bg2 + '">' +
+      '<td style="padding:3px 5px;font-weight:700;color:#334455">' + hr + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;color:#006633;font-weight:700">' + b.liqIn + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;color:' + (b.sang > 0 ? '#cc0000' : '#666') + '">' + b.sang + '</td>' +
+      '<td style="padding:3px 5px;text-align:center">' + b.diu + '</td>' +
+      '<td style="padding:3px 5px;text-align:center;font-weight:800;color:' + (bhr >= 0 ? '#006633' : '#cc6600') + '">' + (bhr >= 0 ? '+' : '') + bhr + '</td>' +
+      '<td style="padding:3px 5px;font-size:7px;color:#555">' + b.farms.map(function(f) { return '<b>' + f.n + '</b> ' + f.d; }).join(' · ') + '</td></tr>';
+  }).join('');
 
   const pg2 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0077aa;padding-bottom:5px;margin-bottom:10px">' +
@@ -5438,10 +5456,8 @@ function serializeState() {
       pg:   (document.getElementById('in-pg')    || {value:''}).value,
       med:  (document.getElementById('in-med')   || {value:''}).value,
       otro: (document.getElementById('in-otro')  || {value:''}).value,
-      ins:  (function(){ var e=document.getElementById('eg-ins');
-              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
-      bas:  (function(){ var e=document.getElementById('eg-bas');
-              return (e && e.getAttribute('data-auto')==='1') ? '' : (e?e.value:''); })(),
+      ins:  (document.getElementById('eg-ins')   || {value:''}).value,
+      bas:  (document.getElementById('eg-bas')   || {value:''}).value,
       diu:  (document.getElementById('eg-diu')   || {value:''}).value,
       sang: (document.getElementById('eg-sang')  || {value:''}).value,
       trau: (document.getElementById('eg-trau')  || {value:''}).value,
@@ -5590,11 +5606,6 @@ function restoreState(caso) {
   // mañana el cronómetro mostraría 14h, 73h, etc. de forma incorrecta.
   // Solución: si no hay finAn pero hay savedAt, congelar en (savedAt - an).
   var _savedAt = caso.savedAt ? new Date(caso.savedAt) : null;
-  var _now     = new Date();
-  // Duración máxima razonable de anestesia: 24 horas.
-  // Si el elapsed supera eso, el caso fue abandonado → congelar siempre.
-  var MAX_AN_MS = 24 * 3600 * 1000;
-
   if(S.phases.an) {
     if(S.phases.finAn) {
       S._frozenTan = S.phases.finAn - S.phases.an;
@@ -5602,20 +5613,6 @@ function restoreState(caso) {
       // Caso histórico sin fin — congelar al momento del último guardado
       S._frozenTan = _savedAt - S.phases.an;
       if(S._frozenTan < 0) S._frozenTan = 0;
-    } else {
-      // Sin savedAt: congelar en el elapsed actual si supera lo razonable
-      var _liveElapsed = _now - S.phases.an;
-      if(_liveElapsed > MAX_AN_MS) {
-        S._frozenTan = MAX_AN_MS; // mostrar 24:00 como máximo
-      }
-    }
-    // Seguro adicional: nunca mostrar más de 24h en timer live
-    // (protege contra fechas corruptas en localStorage)
-    if(S._frozenTan == null) {
-      var _liveNow = _now - S.phases.an;
-      if(_liveNow > MAX_AN_MS) {
-        S._frozenTan = _liveNow > 0 ? Math.min(_liveNow, MAX_AN_MS) : 0;
-      }
     }
   }
   if(S.phases.cx) {
@@ -5624,17 +5621,6 @@ function restoreState(caso) {
     } else if(_savedAt) {
       S._frozenTcx = _savedAt - S.phases.cx;
       if(S._frozenTcx < 0) S._frozenTcx = 0;
-    } else {
-      var _liveElapsedCx = _now - S.phases.cx;
-      if(_liveElapsedCx > MAX_AN_MS) {
-        S._frozenTcx = MAX_AN_MS;
-      }
-    }
-    if(S._frozenTcx == null) {
-      var _liveNowCx = _now - S.phases.cx;
-      if(_liveNowCx > MAX_AN_MS) {
-        S._frozenTcx = Math.min(_liveNowCx, MAX_AN_MS);
-      }
     }
   }
 
@@ -5705,10 +5691,8 @@ function restoreState(caso) {
 
   // Liquid inputs
   var li = caso.liqInputs || {};
-  // ins/bas are auto-calculated by calcLiq() — never restore from saved state
-  // to avoid stale values showing as balance when ingresos are 0
   var lm = {nacl:'in-nacl',hart:'in-hart',col:'in-col',pg:'in-pg',med:'in-med',otro:'in-otro',
-             diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
+             ins:'eg-ins',bas:'eg-bas',diu:'eg-diu',sang:'eg-sang',trau:'eg-trau',oeg:'eg-otro'};
   Object.keys(lm).forEach(function(k){ var el=document.getElementById(lm[k]); if(el) el.value=li[k]||''; });
 
   // Aldrete
@@ -6544,10 +6528,7 @@ function resetForNewCase(){
   ['m-nombre','m-edad','m-exp','m-peso','m-talla','m-dx','m-cx',
    'm-anest','m-ciru','m-inst','m-tipoan-nota','m-anlocal-dosis',
    'm-alergias','m-ayuno','m-premed','m-antecedentes','m-medcronicos'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
   try{document.getElementById('m-ayuno-tipo').value='';}catch(e){}
   try{document.getElementById('m-mallampati').value='';}catch(e){}
   try{document.getElementById('m-apertura').value='';}catch(e){}
@@ -6586,17 +6567,11 @@ function resetForNewCase(){
   // ── Limpiar todos los campos de líquidos ──
   ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
    'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Limpiar cronómetros completamente ──
   ['time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
-  ].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.value=''; el.removeAttribute('data-auto'); }
-  });
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
 
   // ── Reset botones de fases ──
   var phBtns = {
