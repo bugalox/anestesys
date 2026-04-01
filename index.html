@@ -5590,6 +5590,11 @@ function restoreState(caso) {
   // mañana el cronómetro mostraría 14h, 73h, etc. de forma incorrecta.
   // Solución: si no hay finAn pero hay savedAt, congelar en (savedAt - an).
   var _savedAt = caso.savedAt ? new Date(caso.savedAt) : null;
+  var _now     = new Date();
+  // Duración máxima razonable de anestesia: 24 horas.
+  // Si el elapsed supera eso, el caso fue abandonado → congelar siempre.
+  var MAX_AN_MS = 24 * 3600 * 1000;
+
   if(S.phases.an) {
     if(S.phases.finAn) {
       S._frozenTan = S.phases.finAn - S.phases.an;
@@ -5597,6 +5602,20 @@ function restoreState(caso) {
       // Caso histórico sin fin — congelar al momento del último guardado
       S._frozenTan = _savedAt - S.phases.an;
       if(S._frozenTan < 0) S._frozenTan = 0;
+    } else {
+      // Sin savedAt: congelar en el elapsed actual si supera lo razonable
+      var _liveElapsed = _now - S.phases.an;
+      if(_liveElapsed > MAX_AN_MS) {
+        S._frozenTan = MAX_AN_MS; // mostrar 24:00 como máximo
+      }
+    }
+    // Seguro adicional: nunca mostrar más de 24h en timer live
+    // (protege contra fechas corruptas en localStorage)
+    if(S._frozenTan == null) {
+      var _liveNow = _now - S.phases.an;
+      if(_liveNow > MAX_AN_MS) {
+        S._frozenTan = _liveNow > 0 ? Math.min(_liveNow, MAX_AN_MS) : 0;
+      }
     }
   }
   if(S.phases.cx) {
@@ -5605,6 +5624,17 @@ function restoreState(caso) {
     } else if(_savedAt) {
       S._frozenTcx = _savedAt - S.phases.cx;
       if(S._frozenTcx < 0) S._frozenTcx = 0;
+    } else {
+      var _liveElapsedCx = _now - S.phases.cx;
+      if(_liveElapsedCx > MAX_AN_MS) {
+        S._frozenTcx = MAX_AN_MS;
+      }
+    }
+    if(S._frozenTcx == null) {
+      var _liveNowCx = _now - S.phases.cx;
+      if(_liveNowCx > MAX_AN_MS) {
+        S._frozenTcx = Math.min(_liveNowCx, MAX_AN_MS);
+      }
     }
   }
 
