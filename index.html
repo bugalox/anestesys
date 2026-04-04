@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- PATCH B-05: Content Security Policy — bloquea ejecución de scripts inyectados vía XSS -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; connect-src https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://securetoken.googleapis.com; img-src 'self' data:; font-src 'self' https://unpkg.com data:;">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2528,6 +2530,38 @@ if('serviceWorker' in navigator && location.hostname === 'bugalox.github.io') {
 }
 
 // ═══════════════════════════════════════════════
+// PATCH A-06: Sanitización HTML centralizada
+// Usar esc() en toda interpolación de datos de usuario en innerHTML.
+// Aplica a campos de texto libre (nombre, dx, cx, fármacos, notas, etc.)
+// NO aplica a valores numéricos calculados internamente.
+// ═══════════════════════════════════════════════
+var _escDiv = document.createElement('div');
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  _escDiv.textContent = String(str);
+  return _escDiv.innerHTML;
+}
+
+// ═══════════════════════════════════════════════
+// PATCH M-01: Logger centralizado
+// Reemplaza catch(e){} vacíos en lógica de negocio.
+// En producción conectar _sendToRemote() a Sentry/LogRocket.
+// ═══════════════════════════════════════════════
+function appLog(context, error) {
+  var msg = '[AnesteSys:' + context + ']';
+  if (error instanceof Error) {
+    console.warn(msg, error.message, error.stack);
+  } else {
+    console.warn(msg, String(error));
+  }
+  // Stub para integración futura con error tracking remoto:
+  // _sendToRemote(context, error);
+}
+function appWarn(context, msg) {
+  console.warn('[AnesteSys:' + context + ']', msg);
+}
+
+// ═══════════════════════════════════════════════
 // ACCESS FLAG (bloqueo total)
 window.__ACCESS_GRANTED = false;
 // ═══════════════════════════════════════════════
@@ -2726,11 +2760,11 @@ function savePacModal() {
   const instEl = document.getElementById('res-inst-header');
   if(instEl) instEl.textContent = S.pac.inst || 'Anestesiología · Registro Perioperatorio';
   // Recalcular VSC y permisible con los nuevos datos del paciente
-  try { if(S._vscManual == null && S._vspManual == null) calcVSCyPermisible(); calcLiq(); } catch(e) {}
+  try { if(S._vscManual == null && S._vspManual == null) calcVSCyPermisible(); calcLiq(); } catch(e) { appLog('savePacModal:calcVSC', e); }
   closePacModal();
   if(navigator.vibrate) navigator.vibrate(30);
   // FIX SAVE-5: guardar de inmediato al registrar paciente
-  try { if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length)) autoSave(); }catch(e){}
+  try { if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length)) autoSave(); } catch(e) { appLog('savePacModal:autoSave', e); }
 }
 
 function updateTopbar() {
@@ -2767,11 +2801,11 @@ function nav(id, btn) {
   document.getElementById('page-'+id).classList.add('active');
   btn.classList.add('active');
   window.scrollTo(0,0);
-  if(id==='res')     { try{genRes();}catch(e){} }
-  if(id==='monitor') { try{drawChart();}catch(e){} }
-  if(id==='farm')    { try{renderFarmAcum();}catch(e){} }
-  if(id==='vent')    { try{calcVentDerived();}catch(e){} }
-  if(id==='lab')     { try{labLoad();}catch(e){} }
+  if(id==='res')     { try{genRes();}catch(e){ appLog('nav:genRes', e); } }
+  if(id==='monitor') { try{drawChart();}catch(e){ appLog('nav:drawChart', e); } }
+  if(id==='farm')    { try{renderFarmAcum();}catch(e){ appLog('nav:renderFarmAcum', e); } }
+  if(id==='vent')    { try{calcVentDerived();}catch(e){ appLog('nav:calcVentDerived', e); } }
+  if(id==='lab')     { try{labLoad();}catch(e){ appLog('nav:labLoad', e); } }
 }
 
 // ═══════════════════════════════════════════════
@@ -2797,7 +2831,7 @@ function debounceSave() {
       });
     // FIX SAVE-3: incluir ventHist y liqHora en la condición
     if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||S.ventHist.length||S.liqHora.length||_liq)){
-      try{autoSave();}catch(e){}
+      try{autoSave();}catch(e){ appLog('debounceSave:autoSave', e); }
     }
   }, 1200); // FIX SAVE-1: 3000→1200ms (guarda antes de cerrar app)
 }
@@ -2832,7 +2866,7 @@ document.addEventListener('visibilitychange', function() {
     try {
       if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||S.ventHist.length||S.liqHora.length))
         autoSave();
-    } catch(e) {}
+    } catch(e) { appLog('visibilitychange:autoSave', e); }
   }
 });
 // FIX SAVE-4b: pagehide — iOS Safari PWA no dispara beforeunload
@@ -2840,7 +2874,7 @@ window.addEventListener('pagehide', function() {
   try {
     if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||S.ventHist.length||S.liqHora.length))
       autoSave();
-  } catch(e) {}
+  } catch(e) { appLog('pagehide:autoSave', e); }
 });
 
 
@@ -2957,7 +2991,7 @@ function registrar() {
   addToHourBucket('vital', row);
   if(navigator.vibrate) navigator.vibrate(30);
   // Auto-save every 5 registros to prevent data loss
-  if(S.history.length % 5 === 0) { try { autoSave(); } catch(e) {} }
+  if(S.history.length % 5 === 0) { try { autoSave(); } catch(e) { appLog('regVital:autoSave', e); } }
 }
 
 function checkAlarms(v, hora) {
@@ -3219,7 +3253,7 @@ function startPhase(p) {
     addAlert('info', '🔪 Cirugía iniciada: ' + hora, hora);
   }
   if(navigator.vibrate) navigator.vibrate([50,30,50]);
-  try { autoSave(); } catch(e) {}
+  try { autoSave(); } catch(e) { appLog('startPhase:autoSave', e); }
 }
 
 // ── Finalizar cronómetro independiente (an o cx) ──
@@ -3264,7 +3298,7 @@ function endPhase(p) {
     }
   }
   if(navigator.vibrate) navigator.vibrate([50,30,50]);
-  try { autoSave(); } catch(e) {}
+  try { autoSave(); } catch(e) { appLog('endPhase:autoSave', e); }
 }
 
 // ── editar hora de FIN manualmente ──
@@ -3535,7 +3569,7 @@ function editVSCModal() {
   var _hm = (S._htoMin != null) ? S._htoMin : 30;
   document.getElementById('vsc-auto-info').innerHTML =
     '<b style="color:#00e5ff">Cálculo automático</b><br>' +
-    'Paciente: ' + peso + ' kg · ' + edad + ' años · ' + sexo + '<br>' +
+    'Paciente: ' + peso + ' kg · ' + edad + ' años · ' + esc(sexo) + '<br>' +
     'Factor VSC: ' + factor + ' ml/kg   Hto ref: ' + hto0 + '%   Hto mín: ' + _hm + '%<br>' +
     'VSC auto: <b>' + vscAuto + ' ml</b> &nbsp; Permisible auto: <b>' + vspAuto + ' ml</b><br>' +
     '<span style="font-size:10px;color:#3d5a78">Ajusta el Hto mínimo según el paciente (30% general · 35% cardíaco · 38% anciano ASA III+)</span>';
@@ -3953,10 +3987,10 @@ function confirmSave() {
   closeSaveModal();
 
   // Update historial tabs to show new category
-  try { setHistTab(_saveCatSelected); } catch(e) {}
+  try { setHistTab(_saveCatSelected); } catch(e) { appLog('saveCaso:setHistTab', e); }
 
   // Update topbar category badge
-  try { updateTopbar(); } catch(e) {}
+  try { updateTopbar(); } catch(e) { appLog('saveCaso:updateTopbar', e); }
 
   // Show success with folder name
   var catName = _saveCatSelected === 'privado' ? '🔒 Privado' : '<i class="ph ph-hospital" style="margin-right:5px"></i>Hospital';
@@ -4235,7 +4269,7 @@ function calcLiq() {
   // Additional thresholds
   var sangEl = document.getElementById('eg-sang');
   if(sangEl) sangEl.style.borderColor = sang>vsp?'var(--red)':sang>vsp*0.6?'var(--yellow)':'';
-  try { debounceSave(); } catch(e) {}
+  try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
 calcLiq();
 
@@ -4501,10 +4535,8 @@ function addLiqHoraManual() {
   msg.textContent = '✓ Hora registrada — ' + hora;
   document.body.appendChild(msg);
   setTimeout(function(){ msg.remove(); }, 2500);
-  try { autoSave(); } catch(e) {}
+  try { autoSave(); } catch(e) { appLog('saveLiqHora:autoSave', e); }
 }
-// ═══════════════════════════════════════════════
-// VENTILADOR
 // ═══════════════════════════════════════════════
 const ventVals = {fio2:40,vc:400,fr:12,peep:5,ppeak:20,etco2:38};
 function upVent(k,v,u) {
@@ -4563,7 +4595,7 @@ function regVent() {
     <td>${r.vm}</td><td style="color:var(--cyan);font-size:16px;text-align:center">✏️</td>
   </tr>`).join('');
   if(navigator.vibrate) navigator.vibrate(30);
-  try { debounceSave(); } catch(e) {}
+  try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
 
 // ═══════════════════════════════════════════════
@@ -4593,7 +4625,7 @@ function addFarm() {
   addAlert('info','💊 '+n+' '+d+' '+v+' — '+h,h);
   addToHourBucket('farm', {n,d,v,h,nota});
   if(navigator.vibrate) navigator.vibrate(30);
-  try { debounceSave(); } catch(e) {}
+  try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
 
 function renderFarms() {
@@ -4602,15 +4634,15 @@ function renderFarms() {
   el.innerHTML=S.farms.map((f,i)=>`
     <div class="f-item" style="cursor:pointer" onclick="openEditFarm2(${i})">
       <div>
-        <div class="f-name">${f.n}</div>
-        <div class="f-dose">${f.d} · ${f.v}</div>
-        ${f.nota?`<div class="f-note">${f.nota}</div>`:''}
+        <div class="f-name">${esc(f.n)}</div>
+        <div class="f-dose">${esc(f.d)} · ${esc(f.v)}</div>
+        ${f.nota?`<div class="f-note">${esc(f.nota)}</div>`:''}
       </div>
-      <div class="f-meta"><div class="f-hour">${f.h}</div><div class="f-via">${f.v}</div></div>
+      <div class="f-meta"><div class="f-hour">${esc(f.h)}</div><div class="f-via">${esc(f.v)}</div></div>
     </div>`).join('');
   document.getElementById('farm-badge').textContent=S.farms.length;
   document.getElementById('st-fm').textContent=S.farms.length;
-  try { renderFarmAcum(); } catch(e) {}
+  try { renderFarmAcum(); } catch(e) { appLog('renderFarms:renderFarmAcum', e); }
 }
 renderFarms();
 
@@ -4644,7 +4676,7 @@ function _renderAlertList() {
 function addAlert(type,msg,hora) {
   S.alerts.push({type,msg,hora});
   _renderAlertList();
-  try { debounceSave(); } catch(e) {}
+  try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
 function clearAlerts() {S.alerts=[]; _renderAlertList(); /* FIX F: usa render centralizado */}
 function saveAlarmCfg() {
@@ -4754,32 +4786,32 @@ function genRes() {
     ? fmt2(S.phases.isqFin - S.phases.isqIni)
     : (S.phases.isqIni ? 'En curso' : null);
 
-  // ── Screen version ──
+  // ── Screen version ── (PATCH A-06: esc() en todos los campos de texto libre)
   document.getElementById('res-pac').innerHTML = `
     <div class="res-title">DATOS DEL PACIENTE</div>
-    <div class="res-row"><span>Paciente</span><span style="font-weight:800">${p.nombre||'—'}</span></div>
-    <div class="res-row"><span>Edad / Sexo</span><span>${p.edad||'—'} a · ${p.sexo||'—'}</span></div>
-    ${p.exp ? '<div class="res-row"><span>Expediente</span><span>' + p.exp + '</span></div>' : ''}
-    <div class="res-row"><span>Diagnóstico</span><span style="max-width:55%;text-align:right">${p.dx||'—'}</span></div>
-    <div class="res-row"><span><i class="ph ph-knife" style="font-size:10px;margin-right:3px"></i>Cirugía</span><span style="max-width:55%;text-align:right">${p.cx||'—'}</span></div>
-    <div class="res-row"><span>Técnica</span><span style="color:var(--cyan);max-width:60%;text-align:right">${p.tipoAn||'—'}${p.tipoAn2 ? ' + ' + p.tipoAn2 : ''}</span></div>
-    ${p.guia ? '<div class="res-row"><span>Guía</span><span>' + p.guia + '</span></div>' : ''}
-    ${p.anLocal ? '<div class="res-row"><span>Anest. local</span><span>' + p.anLocal + (p.anLocalDosis ? ' · ' + p.anLocalDosis : '') + '</span></div>' : ''}
-    ${p.tipoAnNota ? '<div class="res-row"><span>Notas técnica</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.tipoAnNota + '</span></div>' : ''}
+    <div class="res-row"><span>Paciente</span><span style="font-weight:800">${esc(p.nombre)||'—'}</span></div>
+    <div class="res-row"><span>Edad / Sexo</span><span>${esc(p.edad)||'—'} a · ${esc(p.sexo)||'—'}</span></div>
+    ${p.exp ? '<div class="res-row"><span>Expediente</span><span>' + esc(p.exp) + '</span></div>' : ''}
+    <div class="res-row"><span>Diagnóstico</span><span style="max-width:55%;text-align:right">${esc(p.dx)||'—'}</span></div>
+    <div class="res-row"><span><i class="ph ph-knife" style="font-size:10px;margin-right:3px"></i>Cirugía</span><span style="max-width:55%;text-align:right">${esc(p.cx)||'—'}</span></div>
+    <div class="res-row"><span>Técnica</span><span style="color:var(--cyan);max-width:60%;text-align:right">${esc(p.tipoAn)||'—'}${p.tipoAn2 ? ' + ' + esc(p.tipoAn2) : ''}</span></div>
+    ${p.guia ? '<div class="res-row"><span>Guía</span><span>' + esc(p.guia) + '</span></div>' : ''}
+    ${p.anLocal ? '<div class="res-row"><span>Anest. local</span><span>' + esc(p.anLocal) + (p.anLocalDosis ? ' · ' + esc(p.anLocalDosis) : '') + '</span></div>' : ''}
+    ${p.tipoAnNota ? '<div class="res-row"><span>Notas técnica</span><span style="max-width:60%;text-align:right;font-size:11px">' + esc(p.tipoAnNota) + '</span></div>' : ''}
     <div class="res-row"><span>Peso / Talla</span><span>${p.peso ? p.peso + ' kg' : '—'}${p.talla ? ' · ' + p.talla + ' cm' : ''}</span></div>
-    <div class="res-row"><span>ASA</span><span style="color:var(--yellow);font-weight:800">${p.asa||'—'}</span></div>
-    <div class="res-row"><span>Anestesiólogo</span><span>${p.med||'—'}</span></div>
-    ${S.pac.medCed ? `<div class="pr-row-sub">Céd. Prof: ${S.pac.medCed}${S.pac.medCedEsp ? ' / Esp: '+S.pac.medCedEsp : ''}</div>` : ''}
-    ${p.ciru ? `<div class="res-row"><span>Cirujano</span><span>${p.ciru}</span></div>` : ''}
-    ${S.pac.ciruCed ? `<div class="pr-row-sub">Céd. Prof: ${S.pac.ciruCed}${S.pac.ciruCedEsp ? ' / Esp: '+S.pac.ciruCedEsp : ''}</div>` : ''}
-    ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + p.inst + '</span></div>' : ''}
-    ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + p.alergias + '</span></div>' : ''}
-    ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID previo: '+p.antID:'') + '</span></div>' : ''}
-    ${p.aperturaBucal ? `<div class="res-row"><span>Apertura bucal</span><span>${p.aperturaBucal}${p.dtm ? ' · DTM: '+p.dtm : ''}</span></div>` : ''}
-    ${p.ayuno ? '<div class="res-row"><span>Ayuno</span><span>' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</span></div>' : ''}
-    ${p.antecedentes ? '<div class="res-row"><span>Antecedentes</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.antecedentes + '</span></div>' : ''}
-    ${p.medCronicos ? '<div class="res-row"><span>Medicamentos crónicos</span><span style="max-width:60%;text-align:right;font-size:11px">' + p.medCronicos + '</span></div>' : ''}
-    ${p.premed ? '<div class="res-row"><span>Premedicación</span><span>' + p.premed + '</span></div>' : ''}
+    <div class="res-row"><span>ASA</span><span style="color:var(--yellow);font-weight:800">${esc(p.asa)||'—'}</span></div>
+    <div class="res-row"><span>Anestesiólogo</span><span>${esc(p.med)||'—'}</span></div>
+    ${S.pac.medCed ? `<div class="pr-row-sub">Céd. Prof: ${esc(S.pac.medCed)}${S.pac.medCedEsp ? ' / Esp: '+esc(S.pac.medCedEsp) : ''}</div>` : ''}
+    ${p.ciru ? `<div class="res-row"><span>Cirujano</span><span>${esc(p.ciru)}</span></div>` : ''}
+    ${S.pac.ciruCed ? `<div class="pr-row-sub">Céd. Prof: ${esc(S.pac.ciruCed)}${S.pac.ciruCedEsp ? ' / Esp: '+esc(S.pac.ciruCedEsp) : ''}</div>` : ''}
+    ${p.inst ? '<div class="res-row"><span>Institución</span><span>' + esc(p.inst) + '</span></div>' : ''}
+    ${p.alergias ? '<div class="res-row"><span>Alergias</span><span style="color:var(--red);font-weight:800">' + esc(p.alergias) + '</span></div>' : ''}
+    ${p.mallampati ? '<div class="res-row"><span>Mallampati</span><span>' + esc(p.mallampati) + (p.antID&&p.antID!=='No'?' · ID previo: '+esc(p.antID):'') + '</span></div>' : ''}
+    ${p.aperturaBucal ? `<div class="res-row"><span>Apertura bucal</span><span>${esc(p.aperturaBucal)}${p.dtm ? ' · DTM: '+esc(p.dtm) : ''}</span></div>` : ''}
+    ${p.ayuno ? '<div class="res-row"><span>Ayuno</span><span>' + esc(p.ayuno) + 'h ' + esc(p.ayunoTipo||'') + '</span></div>' : ''}
+    ${p.antecedentes ? '<div class="res-row"><span>Antecedentes</span><span style="max-width:60%;text-align:right;font-size:11px">' + esc(p.antecedentes) + '</span></div>' : ''}
+    ${p.medCronicos ? '<div class="res-row"><span>Medicamentos crónicos</span><span style="max-width:60%;text-align:right;font-size:11px">' + esc(p.medCronicos) + '</span></div>' : ''}
+    ${p.premed ? '<div class="res-row"><span>Premedicación</span><span>' + esc(p.premed) + '</span></div>' : ''}
     <div class="res-row"><span>Inicio Anestesia</span><span>${tAN}</span></div>
     <div class="res-row"><span>Inicio Cirugía</span><span>${tCX}</span></div>
     <div class="res-row"><span>Fin</span><span>${tFN}</span></div>
@@ -4858,35 +4890,35 @@ function genRes() {
   const pg1 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0077aa;padding-bottom:8px;margin-bottom:10px">' +
       '<div><div style="font-size:20px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO</div>' +
-      '<div style="font-size:9px;color:#666;margin-top:2px">' + (p.inst || 'Anestesiología · Registro Perioperatorio') + '</div></div>' +
+      '<div style="font-size:9px;color:#666;margin-top:2px">' + esc(p.inst || 'Anestesiología · Registro Perioperatorio') + '</div></div>' +
       '<div style="text-align:right;font-size:9px;color:#666"><div>' + fecha + '</div></div>' +
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
       '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
         '<div style="background:#0077aa;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👤 PACIENTE</div>' +
         '<div style="padding:6px 8px">' +
-          '<div style="font-size:14px;font-weight:900;margin-bottom:3px">' + (p.nombre || '—') + '</div>' +
-          '<div>' + (p.edad || '—') + ' años · ' + (p.sexo || '—') + ' · ASA <b style="color:#d44">' + (p.asa || '—') + '</b></div>' +
-          (p.exp ? '<div style="color:#666;font-size:8px">Exp: ' + p.exp + '</div>' : '') +
-          '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:3px"><b>Dx:</b> ' + (p.dx || '—') + '</div>' +
-          '<div><b>Cx:</b> <i>' + (p.cx || '—') + '</i></div>' +
-          '<div style="margin-top:3px;color:#0077aa;font-weight:700;font-size:8px">' + (p.tipoAn || '—') + (p.tipoAn2 ? ' + ' + p.tipoAn2 : '') + '</div>' +
-          (p.guia ? '<div style="font-size:7px;color:#444">Guía: ' + p.guia + '</div>' : '') +
-          (p.anLocal ? '<div style="font-size:7px;color:#444">An. local: ' + p.anLocal + (p.anLocalDosis ? ' · ' + p.anLocalDosis : '') + '</div>' : '') +
-          (p.tipoAnNota ? '<div style="font-size:7px;color:#555;font-style:italic;margin-top:2px">' + p.tipoAnNota + '</div>' : '') +
-          (p.alergias ? '<div style="font-size:7px;color:#c00;font-weight:800;margin-top:2px;background:#fee;padding:1px 3px;border-radius:2px">⚠ ALERGIA: ' + p.alergias + '</div>' : '') +
-          (p.mallampati ? '<div style="font-size:7px;color:#444">Mallampati: ' + p.mallampati + (p.antID&&p.antID!=='No'?' · ID prev: '+p.antID:'') + '</div>' : '') +
-          (p.ayuno ? '<div style="font-size:7px;color:#444">Ayuno: ' + p.ayuno + 'h ' + (p.ayunoTipo||'') + '</div>' : '') +
+          '<div style="font-size:14px;font-weight:900;margin-bottom:3px">' + esc(p.nombre || '—') + '</div>' +
+          '<div>' + esc(p.edad || '—') + ' años · ' + esc(p.sexo || '—') + ' · ASA <b style="color:#d44">' + esc(p.asa || '—') + '</b></div>' +
+          (p.exp ? '<div style="color:#666;font-size:8px">Exp: ' + esc(p.exp) + '</div>' : '') +
+          '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:3px"><b>Dx:</b> ' + esc(p.dx || '—') + '</div>' +
+          '<div><b>Cx:</b> <i>' + esc(p.cx || '—') + '</i></div>' +
+          '<div style="margin-top:3px;color:#0077aa;font-weight:700;font-size:8px">' + esc(p.tipoAn || '—') + (p.tipoAn2 ? ' + ' + esc(p.tipoAn2) : '') + '</div>' +
+          (p.guia ? '<div style="font-size:7px;color:#444">Guía: ' + esc(p.guia) + '</div>' : '') +
+          (p.anLocal ? '<div style="font-size:7px;color:#444">An. local: ' + esc(p.anLocal) + (p.anLocalDosis ? ' · ' + esc(p.anLocalDosis) : '') + '</div>' : '') +
+          (p.tipoAnNota ? '<div style="font-size:7px;color:#555;font-style:italic;margin-top:2px">' + esc(p.tipoAnNota) + '</div>' : '') +
+          (p.alergias ? '<div style="font-size:7px;color:#c00;font-weight:800;margin-top:2px;background:#fee;padding:1px 3px;border-radius:2px">⚠ ALERGIA: ' + esc(p.alergias) + '</div>' : '') +
+          (p.mallampati ? '<div style="font-size:7px;color:#444">Mallampati: ' + esc(p.mallampati) + (p.antID&&p.antID!=='No'?' · ID prev: '+esc(p.antID):'') + '</div>' : '') +
+          (p.ayuno ? '<div style="font-size:7px;color:#444">Ayuno: ' + esc(p.ayuno) + 'h ' + esc(p.ayunoTipo||'') + '</div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden">' +
         '<div style="background:#005f8a;color:#fff;font-size:9px;font-weight:800;padding:4px 8px">👨‍⚕️ EQUIPO MÉDICO</div>' +
         '<div style="padding:6px 8px">' +
-          '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + (p.med || '—') + '</b>'
-          + (S.pac.medCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + S.pac.medCed + (S.pac.medCedEsp ? ' / Esp: ' + S.pac.medCedEsp : '') + '</span>' : '')
+          '<div style="margin-bottom:4px"><span style="color:#888">Anestesiólogo:</span><br><b>' + esc(p.med || '—') + '</b>'
+          + (S.pac.medCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + esc(S.pac.medCed) + (S.pac.medCedEsp ? ' / Esp: ' + esc(S.pac.medCedEsp) : '') + '</span>' : '')
           + '</div>' +
-          '<div style="margin-bottom:8px"><span style="color:#888">Cirujano:</span><br>' + (p.ciru || '—')
-          + (S.pac.ciruCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + S.pac.ciruCed + (S.pac.ciruCedEsp ? ' / Esp: ' + S.pac.ciruCedEsp : '') + '</span>' : '')
+          '<div style="margin-bottom:8px"><span style="color:#888">Cirujano:</span><br>' + esc(p.ciru || '—')
+          + (S.pac.ciruCed ? '<br><span style="font-size:8px;color:#0077aa">Céd: ' + esc(S.pac.ciruCed) + (S.pac.ciruCedEsp ? ' / Esp: ' + esc(S.pac.ciruCedEsp) : '') + '</span>' : '')
           + '</div>' +
           '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
             '<div style="border:1px solid #0077aa;border-radius:4px;padding:3px 4px;text-align:center"><div style="font-size:7px;color:#888">Inicio Anest.</div><div style="font-weight:800;font-size:11px;color:#0077aa">' + tAN + '</div></div>' +
@@ -4984,7 +5016,7 @@ function genRes() {
 
   const pg2 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0077aa;padding-bottom:5px;margin-bottom:10px">' +
-      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + (p.nombre || 'Paciente') + '</span></div>' +
+      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + esc(p.nombre || 'Paciente') + '</span></div>' +
       '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
     '</div>' +
     ST('💧 BALANCE DE LÍQUIDOS') +
@@ -5103,11 +5135,11 @@ function genRes() {
         '</tr></thead><tbody>' +
         [...S.farms].reverse().map(function(f, i) {
           return '<tr style="background:' + (i % 2 === 0 ? '#fff' : '#faf7ff') + '">' +
-            '<td style="padding:3px 6px;font-weight:800;color:#5b2d8e">' + f.h + '</td>' +
-            '<td style="padding:3px 6px;font-weight:700">' + f.n + '</td>' +
-            '<td style="padding:3px 6px;text-align:center;color:#0077aa;font-weight:700">' + f.d + '</td>' +
-            '<td style="padding:3px 6px;text-align:center">' + f.v + '</td>' +
-            '<td style="padding:3px 6px;color:#666">' + f.nota + '</td></tr>';
+            '<td style="padding:3px 6px;font-weight:800;color:#5b2d8e">' + esc(f.h) + '</td>' +
+            '<td style="padding:3px 6px;font-weight:700">' + esc(f.n) + '</td>' +
+            '<td style="padding:3px 6px;text-align:center;color:#0077aa;font-weight:700">' + esc(f.d) + '</td>' +
+            '<td style="padding:3px 6px;text-align:center">' + esc(f.v) + '</td>' +
+            '<td style="padding:3px 6px;color:#666">' + esc(f.nota) + '</td></tr>';
         }).join('') +
         '</tbody></table>'
       : '<div style="color:#999;padding:8px;text-align:center">Sin fármacos registrados</div>') +
@@ -5128,7 +5160,7 @@ function genRes() {
 
   const pg3 = '<div style="font-family:Arial,sans-serif;color:#000;padding:14px 16px;font-size:9px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0077aa;padding-bottom:5px;margin-bottom:10px">' +
-      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + (p.nombre || 'Paciente') + '</span></div>' +
+      '<div style="font-size:13px;font-weight:900;color:#0077aa">REGISTRO ANESTÉSICO — <span style="font-size:11px">' + esc(p.nombre || 'Paciente') + '</span></div>' +
       '<div style="font-size:8px;color:#666">' + fecha + '</div>' +
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">' +
@@ -5190,10 +5222,10 @@ function genRes() {
       '<div style="font-size:10px;font-weight:800;color:#0077aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Firmas y Validación</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
         '<div><div style="border-bottom:1px solid #333;height:40px;margin-bottom:4px"></div>' +
-          '<div style="font-size:9px;text-align:center"><b>' + (p.med || 'Anestesiólogo') + '</b></div>' +
+          '<div style="font-size:9px;text-align:center"><b>' + esc(p.med || 'Anestesiólogo') + '</b></div>' +
           '<div style="font-size:8px;text-align:center;color:#666">Médico Anestesiólogo</div></div>' +
         '<div><div style="border-bottom:1px solid #333;height:40px;margin-bottom:4px"></div>' +
-          '<div style="font-size:9px;text-align:center"><b>' + (p.ciru || 'Cirujano') + '</b></div>' +
+          '<div style="font-size:9px;text-align:center"><b>' + esc(p.ciru || 'Cirujano') + '</b></div>' +
           '<div style="font-size:8px;text-align:center;color:#666">Médico Cirujano</div></div>' +
       '</div>' +
     '</div>' +
@@ -5553,7 +5585,7 @@ function restoreState(caso) {
       if (sl && S.vitals[k] != null) sl.value = S.vitals[k];
       if (dv && S.vitals[k] != null) dv.textContent = S.vitals[k];
     });
-    try { updatePAM(); } catch(e) {}
+    try { updatePAM(); } catch(e) { appLog('restoreState:updatePAM', e); }
   }
   S.history     = _dc(caso.history,     []);
   S.farms       = _dc(caso.farms,       []);
@@ -5582,13 +5614,26 @@ function restoreState(caso) {
   var ph = caso.phases || {};
   // Ajustar fases: si la fecha guardada es en el futuro (caso de ayer restaurado hoy),
   // restar 24h para que el cronómetro sea positivo y correcto.
+  // PATCH A-07: _fixPhaseDate reescrita
+  // Las fases se persisten como ISO 8601 completo (toISOString()), por lo que
+  // new Date(isoString) las reconstruye exactamente sin manipulación de días.
+  // El bucle anterior que restaba 24h era incorrecto para casos de más de un día
+  // y podía producir duraciones quirúrgicas negativas o fabricadas.
+  // Si la fecha resulta ser >5 min en el futuro (dato corrupto o reloj mal
+  // configurado), devolvemos null — el cronómetro mostrará --:-- en lugar de
+  // una duración incorrecta. El congelado correcto para casos históricos sin fin
+  // ya está manejado por el bloque _frozenTan/_frozenTcx usando savedAt.
   function _fixPhaseDate(val) {
     if (!val) return null;
     var d = new Date(val);
-    var now = new Date();
-    // Si la fecha es más de 1 minuto en el futuro, es del día anterior
-    while (d > now && (d - now) > 60000) {
-      d = new Date(d.getTime() - 86400000); // restar 24h
+    if (isNaN(d.getTime())) {
+      appLog('_fixPhaseDate', 'ISO inválido descartado: ' + val);
+      return null;
+    }
+    var diffMs = d.getTime() - Date.now();
+    if (diffMs > 5 * 60 * 1000) {
+      appLog('_fixPhaseDate', 'Fecha de fase en futuro descartada: ' + val + ' (diff=' + Math.round(diffMs / 60000) + 'min)');
+      return null;
     }
     return d;
   }
@@ -5685,9 +5730,9 @@ function restoreState(caso) {
   S.etco2 = caso.etco2 != null ? caso.etco2 : 38;
   S.bis   = caso.bis   != null ? caso.bis   : null;
   // Sync EtCO2 display
-  try { var me = document.getElementById('mon-etco2'); if(me) { me.textContent = S.etco2; me.style.color = S.etco2>50?'var(--red)':S.etco2<30?'var(--yellow)':'var(--purple)'; } } catch(e){}
+  try { var me = document.getElementById('mon-etco2'); if(me) { me.textContent = S.etco2; me.style.color = S.etco2>50?'var(--red)':S.etco2<30?'var(--yellow)':'var(--purple)'; } } catch(e){ appLog('restoreState:syncEtco2', e); }
   // Sync BIS display
-  try { if(S.bis != null) { adjBis(0); } } catch(e){}
+  try { if(S.bis != null) { adjBis(0); } } catch(e){ appLog('restoreState:syncBis', e); }
 
   // Liquid inputs
   var li = caso.liqInputs || {};
@@ -5701,7 +5746,7 @@ function restoreState(caso) {
   // Postop
   var po = caso.postop || {};
   var _pset = function(id,val){ var e=document.getElementById(id); if(e&&val!=null) e.value=val; };
-  _pset('po-eva',       po.eva);       try{updEVA(po.eva||0);}catch(e){}
+  _pset('po-eva',       po.eva);       try{updEVA(po.eva||0);}catch(e){ appLog('restoreState:updEVA', e); }
   _pset('po-nausea',    po.nausea);
   _pset('po-shivering', po.shiver);
   _pset('po-analgesia', po.analgesia);
@@ -5718,7 +5763,7 @@ function restoreState(caso) {
   renderHourBuckets();
   calcLiq();
   if(typeof calcAld==='function') calcAld();
-  try { renderLiqHoraTable(); renderLiqHoraBtns(); } catch(e) {}
+  try { renderLiqHoraTable(); renderLiqHoraBtns(); } catch(e) { appLog('restoreState:renderLiqHora', e); }
   // FIX #5: Relanzar el auto-interval de vitales si aplica (se pierde al serializar)
   try {
     var _viInt = document.getElementById('vi-interval');
@@ -5726,7 +5771,7 @@ function restoreState(caso) {
       if (S.autoInterval) clearInterval(S.autoInterval);
       changeVitalInterval();
     }
-  } catch(e) {}
+  } catch(e) { appLog('restoreState:changeVitalInterval', e); }
 }
 
 function loadCaso(id) {
@@ -5744,7 +5789,7 @@ function loadCaso(id) {
   if(caso.pac) caso.pac.categoria = casoHosp ? 'hospital' : 'privado';
 
   // Guardar caso actual antes de cambiar (si tiene datos)
-  if (hasCurrentData()) { try { autoSave(); } catch(e) {} }
+  if (hasCurrentData()) { try { autoSave(); } catch(e) { appLog('loadCaso:autoSave', e); } }
 
   // ── Limpiar UI completamente antes de restaurar ──
   // Evita mezcla de datos entre casos
@@ -5755,7 +5800,7 @@ function loadCaso(id) {
   S._readOnly = true;
   _showReadOnlyBanner(true);
   hideLogin();
-  try { labLoad(); } catch(e) {}
+  try { labLoad(); } catch(e) { appLog('loadCaso:labLoad', e); }
   showToast('📂 Cargado: ' + (caso.pac && caso.pac.nombre ? caso.pac.nombre : 'Sin nombre'));
 }
 
@@ -6050,7 +6095,7 @@ function deleteVitalRow() {
       S.history.splice(_editVitalIdx, 1);
       closeEditVital();
       renderVitalTable();
-      try { drawChart(); } catch(e) {}
+      try { drawChart(); } catch(e) { appLog('tick:drawChart', e); }
       autoSave();
       if (navigator.vibrate) navigator.vibrate([50,30,50]);
     }
@@ -6151,7 +6196,7 @@ function deleteAlert(idx) {
 // FIX SAVE-2: 90s→45s, incluye ventHist+liqHora como condición
 setInterval(function(){
   if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||S.ventHist.length||S.liqHora.length))
-    try{autoSave();}catch(e){}
+    try{autoSave();}catch(e){ appLog('interval45s:autoSave', e); }
 }, 45000);
 
 // ── On startup (deferred to after DOM is fully loaded) ──
@@ -6444,9 +6489,9 @@ function setAccessUI(isAuthed) {
   // Recalcular resúmenes al cargar/restaurar
   // ─────────────────────────────────────────────────────────
   window.addEventListener('load', function(){
-    try { window.renderVitalTable(); } catch(e){}
-    try { addVentSummary(); } catch(e){}
-    try { window.renderFarms(); } catch(e){}
+    try { window.renderVitalTable(); } catch(e){ appLog('load:renderVitalTable', e); }
+    try { addVentSummary(); } catch(e){ appLog('load:addVentSummary', e); }
+    try { window.renderFarms(); } catch(e){ appLog('load:renderFarms', e); }
   });
 
   // Hook restoreState if exists
@@ -6454,9 +6499,9 @@ function setAccessUI(isAuthed) {
   if (typeof _origRestore === 'function') {
     window.restoreState = function(caso){
       _origRestore(caso);
-      try { window.renderVitalTable(); } catch(e){}
-      try { addVentSummary(); } catch(e){}
-      try { window.renderFarms(); } catch(e){}
+      try { window.renderVitalTable(); } catch(e){ appLog('restoreState:renderVitalTable', e); }
+      try { addVentSummary(); } catch(e){ appLog('restoreState:addVentSummary', e); }
+      try { window.renderFarms(); } catch(e){ appLog('restoreState:renderFarms', e); }
     };
   }
 
@@ -6484,14 +6529,14 @@ function hasCurrentData(){
 
 function resetForNewCase(){
   // ── Limpiar timers activos ──
-  try { if(S.autoInterval) { clearInterval(S.autoInterval); S.autoInterval = null; } } catch(e) {}
+  try { if(S.autoInterval) { clearInterval(S.autoInterval); S.autoInterval = null; } } catch(e) { appLog('resetForNewCase:timer', e); }
   // FIX L: Resetear lock de liqHora — si quedó bloqueado de caso anterior, el botón no funcionaría
-  try { if(typeof _liqHoraLock !== 'undefined') _liqHoraLock = false; } catch(e) {}
+  try { if(typeof _liqHoraLock !== 'undefined') _liqHoraLock = false; } catch(e) { appLog('resetForNewCase:liqHoraLock', e); }
   // FIX L: Cancelar debounce pendiente para no guardar caso anterior sobre el nuevo
-  try { if(typeof _saveDebounce !== 'undefined') clearTimeout(_saveDebounce); } catch(e) {}
+  try { if(typeof _saveDebounce !== 'undefined') clearTimeout(_saveDebounce); } catch(e) { appLog('resetForNewCase:saveDebounce', e); }
   // ── Reset COMPLETO del estado ──
   S._casoId    = null;
-  try { _showReadOnlyBanner(false); } catch(e) {}
+  try { _showReadOnlyBanner(false); } catch(e) { appLog('resetForNewCase:readOnlyBanner', e); }
   S.vitals     = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
   S.history    = [];
   S.farms      = [];
@@ -6651,10 +6696,10 @@ function resetForNewCase(){
   try { var mbl=document.getElementById('mon-bis-lbl'); if(mbl){mbl.textContent='sin dato';mbl.style.color='';} }catch(e){}
 
   // ── Render vacíos ──
-  try{ updateTopbar(); }catch(e){}
-  try{ renderVitalTable(); drawChart(); }catch(e){}
-  try{ renderFarms(); }catch(e){}
-  try{ calcLiq(); }catch(e){}
+  try{ updateTopbar(); }catch(e){ appLog('resetUI:updateTopbar', e); }
+  try{ renderVitalTable(); drawChart(); }catch(e){ appLog('resetUI:renderVitals', e); }
+  try{ renderFarms(); }catch(e){ appLog('resetUI:renderFarms', e); }
+  try{ calcLiq(); }catch(e){ appLog('resetUI:calcLiq', e); }
   try{
     var vb=document.getElementById('vent-tbody');
     if(vb) vb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px">Sin registros</td></tr>';
@@ -6738,7 +6783,7 @@ function resetForNewCase(){
 function _doNewPatient(){
   // Seguridad: autosave del caso actual si no es solo lectura
   if(!S._readOnly) {
-    try{ if(hasCurrentData()) autoSave(true); }catch(e){ try{ autoSave(); }catch(_){} }
+    try{ if(hasCurrentData()) autoSave(true); }catch(e){ appLog('saveModal:autoSave', e); }
   }
 
   // Prefill médico e institución desde perfil
@@ -6747,9 +6792,9 @@ function _doNewPatient(){
   S._readOnly = false; // nuevo caso = editable
   if(u && u.nombre){ S.pac.med = u.nombre; }
   if(u && u.inst){ S.pac.inst = u.inst; }
-  try{ updateTopbar(); }catch(e){}
-  try{ hideLogin(); }catch(e){}
-  try{ openPacModal(); }catch(e){}
+  try{ updateTopbar(); }catch(e){ appLog('newCase:updateTopbar', e); }
+  try{ hideLogin(); }catch(e){ appLog('newCase:hideLogin', e); }
+  try{ openPacModal(); }catch(e){ appLog('newCase:openPacModal', e); }
 }
 
 function loginAndNew(){
@@ -6819,8 +6864,8 @@ function saveLiqEdit(){
   });
   closeEditLiq();
   renderLiqHoraTable(); renderLiqHoraBtns();
-  try{ autoSave(); }catch(e){}
-  try{ calcLiq(); }catch(e){}
+  try{ autoSave(); }catch(e){ appLog('liqHora:autoSave', e); }
+  try{ calcLiq(); }catch(e){ appLog('liqHora:calcLiq', e); }
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -6886,7 +6931,7 @@ function saveVentEdit(){
   };
   closeEditVent();
   _renderVentTable();
-  try{ autoSave(); }catch(e){}
+  try{ autoSave(); }catch(e){ appLog('regVent:autoSave', e); }
   if(navigator.vibrate) navigator.vibrate(30);
 }
 
@@ -7018,7 +7063,7 @@ function labSave() {
     _labData.notas = notasEl ? notasEl.value : '';
     localStorage.setItem(_labKey(), JSON.stringify(_labData));
   } catch(e) {}
-  try { debounceSave(); } catch(e) {}
+  try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
 function labLoad() {
   try {
@@ -7303,13 +7348,13 @@ function _labRenderExtra() {
     row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 12px;'
                       + 'border-bottom:1px solid var(--border)';
     row.innerHTML =
-      '<div style="flex:1;font-size:13px;font-weight:600;color:var(--white)">' + item.name + '</div>'
-      + '<input type="number" inputmode="decimal" value="' + (item.value || '') + '" '
+      '<div style="flex:1;font-size:13px;font-weight:600;color:var(--white)">' + esc(item.name) + '</div>'
+      + '<input type="number" inputmode="decimal" value="' + esc(item.value || '') + '" '
       + 'style="width:88px;background:var(--bg);border:1px solid var(--border);border-radius:8px;'
       + 'color:var(--white);font-size:14px;font-weight:700;padding:7px 9px;outline:none;text-align:right" '
       + 'oninput="labEditExtraVal(' + item.id + ',this.value)" placeholder="—">'
       + '<span style="font-size:10px;color:var(--muted);width:42px;flex-shrink:0">'
-      + (item.unit || '') + '</span>'
+      + esc(item.unit || '') + '</span>'
       + '<button onclick="labDeleteExtra(' + item.id + ')" '
       + 'style="background:none;border:none;color:var(--muted);font-size:18px;'
       + 'cursor:pointer;padding:4px 6px;line-height:1">×</button>';
@@ -7330,18 +7375,18 @@ function labGetDataForPDF() { return _labData; }
     if (typeof _origReset === 'function') _origReset();
     _labData = {fecha:'',hb:'',hto:'',plt:'',leu:'',tp:'',tpt:'',inr:'',
                 glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
-    try { _labClearInputs(); } catch(e) {}
+    try { _labClearInputs(); } catch(e) { appLog('resetForNewCase:labClearInputs', e); }
   };
 
   var _origNav = window.nav;
   window.nav = function(id, btn) {
     if (typeof _origNav === 'function') _origNav(id, btn);
-    if (id === 'lab') { try { labLoad(); } catch(e) {} }
+    if (id === 'lab') { try { labLoad(); } catch(e) { appLog('nav:labLoad', e); } }
   };
 })();
 
 // Initial load after page ready
-setTimeout(function() { try { labLoad(); } catch(e) {} }, 800);
+setTimeout(function() { try { labLoad(); } catch(e) { appLog('init:labLoad', e); } }, 800);
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -7371,11 +7416,11 @@ function docSuggest(role, val) {
   var rows = '';
   matches.forEach(function(d) {
     var cedLine = [];
-    if (d.cedula)    cedLine.push('C\u00e9d: ' + d.cedula);
-    if (d.cedulaEsp) cedLine.push('Esp: ' + d.cedulaEsp);
+    if (d.cedula)    cedLine.push('C\u00e9d: ' + esc(d.cedula));
+    if (d.cedulaEsp) cedLine.push('Esp: ' + esc(d.cedulaEsp));
     var sid = '' + d.id;
     rows += '<div class="ddi" onclick="docPick(\'' + role + '\',' + sid + ')">'
-          + '<div class="ddi-name">' + d.nombre + '</div>'
+          + '<div class="ddi-name">' + esc(d.nombre) + '</div>'
           + (cedLine.length ? '<div class="ddi-ced">' + cedLine.join(' \u00b7 ') + '</div>' : '')
           + '</div>';
   });
@@ -7386,7 +7431,7 @@ function docSuggest(role, val) {
   });
   if (curName && !saved) {
     rows += '<div class="ddi-save" onclick="docSaveNew(\'' + role + '\')">'
-          + '\ud83d\udcbe Recordar a <b style="color:#fff;margin-left:4px">' + curName + '</b>'
+          + '\ud83d\udcbe Recordar a <b style="color:#fff;margin-left:4px">' + esc(curName) + '</b>'
           + '</div>';
   }
 
@@ -7519,7 +7564,7 @@ document.addEventListener('click', function(e) {
 // ── SHARE / WHATSAPP — PDF VERSION ────────────────────────────
 async function shareResumen() {
   // 1. Ensure print-area is populated
-  try { genRes(); } catch(e) {}
+  try { genRes(); } catch(e) { appLog('shareResumen:genRes', e); }
 
   var printEl = document.getElementById('print-area');
   if (!printEl) { showToast('⚠️ Sin datos para compartir'); return; }
@@ -7764,9 +7809,8 @@ function agGet()  { try { return JSON.parse(localStorage.getItem(AG_KEY)||'[]');
 function agPut(a) { try { localStorage.setItem(AG_KEY, JSON.stringify(a)); } catch(e) {} }
 function agUID()  { return 'ag_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
 function agCfg(t) { return AG_CFG[t] || AG_CFG.otro; }
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// PATCH A-06: escHtml unificada con esc() — usar esc() en todo el código
+var escHtml = esc;
 function agTodayStr() {
   var d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -8434,7 +8478,7 @@ function agFireReminderNow(ct) {
   }
   // Toast + alerta en la app
   try { showToast('🔔 ' + icono + ' ' + pacN + ' — ' + tiempoRestante); } catch(e) {}
-  try { addAlert('info', 'Recordatorio: ' + icono + ' ' + pacN + ' — ' + dx + ' a las ' + hora); } catch(e) {}
+  try { addAlert('info', 'Recordatorio: ' + icono + ' ' + pacN + ' — ' + dx + ' a las ' + hora); } catch(e) { appLog('agReminder:addAlert', e); }
   if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
 }
 
@@ -8738,7 +8782,7 @@ function irAgenda() {
 
   // ── LOGOUT ──
   window.doLogout = async function () {
-    try { await signOut(auth); } catch(e) {}
+    try { await signOut(auth); } catch(e) { appLog('doLogout:signOut', e); }
     _showLogin();
     _setAccessUI(false);
     setAccessMsg('🔐 Sesión cerrada.');
