@@ -2792,20 +2792,21 @@ window.addEventListener('load', () => {
 });
 
 
-// ═══════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════
+// PATCH A-04: nav() consolidada — todos los hooks de módulo (lab, agenda)
+// integrados directamente. Elimina la cadena de monkey-patches (_origNav)
+// que era frágil ante cambios de orden de carga.
 function nav(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   window.scrollTo(0,0);
   if(id==='res')     { try{genRes();}catch(e){ appLog('nav:genRes', e); } }
   if(id==='monitor') { try{drawChart();}catch(e){ appLog('nav:drawChart', e); } }
   if(id==='farm')    { try{renderFarmAcum();}catch(e){ appLog('nav:renderFarmAcum', e); } }
   if(id==='vent')    { try{calcVentDerived();}catch(e){ appLog('nav:calcVentDerived', e); } }
   if(id==='lab')     { try{labLoad();}catch(e){ appLog('nav:labLoad', e); } }
+  if(id==='agenda')  { try{agInit();}catch(e){ appLog('nav:agInit', e); } }
 }
 
 // ═══════════════════════════════════════════════
@@ -2930,7 +2931,8 @@ function tick() {
     try { agCheckReminders(); } catch(e) {}
   }
 }
-setInterval(tick,1000); tick();
+// PATCH A-05: Referencia guardada en S para poder limpiar en resetForNewCase
+S._tickInterval = setInterval(tick, 1000); tick();
 
 // ═══════════════════════════════════════════════
 // VITALS
@@ -2956,8 +2958,31 @@ function updatePAM(){
   } catch(e) {}
 }
 
+// PATCH A-02 + M-07: Rangos clínicos absolutos — valores fuera de rango son
+// fisiológicamente imposibles y nunca deben usarse en cálculos de alarma.
+// Estos límites son más amplios que vDangLo/vDangHi (que son los umbrales de
+// color), pero descartan datos claramente corruptos (ej: FC=0, SpO2=200).
+const VITAL_HARD_RANGES = {
+  tas:  [20,  280],
+  tad:  [10,  200],
+  pam:  [10,  200],
+  fc:   [10,  280],
+  spo2: [40,  100],
+  fr:   [2,   80],
+  temp: [28,  44]
+};
+function _clampVital(key, val) {
+  var r = VITAL_HARD_RANGES[key];
+  if (!r) return val;
+  var n = parseFloat(val);
+  if (!isFinite(n)) { appLog('upV:NaN', key + '=' + val); return r[0]; }
+  if (n < r[0] || n > r[1]) { appLog('upV:outOfRange', key + '=' + n + ' range=['+r+']'); return Math.min(r[1], Math.max(r[0], n)); }
+  return n;
+}
+
 function upV(key, val) {
-  S.vitals[key] = parseFloat(val);
+  var safe = _clampVital(key, val);
+  S.vitals[key] = safe;
   const dv = document.getElementById('dv-'+key);
   const sl = document.getElementById('sl-'+key);
   // BUG-J FIX: null guard antes de acceder a propiedades
@@ -4258,9 +4283,11 @@ function calcLiq() {
   document.getElementById('st-sang').textContent=sang;
   // VSC y permisible dinámicos
   const {vsc, vsp} = calcVSCyPermisible();
-  const pct=Math.min(100,Math.round(sang/vsp*100));
+  // PATCH M-02: Guardia contra división por cero — vsp puede ser 0 si peso o hto no están definidos
+  const _safevsp = (vsp && vsp > 0) ? vsp : 1;
+  const pct=Math.min(100,Math.round(sang/_safevsp*100));
   document.getElementById('sang-bar').style.width=pct+'%';
-  document.getElementById('sang-pct').textContent=sang+' ml ('+pct+'%)';
+  document.getElementById('sang-pct').textContent=sang+' ml ('+(vsp>0?pct+'%':'—')+')';
   // diuresis/hr
   const hrs=S.phases.an?Math.max(0.5,(new Date()-S.phases.an)/3600000):2.5;
   const dur=(diu/(parseFloat(S.pac.pesoC)||parseFloat(S.pac.peso)||70)/hrs).toFixed(2);
@@ -4271,7 +4298,8 @@ function calcLiq() {
   if(sangEl) sangEl.style.borderColor = sang>vsp?'var(--red)':sang>vsp*0.6?'var(--yellow)':'';
   try { debounceSave(); } catch(e) { appLog('debounceSave', e); }
 }
-calcLiq();
+// PATCH M-04: Wrapped in DOMContentLoaded — DOM must exist before querying elements
+document.addEventListener('DOMContentLoaded', function(){ try{ calcLiq(); }catch(e){ appLog('init:calcLiq', e); } });
 
 function forceHourSnapshot() {
   const get=id=>parseInt(document.getElementById(id)?.value)||0;
@@ -4644,7 +4672,8 @@ function renderFarms() {
   document.getElementById('st-fm').textContent=S.farms.length;
   try { renderFarmAcum(); } catch(e) { appLog('renderFarms:renderFarmAcum', e); }
 }
-renderFarms();
+// PATCH M-04: Wrapped in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function(){ try{ renderFarms(); }catch(e){ appLog('init:renderFarms', e); } });
 
 // ═══════════════════════════════════════════════
 // ALERTS
@@ -4664,7 +4693,7 @@ function _renderAlertList() {
     var ic = a.type==='danger' ? '🚨' : a.type==='warn' ? '⚠️' : 'ℹ️';
     div.style.cssText = 'display:flex;align-items:center;gap:8px';
     div.innerHTML = '<span class="alert-icon">'+ic+'</span>'
-      + '<div style="flex:1"><div>'+a.msg+'</div><span class="alert-time">'+a.hora+'</span></div>'
+      + '<div style="flex:1"><div>'+esc(a.msg)+'</div><span class="alert-time">'+esc(a.hora)+'</span></div>'
       + '<button onclick="deleteAlert('+realIdx+')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;flex-shrink:0">🗑</button>';
     el.appendChild(div);
   });
@@ -4748,7 +4777,9 @@ function genRes() {
   var _resoHto0  = (_resoSexo.includes('fem')||_resoSexo==='f') ? 42 : 45;
   if(_resoEdad<1) _resoHto0=44; else if(_resoEdad<=5) _resoHto0=40;
   var vsp = S._vspManual != null ? S._vspManual : Math.round(_resoVSC * (_resoHto0-21) / _resoHto0);
-  const sangPct = Math.min(100, Math.round(sang_ml / vsp * 100));
+  // PATCH M-02: Guardia contra división por cero en PDF
+  var _safevsp2 = (vsp && vsp > 0) ? vsp : 1;
+  const sangPct = Math.min(100, Math.round(sang_ml / _safevsp2 * 100));
   const lv  = S.history.length ? S.history[S.history.length - 1] : {};
   const vl  = S.ventHist.length ? S.ventHist[0] : null;
   const sc  = calcAld();
@@ -5301,9 +5332,9 @@ function getT(){return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',min
 // Request notifications
 if('Notification' in window) Notification.requestPermission();
 
-// Periodic recalc
-setInterval(calcLiq, 60000);
-setInterval(calcVentDerived, 10000);
+// PATCH A-05: Referencias guardadas para cleanup en resetForNewCase
+S._calcLiqInterval  = setInterval(calcLiq, 60000);
+S._ventInterval     = setInterval(calcVentDerived, 10000);
 
 // ═══════════════════════════════════════════════════════════════
 // EDITAR SIGNO VITAL
@@ -5415,19 +5446,29 @@ function getCasos(cat) {
 
 function saveCasos(arr, cat) {
   var key = (cat === 'hospital') ? DB_KEY_HOSP : DB_KEY_PRIV;
-  // FIX C: Capturar QuotaExceededError (localStorage lleno) para no silenciar el crash
   try {
     localStorage.setItem(key, JSON.stringify(arr));
   } catch(e) {
-    // Quota exceeded — intentar liberar espacio eliminando caso más viejo
+    // PATCH A-03: Quota exceeded — advertir con modal persistente (no toast efímero)
+    // antes de truncar, y ofrecer exportación para no perder datos clínicos.
+    appLog('saveCasos:QuotaExceeded', e);
     try {
       var existing = JSON.parse(localStorage.getItem(key) || '[]');
       if (existing.length > 5) {
-        existing = existing.slice(0, 5); // conservar solo 5 más recientes
-        localStorage.setItem(key, JSON.stringify(existing));
+        showConfirm(
+          '⚠️ Almacenamiento lleno',
+          'Se conservarán solo los 5 casos más recientes. Exporta el historial antes de continuar para no perder registros clínicos.',
+          '📥 Entendido — conservar 5',
+          '#ff6d00',
+          function() {
+            try {
+              var trimmed = existing.slice(0, 5);
+              localStorage.setItem(key, JSON.stringify(trimmed));
+            } catch(e2) { appLog('saveCasos:trimFailed', e2); }
+          }
+        );
       }
-    } catch(e2) {}
-    try { showToast('⚠️ Almacenamiento lleno — se redujo el historial'); } catch(e3) {}
+    } catch(e2) { appLog('saveCasos:quotaHandler', e2); }
   }
 }
 
@@ -5556,18 +5597,29 @@ function autoSave(manual) {
   }
 }
 
+// PATCH M-06: showToast reconstruye el nodo en cada llamada y lo destruye
+// tras el fadeout — evita acumulación de nodos ocultos en el DOM.
 function showToast(msg) {
-  var t = document.getElementById('toast-msg');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast-msg';
-    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f1628;border:1px solid #1e2d44;border-radius:10px;padding:11px 20px;font-size:13px;color:#dde8ff;z-index:600;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.7);transition:opacity .4s';
-    document.body.appendChild(t);
-  }
+  // Cancelar y eliminar cualquier toast previo en vuelo
+  var prev = document.getElementById('toast-msg');
+  if (prev) { clearTimeout(prev._t); prev.remove(); }
+
+  var t = document.createElement('div');
+  t.id = 'toast-msg';
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f1628;border:1px solid #1e2d44;border-radius:10px;padding:11px 20px;font-size:13px;color:#dde8ff;z-index:600;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.7);transition:opacity .4s';
   t.textContent = msg;
+  document.body.appendChild(t);
+
+  // Forzar reflow para que la transición CSS arranque desde opacity 1
+  // eslint-disable-next-line no-unused-expressions
+  t.offsetHeight;
   t.style.opacity = '1';
-  clearTimeout(t._t);
-  t._t = setTimeout(function(){ t.style.opacity='0'; }, 2500);
+
+  t._t = setTimeout(function() {
+    t.style.opacity = '0';
+    // Destruir el nodo después de que termine la transición (400ms)
+    setTimeout(function() { if (t.parentNode) t.remove(); }, 420);
+  }, 2500);
 }
 
 function restoreState(caso) {
@@ -5578,7 +5630,10 @@ function restoreState(caso) {
   S.pac         = _dc(caso.pac,         {});
   // Restore current vitals values into sliders
   if (caso.vitals) {
-    Object.assign(S.vitals, caso.vitals);
+    // PATCH M-07: Sanear valores antes de asignar — descarta datos corruptos de localStorage
+    Object.keys(caso.vitals).forEach(function(k) {
+      S.vitals[k] = _clampVital(k, caso.vitals[k]);
+    });
     ['tas','tad','fc','spo2','fr','temp'].forEach(function(k) {
       var sl = document.getElementById('sl-'+k);
       var dv = document.getElementById('dv-'+k);
@@ -6192,9 +6247,9 @@ function deleteAlert(idx) {
   autoSave();
 }
 
-// Auto-save every 90 seconds
+// Auto-save every 45 seconds — PATCH A-05: ref guardada para cleanup
 // FIX SAVE-2: 90s→45s, incluye ventHist+liqHora como condición
-setInterval(function(){
+S._autoSaveInterval = setInterval(function(){
   if(!S._readOnly&&(S.pac.nombre||S.history.length||S.farms.length||S.ventHist.length||S.liqHora.length))
     try{autoSave();}catch(e){ appLog('interval45s:autoSave', e); }
 }, 45000);
@@ -6529,7 +6584,11 @@ function hasCurrentData(){
 
 function resetForNewCase(){
   // ── Limpiar timers activos ──
-  try { if(S.autoInterval) { clearInterval(S.autoInterval); S.autoInterval = null; } } catch(e) { appLog('resetForNewCase:timer', e); }
+  try { if(S.autoInterval)      { clearInterval(S.autoInterval);      S.autoInterval      = null; } } catch(e) { appLog('resetForNewCase:timer', e); }
+  // PATCH A-05: Limpiar los intervals que antes eran orphaned (sin referencia)
+  try { if(S._calcLiqInterval)  { clearInterval(S._calcLiqInterval);  S._calcLiqInterval  = null; } } catch(e) { appLog('resetForNewCase:calcLiqInterval', e); }
+  try { if(S._ventInterval)     { clearInterval(S._ventInterval);     S._ventInterval     = null; } } catch(e) { appLog('resetForNewCase:ventInterval', e); }
+  try { if(S._autoSaveInterval) { clearInterval(S._autoSaveInterval); S._autoSaveInterval = null; } } catch(e) { appLog('resetForNewCase:autoSaveInterval', e); }
   // FIX L: Resetear lock de liqHora — si quedó bloqueado de caso anterior, el botón no funcionaría
   try { if(typeof _liqHoraLock !== 'undefined') _liqHoraLock = false; } catch(e) { appLog('resetForNewCase:liqHoraLock', e); }
   // FIX L: Cancelar debounce pendiente para no guardar caso anterior sobre el nuevo
@@ -7366,7 +7425,7 @@ function _labRenderExtra() {
 function labGetDataForPDF() { return _labData; }
 
 // ── Auto-load when nav to lab tab ─────────────────────────────────────────────
-// (handled by hook in nav() override below)
+// (lab load now handled directly in consolidated nav())
 
 // ── Hooks into case lifecycle ─────────────────────────────────────────────────
 (function() {
@@ -7377,12 +7436,7 @@ function labGetDataForPDF() { return _labData; }
                 glu:'',urea:'',crea:'',bun:'',col:'',tg:'',notas:'',extra:[]};
     try { _labClearInputs(); } catch(e) { appLog('resetForNewCase:labClearInputs', e); }
   };
-
-  var _origNav = window.nav;
-  window.nav = function(id, btn) {
-    if (typeof _origNav === 'function') _origNav(id, btn);
-    if (id === 'lab') { try { labLoad(); } catch(e) { appLog('nav:labLoad', e); } }
-  };
+  // PATCH A-04: nav() override removed — lab hook integrated in consolidated nav()
 })();
 
 // Initial load after page ready
@@ -8135,7 +8189,7 @@ function agUpdateDaySection() {
   if (!_agSelDay || _agView==='lista') { sec.style.display='none'; return; }
   sec.style.display='block';
 
-  if (title) title.innerHTML = '<i class="ph ph-calendar-blank" style="margin-right:6px"></i>'+agFmtFull(_agSelDay);
+  if (title) title.innerHTML = '<i class="ph ph-calendar-blank" style="margin-right:6px"></i>'+esc(agFmtFull(_agSelDay));
 
   var citas = agGet().filter(function(ct){ return ct.fecha===_agSelDay; });
   citas.sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
@@ -8528,16 +8582,7 @@ function agInit() {
   agRender();
 }
 
-// ── Hook nav() ──
-(function(){
-  var _orig=window.nav;
-  if(typeof _orig==='function'){
-    window.nav=function(id,btn){
-      _orig(id,btn);
-      if(id==='agenda'){ try{ agInit(); }catch(e){} }
-    };
-  }
-})();
+// PATCH A-04: Hook nav() eliminado — agInit integrado en consolidated nav() directamente.
 
 // Inicializar recordatorios DESPUÉS de que el SW esté activo
 if(navigator.serviceWorker) {
@@ -8750,7 +8795,20 @@ function irAgenda() {
     if (!snap.exists()) return false;
     const data = snap.data() || {};
     if (data.active !== true) return false;
-    if (data.paid_until && String(data.paid_until) < todayYYYYMMDD()) return false;
+    // PATCH A-01: Normalizar paid_until sin importar si es Timestamp Firestore,
+    // Unix ms, o string YYYY-MM-DD. String() de un Timestamp produce algo como
+    // "Timestamp(seconds=...)" que nunca ordena correctamente con fechas.
+    if (data.paid_until) {
+      var paidDate;
+      if (data.paid_until && typeof data.paid_until.toDate === 'function') {
+        paidDate = data.paid_until.toDate(); // Firestore Timestamp nativo
+      } else if (typeof data.paid_until === 'number') {
+        paidDate = new Date(data.paid_until); // Unix ms
+      } else {
+        paidDate = new Date(String(data.paid_until)); // string YYYY-MM-DD u otro
+      }
+      if (!isNaN(paidDate.getTime()) && paidDate < new Date()) return false;
+    }
     return true;
   }
 
