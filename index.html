@@ -4616,7 +4616,7 @@ function regVent() {
   S.ventHist.unshift(v);
   const b=document.getElementById('vent-tbody');
   b.innerHTML=S.ventHist.map((r,i)=>`<tr onclick="openEditVent(${i})" style="cursor:pointer">
-    <td class="hl">${r.hora}</td><td>${r.modo}</td><td>${r.fio2}%</td>
+    <td class="hl">${esc(r.hora)}</td><td>${esc(r.modo)}</td><td>${r.fio2}%</td>
     <td>${r.vc}</td><td>${r.fr}</td><td>${r.peep}</td>
     <td class="${r.ppeak>30?'dc':''}">${r.ppeak}</td>
     <td class="${r.etco2>45||r.etco2<30?'wc':''}">${r.etco2}</td>
@@ -4671,6 +4671,8 @@ function renderFarms() {
   document.getElementById('farm-badge').textContent=S.farms.length;
   document.getElementById('st-fm').textContent=S.farms.length;
   try { renderFarmAcum(); } catch(e) { appLog('renderFarms:renderFarmAcum', e); }
+  // PATCH M-02: Notificar a módulos suscritos (ej: viaBreakdown) sin monkey-patch
+  document.dispatchEvent(new CustomEvent('anestesys:renderFarms'));
 }
 // PATCH M-04: Wrapped in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function(){ try{ renderFarms(); }catch(e){ appLog('init:renderFarms', e); } });
@@ -5827,6 +5829,8 @@ function restoreState(caso) {
       changeVitalInterval();
     }
   } catch(e) { appLog('restoreState:changeVitalInterval', e); }
+  // PATCH M-02: Notificar a módulos suscritos (ej: viaBreakdown) sin monkey-patch
+  document.dispatchEvent(new CustomEvent('anestesys:restoreState'));
 }
 
 function loadCaso(id) {
@@ -7054,24 +7058,16 @@ function deleteFarmRow(){
     }catch(e){}
   }
 
-  // Wrap renderFarms to always apply
-  var _orig = window.renderFarms;
-  if(typeof _orig === 'function'){
-    window.renderFarms = function(){
-      _orig();
-      addViaBreakdown();
-    };
-  }
+  // PATCH M-02: Eliminados los monkey-patches de renderFarms y restoreState.
+  // Se usa CustomEvent para desacoplar el módulo viaBreakdown sin depender
+  // del orden de carga ni encadenar sobrescrituras frágiles.
+  // addViaBreakdown se suscribe a los eventos 'anestesys:renderFarms' y
+  // 'anestesys:restoreState' que son disparados por las funciones originales.
+  document.addEventListener('anestesys:renderFarms',   function() { addViaBreakdown(); });
+  document.addEventListener('anestesys:restoreState',  function() { setTimeout(addViaBreakdown, 50); });
 
-  // Apply on load and after restoreState
+  // Apply on load
   window.addEventListener('load', function(){ setTimeout(addViaBreakdown, 50); });
-  var _restore = window.restoreState;
-  if(typeof _restore === 'function'){
-    window.restoreState = function(caso){
-      _restore(caso);
-      setTimeout(addViaBreakdown, 50);
-    };
-  }
 })();
 
 
@@ -7654,6 +7650,16 @@ async function shareResumen() {
     var pageH   = pdf.internal.pageSize.getHeight();
     var imgW    = canvas.width;
     var imgH    = canvas.height;
+
+    // PATCH M-01: Si canvas.width es 0 (html2canvas falló silenciosamente o
+    // print-area estaba oculto), ratio sería Infinity y el while loop
+    // while(yPos < scaledH) se vuelve infinito, congelando la app.
+    if (!imgW || imgW === 0 || !imgH || imgH === 0) {
+      appLog('shareResumen:pdf', 'canvas vacío — imgW=' + imgW + ' imgH=' + imgH);
+      try { showToast('⚠️ Error al generar PDF — intenta nuevamente'); } catch(_) {}
+      return;
+    }
+
     var ratio   = pageW / imgW;
     var scaledH = imgH * ratio;
 
@@ -8003,7 +8009,7 @@ function agRenderSemana() {
       html += '<div onclick="event.stopPropagation();agEditCita(\''+ct.id+'\')" style="'+op+
         'background:'+cfg.bg+';border-left:3px solid '+cfg.brd+';border-radius:0 6px 6px 0;'+
         'padding:3px 5px;margin-bottom:3px;cursor:pointer;overflow:hidden">'+
-        '<div style="font-size:9px;font-weight:800;color:'+cfg.brd+'">'+ct.hora+'</div>'+
+        '<div style="font-size:9px;font-weight:800;color:'+cfg.brd+'">'+escHtml(ct.hora)+'</div>'+
         '<div style="font-size:9px;color:#dde8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
           escHtml(ct.pacNombre||'—')+'</div>'+
         '</div>';
@@ -8236,12 +8242,12 @@ function agCard(ct, compact) {
           '<span style="font-size:15px">'+cfg.icon+'</span>'+
           '<span style="font-size:13px;font-weight:800;color:#dde8ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(ct.pacNombre||'Sin nombre')+'</span>'+
         '</div>'+
-        (ct.pacDx ? '<div style="font-size:11px;color:'+cfg.brd+';font-weight:600;margin-bottom:3px">'+escHtml(ct.pacDx)+(ct.pacEdad?'<span style="font-size:10px;color:#3d5a78;font-weight:500"> · '+ct.pacEdad+' '+({'anios':'a','meses':'m','semanas':'sem','dias':'d'}[ct.pacEdadUnit]||'a')+'</span>':'')+'</div>' : '')+
+        (ct.pacDx ? '<div style="font-size:11px;color:'+cfg.brd+';font-weight:600;margin-bottom:3px">'+escHtml(ct.pacDx)+(ct.pacEdad?'<span style="font-size:10px;color:#3d5a78;font-weight:500"> · '+escHtml(String(ct.pacEdad))+' '+({'anios':'a','meses':'m','semanas':'sem','dias':'d'}[ct.pacEdadUnit]||'a')+'</span>':'')+'</div>' : '')+
         '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+
-          '<span style="font-size:11px;font-weight:700;color:'+cfg.brd+'">🕐 '+(ct.hora||'—')+'</span>'+
+          '<span style="font-size:11px;font-weight:700;color:'+cfg.brd+'">🕐 '+escHtml(ct.hora||'—')+'</span>'+
           (!compact ? '<span style="font-size:10px;color:#3d5a78">📅 '+dateStr+'</span>' : '')+
           (ct.sala ? '<span style="font-size:10px;color:#3d5a78">🏥 '+escHtml(ct.sala)+'</span>' : '')+
-          (ct.duracion ? '<span style="font-size:10px;color:#3d5a78">⏱ '+ct.duracion+' min</span>' : '')+
+          (ct.duracion ? '<span style="font-size:10px;color:#3d5a78">⏱ '+escHtml(ct.duracion)+' min</span>' : '')+
         '</div>'+
       '</div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'+
@@ -8604,7 +8610,7 @@ if(navigator.serviceWorker) {
             }).catch(function(){});
           }
           // Reprogramar todos los recordatorios pendientes con el SW
-          try{ agInitReminders(); }catch(e){}
+          try{ agInitReminders(); }catch(e){ appLog('agInitReminders:postPermission', e); }
         }
       }).catch(function(){});
     },2500);
@@ -8815,7 +8821,9 @@ function irAgenda() {
   // ── LOGIN ──
   window.doLogin = async function () {
     const email = (document.getElementById('auth-email')?.value || '').trim();
-    const pass  = (document.getElementById('auth-pass')?.value  || '').trim();
+    // PATCH H-01: No aplicar .trim() a la contraseña — los espacios al inicio/fin
+    // pueden ser intencionales. trim() los eliminaría silenciosamente.
+    const pass  = (document.getElementById('auth-pass')?.value  || '');
     if (!email || !pass) {
       setAccessMsg('⚠️ Escribe tu email y contraseña.', '#ffd600');
       return;
@@ -8824,6 +8832,9 @@ function irAgenda() {
     setAccessMsg('🔄 Iniciando sesión...', '#3d5a78');
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      // PATCH H-01: Limpiar el campo de contraseña del DOM inmediatamente
+      // tras el intento — onAuthStateChanged maneja el flujo posterior.
+      try { const pf = document.getElementById('auth-pass'); if (pf) pf.value = ''; } catch(_) {}
       // onAuthStateChanged se encarga del resto
     } catch (e) {
       const msgs = {
