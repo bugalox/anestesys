@@ -1040,8 +1040,8 @@ canvas{display:block;width:100%;border-radius:10px;background:var(--bg)}
     <div class="section-header"><h2><i class="ph ph-arrow-circle-up sec-ico"></i>Egresos</h2></div>
     <div class="section-body">
       <div class="field-row">
-        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
-        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>P. Insensibles (ml) <span id="lbl-ins-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-ins" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-ins-auto').textContent='';if(!this.value)this.setAttribute('data-user-cleared','1');else this.removeAttribute('data-user-cleared');calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
+        <div class="field"><label>Req. Basal (ml) <span id="lbl-bas-auto" style="color:var(--muted);font-size:9px;font-weight:400"></span></label><input type="number" inputmode="decimal" id="eg-bas" oninput="this.removeAttribute('data-auto');document.getElementById('lbl-bas-auto').textContent='';if(!this.value)this.setAttribute('data-user-cleared','1');else this.removeAttribute('data-user-cleared');calcLiq();debounceSave()" value="" placeholder="auto" onchange="calcLiq()"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Diuresis (ml)</label><input type="number" inputmode="decimal" id="eg-diu" oninput="calcLiq();debounceSave()" value="" placeholder="0" onchange="calcLiq()"></div>
@@ -2971,12 +2971,28 @@ const VITAL_HARD_RANGES = {
   fr:   [2,   80],
   temp: [28,  44]
 };
+// Valores por defecto clínicamente razonables para cada vital
+// (coinciden con los defaults del slider HTML — se usan solo si el valor
+//  guardado es null/undefined/NaN, NO como límite de clamp agresivo)
+const VITAL_DEFAULTS = {tas:135, tad:91, fc:100, spo2:93, fr:17, temp:37.0};
+
 function _clampVital(key, val) {
   var r = VITAL_HARD_RANGES[key];
-  if (!r) return val;
+  if (!r) return val; // clave desconocida (ej: pam calculado) — pasar sin modificar
+
   var n = parseFloat(val);
-  if (!isFinite(n)) { appLog('upV:NaN', key + '=' + val); return r[0]; }
-  if (n < r[0] || n > r[1]) { appLog('upV:outOfRange', key + '=' + n + ' range=['+r+']'); return Math.min(r[1], Math.max(r[0], n)); }
+  // BUG FIX: Si val es null/undefined/NaN (dato faltante en un save antiguo),
+  // NO forzar al mínimo del rango — eso producía el bug "se queda en 2/4".
+  // Usar el default clínico en su lugar, que es el valor neutro del slider.
+  if (!isFinite(n)) {
+    appLog('_clampVital:missing', key + '=' + String(val) + ' → usando default ' + (VITAL_DEFAULTS[key] || r[0]));
+    return VITAL_DEFAULTS[key] != null ? VITAL_DEFAULTS[key] : r[0];
+  }
+  // Clamp solo si el valor está claramente fuera del rango fisiológico absoluto
+  if (n < r[0] || n > r[1]) {
+    appLog('_clampVital:outOfRange', key + '=' + n + ' range=['+r+'] → clampado');
+    return Math.min(r[1], Math.max(r[0], n));
+  }
   return n;
 }
 
@@ -2987,9 +3003,12 @@ function upV(key, val) {
   const sl = document.getElementById('sl-'+key);
   // BUG-J FIX: null guard antes de acceder a propiedades
   if(!dv || !sl) return;
-  dv.textContent = val;
+  // FIX: mostrar safe (no val) — si hubo clamp, display y estado deben ser coherentes
+  dv.textContent = safe;
+  // Sync slider position to clamped value in case it drifted
+  if (parseFloat(sl.value) !== safe) sl.value = safe;
   updatePAM();
-  const v = parseFloat(val);
+  const v = safe;
   sl.className = '';
   dv.style.color = vColors[key] || 'var(--white)';
   if((vDangLo[key]!==undefined&&v<=vDangLo[key])||(vDangHi[key]!==undefined&&v>=vDangHi[key])){
@@ -4237,19 +4256,31 @@ function calcLiq() {
   if (peso > 0 && hrsCx > 0) {
     const insEl = document.getElementById('eg-ins');
     const basEl = document.getElementById('eg-bas');
-    if (insEl && !insEl.value) {
+
+    // FIX BUG: Auto-fill SOLO si:
+    //   1. El campo está genuinamente vacío (nunca tuvo valor), Y
+    //   2. El usuario NO lo borró intencionalmente (data-user-cleared no presente), Y
+    //   3. El campo no está enfocado en este momento (usuario editando)
+    // Antes: !insEl.value era true tanto para "nunca rellenado" como para
+    // "usuario borró el valor" → se reponía al borrar = bug reportado.
+    const insCleared = insEl && insEl.getAttribute('data-user-cleared') === '1';
+    const basCleared = basEl && basEl.getAttribute('data-user-cleared') === '1';
+    const insFocused = insEl && document.activeElement === insEl;
+    const basFocused = basEl && document.activeElement === basEl;
+
+    if (insEl && !insEl.value && !insCleared && !insFocused) {
       insEl.value = Math.round(2 * peso * hrsCx);
       insEl.style.borderColor = 'var(--muted)';
       insEl.title = 'Auto: 2 ml/kg/h × ' + hrsCx.toFixed(1) + 'h';
       var insLbl = document.getElementById('lbl-ins-auto');
       if(insLbl) insLbl.textContent = '⚡ auto';
       insEl.setAttribute('data-auto','1');
-    } else if (insEl && insEl.getAttribute('data-auto') === '1') {
+    } else if (insEl && insEl.getAttribute('data-auto') === '1' && !insCleared && !insFocused) {
       // FIX BALANCE-3: recalcular auto si el peso cambió
       insEl.value = Math.round(2 * peso * hrsCx);
       insEl.title = 'Auto: 2 ml/kg/h × ' + hrsCx.toFixed(1) + 'h';
     }
-    if (basEl && !basEl.value) {
+    if (basEl && !basEl.value && !basCleared && !basFocused) {
       var basalHr = peso <= 10 ? 4*peso :
                    peso <= 20 ? 40 + 2*(peso-10) :
                                 60 + 1*(peso-20);
@@ -4259,7 +4290,7 @@ function calcLiq() {
       var basLbl = document.getElementById('lbl-bas-auto');
       if(basLbl) basLbl.textContent = '⚡ auto';
       basEl.setAttribute('data-auto','1');
-    } else if (basEl && basEl.getAttribute('data-auto') === '1') {
+    } else if (basEl && basEl.getAttribute('data-auto') === '1' && !basCleared && !basFocused) {
       // FIX BALANCE-3: recalcular auto si el peso cambió
       var basalHrRecalc = peso <= 10 ? 4*peso :
                           peso <= 20 ? 40 + 2*(peso-10) :
@@ -6675,7 +6706,19 @@ function resetForNewCase(){
   // ── Limpiar todos los campos de líquidos ──
   ['in-nacl','in-hart','in-col','in-pg','in-med','in-otro',
    'eg-ins','eg-bas','eg-diu','eg-sang','eg-trau','eg-otro'
-  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) {
+      el.value='';
+      // FIX: limpiar flags de auto-fill para que el próximo caso pueda recibir
+      // valores automáticos de nuevo sin quedar bloqueado
+      el.removeAttribute('data-auto');
+      el.removeAttribute('data-user-cleared');
+    }
+  });
+  // Limpiar labels de auto
+  try{ var _li=document.getElementById('lbl-ins-auto'); if(_li) _li.textContent=''; }catch(e){}
+  try{ var _lb=document.getElementById('lbl-bas-auto'); if(_lb) _lb.textContent=''; }catch(e){}
 
   // ── Limpiar cronómetros completamente ──
   ['time-an','time-cx','time-fin-an','time-fin-cx','time-isq-ini','time-isq-fin'
