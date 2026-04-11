@@ -7673,7 +7673,7 @@ async function shareResumen() {
   printEl.style.width     = '794px';  // A4 width px at 96dpi
   printEl.style.background= '#fff';
   printEl.style.color     = '#000';
-  printEl.style.zIndex    = '-1';
+  printEl.style.zIndex    = '9999'; // iOS Safari no renderiza elementos con z-index negativo
 
   try {
     // 3. Capture with html2canvas
